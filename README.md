@@ -20,5 +20,11 @@ This *should* set it up. I do need to verify this on a new install.
 
 ## Creating a New Project ##
 
+Always make a new branch with the naming scheme "firstname-project".
+If you want to branch from there, use "firstname-project-subproject"
+If there are two people with the same first name, use your firstname, then your last name.
+So If I (David Lenfesty) wanted to create a project called status_indicator, and there was another david, I would create the branch:
+"davidL-status_indicator".
+
 Don't do this without David there, this is just being written down so it isn't forgotten.
 You should just be able to cp the libuavcan_example into a new folder and change some names and it should work.
