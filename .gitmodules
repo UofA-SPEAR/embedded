@@ -1,0 +1,3 @@
+[submodule "freertos_libuavcan_example/lib/libuavcan"]
+	path = freertos_libuavcan_example/lib/libuavcan
+	url = https://github.com/UAVCAN/libuavcan.git
