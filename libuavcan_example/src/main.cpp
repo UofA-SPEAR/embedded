@@ -8,6 +8,7 @@
 #endif
 
 #include <uavcan_stm32/uavcan_stm32.hpp>
+#include <publisher.hpp>
 
 
 int main() {
