@@ -16,6 +16,9 @@ cd embedded/libuavcan
 git submodule update --init --recursive
 ```
 
+As well, if you are running on Ubuntu or a Ubuntu derivative, run the bootstrap.sh script in libuavcan.
+If not I guess just figure out the dependancies from there.
+
 This *should* set it up. I do need to verify this on a new install.
 
 ## Creating a New Project ##
