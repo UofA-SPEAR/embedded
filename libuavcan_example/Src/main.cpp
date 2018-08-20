@@ -47,10 +47,19 @@
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "main.h"
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
+#ifdef __cplusplus
+}
+#endif
+
+#include <uavcan_stm32/uavcan_stm32.hpp>
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
