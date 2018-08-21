@@ -1,5 +1,5 @@
-#ifndef PUBLISHER_HPP_
-#define PUBLISHER_HPP_
+#ifndef APP_PUBLISHERS_HPP_
+#define APP_PUBLISHERS_HPP_
 
 // This should not be hardcoded here, maybe do auto id assignment later
 #define NODE_ID 30

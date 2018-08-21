@@ -63,7 +63,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 
 #include <uavcan_stm32/uavcan_stm32.hpp>
-#include "publisher.hpp"
+#include <app/publishers.hpp>
 
 /* USER CODE END Includes */
 
