@@ -59,8 +59,11 @@ extern "C" {
 }
 #endif
 
-#include <uavcan_stm32/uavcan_stm32.hpp>
+
 /* USER CODE BEGIN Includes */
+
+#include <uavcan_stm32/uavcan_stm32.hpp>
+#include "publisher.hpp"
 
 /* USER CODE END Includes */
 
