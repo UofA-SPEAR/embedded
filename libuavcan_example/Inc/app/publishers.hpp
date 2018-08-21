@@ -25,7 +25,7 @@ static uavcan::Publisher<uavcan::protocol::NodeStatus> status_pub(node);
 
 /**@brief Function to start publisher
  */
-int start_publisher() {
+int start_publishers() {
     int rc = 0;
 
     node.setNodeID(NODE_ID);
