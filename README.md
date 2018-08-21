@@ -53,7 +53,7 @@ If you don't understand, do more research.
 Click File->Open Projects from File System..., from there navigate to your generated project folder and select that.
 
 Once you've imported the folder, right click on the folder in your Project Explorer view and select "Convert to C++"
-Verify that you're C++ build settings are sane.
+Verify that your C++ build settings are sane.
 
 Rename main.c to main.cpp and add extern guards to your includes.
 Any pre-included .h files should have these surrounding them:
