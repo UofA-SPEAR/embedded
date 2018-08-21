@@ -7,27 +7,108 @@ Obviously depends on what members we get and how willing they are.
 
 ## Running ##
 
-Install SW4STM32 (will add link later) and open up the project. Theoretically everything should be installed.
+Install SW4STM32 (will add link later) and import the project.
+Theoretically everything should be installed and ready to go.
 
 ## Creating a New Project ##
 
-Make sure you have:
+Before starting any of this, read through it and make sure you understand at least approximately what you're doing.
+If you don't, just talk to the electrical lead (David at the moment) and we'll walk through it together.
+
+Before you start, make sure you have:
 - SW4STM32
-- STM32CubeMX
-- Git and stuff
+- STM32CubeMX (possibly included with SW4STM32)
+- Git
 
-First, use STM32CubeMX to generate the settings you want for your project (select the chip, enable the required peripherals, etc.
+Then, in the folder you want this repo stored in:
+```
+git clone https://github.com/UofA-SPEAR/embedded.git
+cd libuavcan
+git submodule update --init --recursive
+```
 
-Once you've generated your project, add symlinks to libuavcan and dsdlc_generated from your Inc folder.
-Then right-click on the project in your project explorer and click "Convert to C++".
+### STM32CubeMX ###
+
+First, use STM32CubeMX to generate the settings you want for your project (select the chip, enable the required peripherals, etc.)
+
+Open up STM32CubeMX and start a new project. Narrow down which chip you will be using (generally stm32f103).
+The quickest way to do this is to select your series, then your line, then your package if you know what you want.
+
+Then open your project settings and change your base directory to this repository, and name your project something descriptive, using underscores.
+Avoid words like "design" or "board", we know what these are supposed to run on.
+
+After that, you can start configuring your peripherals. Keep it as simple as possible and don't enable a peripheral unless you know you'll need it.
+Peripherals can always be added in later it's just a bit more work to do manually (manually does mean you are forced to understand it more though).
+
+If you want FreeRTOS, check the box in the "Middlewares" category.
+
+If you're unsure about different peripherals, consult the datasheet or reference manual from ST.
+
+At this point you can click "Generate Code".
+PLEASE LISTEN TO ANY WARNINGS OR ERRORS IT GIVES YOU.
+If you don't understand, do more research.
+
+### SW4STM32 Project ###
+
+Click File->Open Projects from File System..., from there navigate to your generated project folder and select that.
+
+Once you've imported the folder, right click on the folder in your Project Explorer view and select "Convert to C++"
+Verify that you're C++ build settings are sane.
+
+Rename main.c to main.cpp and add extern guards to your includes.
+Any pre-included .h files should have these surrounding them:
+
+```
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Put your C includes here
+
+#ifdef __cplusplus
+}
+#endif
+```
+
+(Yes those are two underscores)
+
+### Libuavcan ###
+
+Add symlinks to libuavcan and dsdlc_generated from your Inc folder.
+```
+cd project_folder
+ln -s ../common/libuavcan Inc/libuavcan
+ln -s ../common/dsdlc_generated dsdlc_generated
+```
 
 Then go to Project->Properties->C/C++ Build->Settings->Includes and add in your libuavcan, libuavcan_stm32, and dsdlc_generated includes.
+Relevant folders to include:
+- Inc/libuavcan/libuavcan/include
+- Inc/libuavcan/libuavcan_drivers/stm32/driver/include
+- Inc/dsdlc_generated
 
-After that, head to the preprocessor tab and to the Defined Symbols (-D) tab, add UAVCAN_STM32_FREERTOS=1, UAVCAN_STM32_NUM_IFACES=1, and UAVCAN_STM32_TIMER_NUMBER=1.
+After that, head to the preprocessor tab and to the Defined Symbols (-D) tab, add the necessary defines:
 (These can be changed but you have to know what you're doing).
 
-Then, head to Project->Properties->Resources->Resource Filters and add four filters. These filters should be exclude all folders and their children, with the filters "linux", "posix", "kinetis", "lpc11c24", "tools", and "test".
+Defaults:
+- UAVCAN_STM32_BAREMETAL=1
+- UAVCAN_STM32_NUM_IFACES=1
+- UAVCAN_STM32_TIMER_NUMBER=1
 
-Make your chip.h file. More on this later.
+Then, head to Project->Properties->Resources->Resource Filters and add six filders.
+These are required so we don't compile unnecessary things at build time that we don't have libraries for.
+These filters should be exclude all folders and their children, with the filters:
+- linux
+- posix
+- kinetis
+- lpc11c24
+- tools
+- test
 
-I *think* this is it.
+### chip.h ###
+
+Refer to libuavcan_example/Inc/chip.h.
+This folder is required by the stm32 libuavcan driver.
+Reference [here](https://github.com/UAVCAN/libuavcan_stm32) for more info on this (and the defines further up).
+
+As far as I'm aware this is it, but we'll see.
