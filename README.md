@@ -7,7 +7,7 @@ Obviously depends on what members we get and how willing they are.
 
 ## Running ##
 
-Install SW4STM32 (will add link later) and import the project.
+Install [SW4STM32](http://openstm32.org) and import the project.
 Theoretically everything should be installed and ready to go.
 
 ## Creating a New Project ##
