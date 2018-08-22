@@ -8,16 +8,15 @@
 // Message type includes
 #include <uavcan/protocol/NodeStatus.hpp>
 
-/* Publisher objects
- * static because I want these to only be accessed via functions
- */
+// Publisher objects - keep static, only access these through functions
 static uavcan::Publisher<uavcan::protocol::NodeStatus>* status_pub;
 
 
-/**@brief Function to start publisher
+/**@brief Function to initialize publishers
+ *
  */
-int start_publishers() {
-    int rc = 0;
+uint8_t publishers_init() {
+    uint8_t rc = 0;
 
     auto* node = get_node();
 
@@ -31,6 +30,9 @@ int start_publishers() {
     return rc;
 }
 
+/**@brief Function to publish to NodeStatus
+ *
+ */
 int publish_NodeStatus(uint8_t health, uint8_t mode, uint16_t status_code) {
     uavcan::protocol::NodeStatus status_msg;
 
