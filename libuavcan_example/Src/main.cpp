@@ -72,7 +72,7 @@ CAN_HandleTypeDef hcan;
 
 osThreadId defaultTaskHandle;
 
-#define SENDER
+#define RECEIVER
 
 #ifdef SENDER
 static const char node_id = 10;
@@ -92,7 +92,22 @@ static void MX_CAN_Init(void);
 static void MX_ADC1_Init(void);
 void StartDefaultTask(void const * argument);
 
+uint32_t systick_counter;
 
+void SysTick_Init() {
+	SysTick_Config(SystemCoreClock / 1000); // set clock to 1ms
+}
+
+void SysTick_Handler() {
+	if (systick_counter != 0) {
+		systick_counter--;
+	}
+}
+
+void delay_ms(uint32_t ms) {
+	systick_counter = ms;
+	while (systick_counter != 0);
+}
 
 /**
   * @brief  The application entry point.
@@ -122,10 +137,33 @@ int main(void)
 
   uavcan_init(node_id, node_name, hw_ver, sw_ver);
 
-  
-  /* We should never get here as control is now taken by the scheduler */
+#ifdef SENDER
+  publishers_init();
+#endif
 
-  while (1);
+#ifdef RECEIVER
+  subscribers_init();
+#endif
+  
+  uavcan_setOperational();
+
+  delay_ms(2000);
+
+  while (1) {
+#ifdef SENDER
+	  delay_ms(500);
+	  publish_NodeStatus(0, 0, 42);
+#endif
+
+#ifdef RECEIVER
+	  uavcan_spin_ms(500);
+	  if (is_node_operational) {
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+		  delay_ms(50);
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	  }
+#endif
+  }
 
 }
 
@@ -275,6 +313,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  // LED is on Pin A5
+  GPIO_InitStruct.Pin = GPIO_PIN_5;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
 /* USER CODE BEGIN 4 */
