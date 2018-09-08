@@ -60,12 +60,10 @@ extern "C" {
 #endif
 
 
-/* USER CODE BEGIN Includes */
-
 #include <uavcan_stm32/uavcan_stm32.hpp>
+#include <app/subscribers.hpp>
 #include <app/publishers.hpp>
 
-/* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
@@ -74,10 +72,18 @@ CAN_HandleTypeDef hcan;
 
 osThreadId defaultTaskHandle;
 
-/* USER CODE BEGIN PV */
-/* Private variables ---------------------------------------------------------*/
+#define SENDER
 
-/* USER CODE END PV */
+#ifdef SENDER
+static const char node_id = 10;
+static char * node_name = "Terminal Sender";
+#endif
+
+#ifdef RECEIVER
+static const char node_id = 20;
+static char* node_name = "Terminal Receiver";
+#endif
+
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -86,14 +92,7 @@ static void MX_CAN_Init(void);
 static void MX_ADC1_Init(void);
 void StartDefaultTask(void const * argument);
 
-/* USER CODE BEGIN PFP */
-/* Private function prototypes -----------------------------------------------*/
 
-/* USER CODE END PFP */
-
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
@@ -114,22 +113,15 @@ int main(void)
   MX_CAN_Init();
   MX_ADC1_Init();
 
-  /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  uavcan::protocol::HardwareVersion hw_ver;
+  hw_ver.major = 0;
+  hw_ver.minor = 0;
+  uavcan::protocol::SoftwareVersion sw_ver;
+  sw_ver.major = 0;
+  sw_ver.minor = 0;
 
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
+  uavcan_init(node_id, node_name, hw_ver, sw_ver);
 
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
- 
-
-  /* Start scheduler */
-  osKernelStart();
   
   /* We should never get here as control is now taken by the scheduler */
 

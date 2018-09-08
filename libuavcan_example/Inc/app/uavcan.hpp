@@ -22,7 +22,7 @@ Node* get_node() {
 /**@brief Function that initializes UAVCAN node
  *
  */
-uint8_t uavcan_init(uint8_t node_id,
+uint8_t uavcan_init(char node_id,
 		char* node_name,
 		uavcan::protocol::HardwareVersion hw_ver,
 		uavcan::protocol::SoftwareVersion sw_ver) {
