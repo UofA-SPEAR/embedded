@@ -72,6 +72,9 @@ extern "C" {
 
 (Yes those are two underscores)
 
+As well, to reduce code size, check out [this thred.](https://groups.google.com/forum/#!topic/uavcan/18_GhJchWX4)
+I will add specific details later once I do more looking into it.
+
 ### Libuavcan ###
 
 Add symlinks to libuavcan and dsdlc_generated from your Inc folder.

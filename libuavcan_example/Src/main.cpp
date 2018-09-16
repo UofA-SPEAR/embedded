@@ -53,7 +53,7 @@ extern "C" {
 
 #include "main.h"
 #include "stm32f1xx_hal.h"
-#include "cmsis_os.h"
+//#include "cmsis_os.h"
 
 #ifdef __cplusplus
 }
@@ -122,6 +122,7 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
+  SysTick_Init();
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
