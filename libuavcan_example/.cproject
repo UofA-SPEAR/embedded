@@ -75,7 +75,7 @@
 									<listOptionValue builtIn="false" value="__packed=&quot;__attribute__((__packed__))&quot;"/>
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
 									<listOptionValue builtIn="false" value="STM32F103xE"/>
-									<listOptionValue builtIn="false" value="UAVCAN_STM32_FREERTOS=1"/>
+									<listOptionValue builtIn="false" value="UAVCAN_STM32_BAREMETAL=1"/>
 									<listOptionValue builtIn="false" value="UAVCAN_STM32_NUM_IFACES=1"/>
 									<listOptionValue builtIn="false" value="UAVCAN_STM32_TIMER_NUMBER=2"/>
 								</option>

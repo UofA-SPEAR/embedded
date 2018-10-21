@@ -98,6 +98,12 @@ Defaults:
 - UAVCAN_STM32_NUM_IFACES=1
 - UAVCAN_STM32_TIMER_NUMBER=1
 
+Then we can head to the Miscellaneous tab and add the following to the "Other Flags" field:
+
+```
+-fmessage-length=0 -std=gnu++11 -nodefaultlibs -lc -lgcc -nostartfiles --specs=nano.specs -flto -Os -g3 -ffunction-sections -fdata-sections -fno-common -fno-exceptions -fno-unwind-tables -fno-stack-protector -fomit-frame-pointer -ftracer -ftree-loop-distribute-patterns -frename-registers -freorder-blocks -fconserve-stack -fno-rtti -fno-threadsafe-statics
+```
+
 Then, head to Project->Properties->Resources->Resource Filters and add six filters.
 These are required so we don't compile unnecessary things at build time that we don't have libraries for.
 These filters should be exclude all folders and their children, with the filters:

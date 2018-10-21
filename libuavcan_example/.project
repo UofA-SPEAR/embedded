@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
 	<name>libuavcan_example</name>
-	<comment></comment>
+	<comment />
 	<projects>
 	</projects>
 	<buildSpec>
@@ -28,7 +28,7 @@
 	<filteredResources>
 		<filter>
 			<id>1534785658833</id>
-			<name></name>
+			<name />
 			<type>26</type>
 			<matcher>
 				<id>org.eclipse.ui.ide.multiFilter</id>
@@ -37,7 +37,7 @@
 		</filter>
 		<filter>
 			<id>1534785658835</id>
-			<name></name>
+			<name />
 			<type>26</type>
 			<matcher>
 				<id>org.eclipse.ui.ide.multiFilter</id>
@@ -46,7 +46,7 @@
 		</filter>
 		<filter>
 			<id>1534785658837</id>
-			<name></name>
+			<name />
 			<type>26</type>
 			<matcher>
 				<id>org.eclipse.ui.ide.multiFilter</id>
@@ -55,7 +55,7 @@
 		</filter>
 		<filter>
 			<id>1534785658840</id>
-			<name></name>
+			<name />
 			<type>26</type>
 			<matcher>
 				<id>org.eclipse.ui.ide.multiFilter</id>
@@ -64,7 +64,7 @@
 		</filter>
 		<filter>
 			<id>1534785658843</id>
-			<name></name>
+			<name />
 			<type>30</type>
 			<matcher>
 				<id>org.eclipse.ui.ide.multiFilter</id>
@@ -73,7 +73,7 @@
 		</filter>
 		<filter>
 			<id>1534785658847</id>
-			<name></name>
+			<name />
 			<type>30</type>
 			<matcher>
 				<id>org.eclipse.ui.ide.multiFilter</id>

@@ -70,9 +70,9 @@ ADC_HandleTypeDef hadc1;
 
 CAN_HandleTypeDef hcan;
 
-osThreadId defaultTaskHandle;
+//osThreadId defaultTaskHandle;
 
-#define RECEIVER
+#define SENDER
 
 #ifdef SENDER
 static const char node_id = 10;
@@ -154,6 +154,9 @@ int main(void)
 #ifdef SENDER
 	  delay_ms(500);
 	  publish_NodeStatus(0, 0, 42);
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+	  delay_ms(500);
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 #endif
 
 #ifdef RECEIVER
@@ -324,17 +327,17 @@ static void MX_GPIO_Init(void)
 /* USER CODE END 4 */
 
 /* StartDefaultTask function */
-void StartDefaultTask(void const * argument)
-{
+//void StartDefaultTask(void const * argument)
+//{
 
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+//  for(;;)
+//  {
+//    osDelay(1);
+//  }
   /* USER CODE END 5 */ 
-}
+//}
 
 /**
   * @brief  Period elapsed callback in non blocking mode
