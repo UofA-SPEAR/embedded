@@ -37,57 +37,56 @@
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
-
 #include "main.h"
 #include "stm32f1xx_hal.h"
-#include "stm32f1xx_it.h"
 
-#include <uavcan_stm32/uavcan_stm32.hpp>
-#include <app/subscribers.hpp>
-#include <app/publishers.hpp>
-
-/* USER CODE BEGIN Includes */
-
-
-/* USER CODE END Includes */
+#include "libcanard_wrapper.h"
 
 /* Private variables ---------------------------------------------------------*/
 CAN_HandleTypeDef hcan;
 
-/* USER CODE BEGIN PV */
-/* Private variables ---------------------------------------------------------*/
+uint8_t m_transfer_id;
 
-#define SENDER
-
-#ifdef SENDER
-static const char node_id = 10;
-static char * node_name = "Terminal Sender";
-#endif
-
-#ifdef RECEIVER
-static const char node_id = 20;
-static char* node_name = "Terminal Receiver";
-#endif
-/* USER CODE END PV */
-
-extern "C" {
 /* Private function prototypes -----------------------------------------------*/
-	void SystemClock_Config(void);
-	static void MX_GPIO_Init(void);
-	static void MX_CAN_Init(void);
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_CAN_Init(void);
+
+
+/** @brief Implementation of a usleep function to avoid errors
+ *
+ */
+void usleep(useconds_t __useconds) {
+	// This only has to last in increments of 1 millisecond
+	HAL_Delay(__useconds / 1000);
 }
 
 
+bool should_accept(const CanardInstance* ins,
+					uint64_t* out_data_type_signature,
+					uint16_t data_type_id,
+					CanardTransferType transfer_type,
+					uint8_t source_node_id) {
+	//do nothing for now
+	return 1;
+}
 
-/* USER CODE BEGIN PFP */
-/* Private function prototypes -----------------------------------------------*/
+
+void on_reception(CanardInstance* ins,
+					CanardRxTransfer* transfer) {
+	// do nothing for now
+}
 
 
-/* USER CODE END PFP */
+int16_t setup_hardware_can_filters(void) {
+	CanardSTM32AcceptanceFilterConfiguration conf[1];
 
-/* USER CODE BEGIN 0 */
+	conf[0].id = 0;
+	conf[0].mask = 0;
 
-/* USER CODE END 0 */
+	return canardSTM32ConfigureAcceptanceFilters(&conf, 1);
+}
+
 
 /**
   * @brief  The application entry point.
@@ -96,80 +95,45 @@ extern "C" {
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration----------------------------------------------------------*/
-
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
   /* Configure the system clock */
   SystemClock_Config();
-  SysTick_Handler();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_CAN_Init();
-  /* USER CODE BEGIN 2 */
 
-  /* USER CODE END 2 */
+  HAL_Delay(500);
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+  libcanard_init( on_reception,
+				  should_accept,
+				  NULL,
+				  8000000,
+				  250000);
 
-  uavcan::protocol::HardwareVersion hw_ver;
-  hw_ver.major = 0;
-  hw_ver.minor = 0;
-  uavcan::protocol::SoftwareVersion sw_ver;
-  sw_ver.major = 0;
-  sw_ver.minor = 0;
+  setup_hardware_can_filters();
 
-  uavcan_init(node_id, node_name, hw_ver, sw_ver);
+  while (1)
+  {
+	  uint8_t data[8] = {[0 ... 7] = 0};
+	  for (uint8_t i = 0; i <= 100; i++) {
+		  data[0] = i;
+		  HAL_Delay(500);
+		  canardBroadcast(&m_canard_instance,
+				  	  	  123, // NOT CORRECT
+						  341,
+						  &m_transfer_id,
+						  0,
+						  data,
+						  7);
 
-#ifdef SENDER
-  publishers_init();
-#endif
-
-#ifdef RECEIVER
-  subscribers_init();
-#endif
-
-  uavcan_setOperational();
-
-  HAL_Delay(2000);
-
-  while (1) {
-#ifdef SENDER
-	  publish_NodeStatus(0, 0, 42);
-	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-	  //HAL_Delay(500);
-	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-#endif
-
-#ifdef RECEIVER
-	  uavcan_spin_ms(500);
-	  if (is_node_operational) {
-		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-		  delay_ms(50);
-		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+		  tx_once();
+		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 	  }
-#endif
+
   }
-
 }
-
-extern "C" {
 
 /**
   * @brief System Clock Configuration
@@ -304,8 +268,6 @@ void assert_failed(uint8_t* file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-}
 
 /**
   * @}

@@ -1,3 +1,6 @@
 [submodule "common/libuavcan"]
 	path = common/libuavcan
 	url = https://github.com/UAVCAN/libuavcan.git
+[submodule "common/libcanard"]
+	path = common/libcanard
+	url = https://github.com/UAVCAN/libcanard.git

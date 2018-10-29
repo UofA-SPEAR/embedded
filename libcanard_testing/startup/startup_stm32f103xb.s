@@ -124,25 +124,10 @@ LoopFillZerobss:
  * @retval : None
 */
     .section .text.Default_Handler,"ax",%progbits
-
 Default_Handler:
-// This code loads the value of the interrupt control register into r2
-
-/* Load the address of the interrupt control register into r3. */
-  ldr r3, NVIC_INT_CTRL_CONST
-  /* Load the value of the interrupt control register into r2 from the
-  address held in r3. */
-  ldr r2, [r3, #0]
-  /* The interrupt number is in the least significant byte - clear all
-  other bits. */
-  uxtb r2, r2
 Infinite_Loop:
   b Infinite_Loop
   .size Default_Handler, .-Default_Handler
-
-.align 4
-/* The address of the NVIC interrupt control register. */
-NVIC_INT_CTRL_CONST: .word 0xe000ed04
 /******************************************************************************
 *
 * The minimal vector table for a Cortex M3.  Note that the proper constructs
@@ -258,8 +243,8 @@ g_pfnVectors:
   .weak PendSV_Handler
   .thumb_set PendSV_Handler,Default_Handler
 
-  /*.weak SysTick_Handler
-  .thumb_set SysTick_Handler,Default_Handler */
+  .weak SysTick_Handler
+  .thumb_set SysTick_Handler,Default_Handler
 
   .weak WWDG_IRQHandler
   .thumb_set WWDG_IRQHandler,Default_Handler
@@ -345,8 +330,8 @@ g_pfnVectors:
   .weak TIM1_CC_IRQHandler
   .thumb_set TIM1_CC_IRQHandler,Default_Handler
 
-  /*.weak TIM2_IRQHandler
-  .thumb_set TIM2_IRQHandler,Default_Handler*/
+  .weak TIM2_IRQHandler
+  .thumb_set TIM2_IRQHandler,Default_Handler
 
   .weak TIM3_IRQHandler
   .thumb_set TIM3_IRQHandler,Default_Handler
