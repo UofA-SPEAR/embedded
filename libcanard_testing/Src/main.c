@@ -40,12 +40,18 @@
 #include "main.h"
 #include "stm32f1xx_hal.h"
 
+// Libcanard includes
 #include "libcanard_wrapper.h"
+#include "canard.h"
+#include "canard_stm32.h"
+
+// Message type includes
+#include "uavcan/protocol/NodeStatus.h"
 
 /* Private variables ---------------------------------------------------------*/
 CAN_HandleTypeDef hcan;
 
-uint8_t m_transfer_id;
+static uint8_t m_transfer_id;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -79,12 +85,12 @@ void on_reception(CanardInstance* ins,
 
 
 int16_t setup_hardware_can_filters(void) {
-	CanardSTM32AcceptanceFilterConfiguration conf[1];
+	const CanardSTM32AcceptanceFilterConfiguration conf[1] = {
+			{ .id = 0, .mask = 0 }
+	};
 
-	conf[0].id = 0;
-	conf[0].mask = 0;
 
-	return canardSTM32ConfigureAcceptanceFilters(&conf, 1);
+	return canardSTM32ConfigureAcceptanceFilters((const CanardSTM32AcceptanceFilterConfiguration* const) &conf, 1);
 }
 
 
@@ -114,19 +120,32 @@ int main(void)
 
   setup_hardware_can_filters();
 
+  uavcan_protocol_NodeStatus status;
+
+  status.uptime_sec = 0;
+  status.health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
+  status.mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
+  status.sub_mode = 0;
+  status.vendor_specific_status_code = 0;
+
+  uint8_t encoded_buf[10] = {[0 ... 9] = 0};
+
   while (1)
   {
-	  uint8_t data[8] = {[0 ... 7] = 0};
-	  for (uint8_t i = 0; i <= 100; i++) {
-		  data[0] = i;
+	  for (uint16_t i = 0; i <= 100; i++) {
+		  status.vendor_specific_status_code = i;
+
+
+		  uint8_t len = uavcan_protocol_NodeStatus_encode(&status, &encoded_buf);
+
 		  HAL_Delay(500);
 		  canardBroadcast(&m_canard_instance,
-				  	  	  123, // NOT CORRECT
+				  	  	  123,
 						  341,
 						  &m_transfer_id,
 						  0,
-						  data,
-						  7);
+						  &encoded_buf,
+						  len);
 
 		  tx_once();
 		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
