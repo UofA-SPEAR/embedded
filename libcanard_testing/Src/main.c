@@ -73,14 +73,30 @@ bool should_accept(const CanardInstance* ins,
 					uint16_t data_type_id,
 					CanardTransferType transfer_type,
 					uint8_t source_node_id) {
-	//do nothing for now
-	return 1;
+
+	if (data_type_id == UAVCAN_PROTOCOL_NODESTATUS_ID) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
 
 void on_reception(CanardInstance* ins,
 					CanardRxTransfer* transfer) {
-	// do nothing for now
+
+	if (transfer->data_type_id == UAVCAN_PROTOCOL_NODESTATUS_ID) {
+		uavcan_protocol_NodeStatus msg;
+
+		uavcan_protocol_NodeStatus_decode(transfer, transfer->payload_len,
+				&msg, NULL);
+
+		if (msg.vendor_specific_status_code) {
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+		} else {
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+		}
+	}
 }
 
 
@@ -132,7 +148,7 @@ int main(void)
 
   while (1)
   {
-	  for (uint16_t i = 0; i <= 100; i++) {
+	  for (uint16_t i = 0; i < 2; i++) {
 		  status.vendor_specific_status_code = i;
 
 
@@ -148,7 +164,7 @@ int main(void)
 						  len);
 
 		  tx_once();
-		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+		  rx_once();
 	  }
 
   }
@@ -207,7 +223,7 @@ static void MX_CAN_Init(void)
 
   hcan.Instance = CAN1;
   hcan.Init.Prescaler = 16;
-  hcan.Init.Mode = CAN_MODE_NORMAL;
+  hcan.Init.Mode = CAN_MODE_LOOPBACK;
   hcan.Init.SJW = CAN_SJW_1TQ;
   hcan.Init.BS1 = CAN_BS1_1TQ;
   hcan.Init.BS2 = CAN_BS2_1TQ;

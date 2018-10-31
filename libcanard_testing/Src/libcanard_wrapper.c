@@ -52,10 +52,10 @@ int8_t tx_once(void) {
 	int8_t retval = LIBCANARD_SUCCESS;
 	int16_t rc;
 
-	const CanardCANFrame* frame = canardPeekTxQueue(&m_canard_instance);
+	const CanardCANFrame* p_frame = canardPeekTxQueue(&m_canard_instance);
 
-	if (frame != NULL) { // If there are any frames to transmit
-		rc = canardSTM32Transmit(frame);
+	if (p_frame != NULL) { // If there are any frames to transmit
+		rc = canardSTM32Transmit(p_frame);
 
 		if (rc == 1) { // If transmit is successful
 			canardPopTxQueue(&m_canard_instance);
@@ -74,14 +74,14 @@ int8_t tx_once(void) {
 
 // Timestamp should come from the input of this
 int8_t rx_once() {
-	CanardCANFrame* p_frame = NULL;
+	CanardCANFrame in_frame;
 
-	int16_t rc = canardSTM32Receive(p_frame);
+	int16_t rc = canardSTM32Receive(&in_frame);
 
 	switch (rc) {
 	case 1:
 		canardHandleRxFrame(&m_canard_instance,
-							p_frame,
+							&in_frame,
 							100000); // timestamp needs to be dynamic. Do later
 		return LIBCANARD_SUCCESS;
 	case 0:
