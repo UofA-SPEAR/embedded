@@ -2,8 +2,7 @@
 
 This is all the code for the embedded systems on the rover.
 
-I want to try using STM32 chips on our boards and use STM32CubeMX for configuring them, instead of Arduino, so that I can have some semblence of control over the build process.
-Obviously depends on what members we get and how willing they are.
+This code will run on STM32 chips, specifically the F103 or F303 series (preferably F303)
 
 ## Running ##
 
@@ -23,7 +22,7 @@ Before you start, make sure you have:
 Then, in the folder you want this repo stored in:
 ```
 git clone https://github.com/UofA-SPEAR/embedded.git
-cd libuavcan
+cd embedded
 git submodule update --init --recursive
 ```
 
@@ -52,72 +51,26 @@ If you don't understand, do more research.
 
 Click File->Open Projects from File System..., from there navigate to your generated project folder and select that.
 
-Once you've imported the folder, right click on the folder in your Project Explorer view and select "Convert to C++"
-Verify that your C++ build settings are sane.
+### Libcanard ###
 
-Rename main.c to main.cpp and add extern guards to your includes.
-Any pre-included .h files should have these surrounding them:
-
-```
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Put your C includes here
-
-#ifdef __cplusplus
-}
-#endif
-```
-
-(Yes those are two underscores)
-
-As well, to reduce code size, check out [this thred.](https://groups.google.com/forum/#!topic/uavcan/18_GhJchWX4)
-I will add specific details later once I do more looking into it.
-
-### Libuavcan ###
-
-Add symlinks to libuavcan and dsdlc_generated from your Inc folder.
+Add symlinks to libcanard and dsdlc_generated from your Inc folder.
 ```
 cd project_folder
-ln -s ../common/libuavcan Inc/libuavcan
-ln -s ../common/dsdlc_generated dsdlc_generated
+ln -s ../common/libcanard Inc/libcanard
+ln -s ../common/dsdlc_generated/libcanard_dsdlc_generated Inc/dsdlc_generated
 ```
 
-Then go to Project->Properties->C/C++ Build->Settings->Includes and add in your libuavcan, libuavcan_stm32, and dsdlc_generated includes.
+Then go to Project->Properties->C/C++ Build->Settings->Includes and add in your libcanard, libcanard_stm32, and dsdlc_generated includes.
 Relevant folders to include:
-- Inc/libuavcan/libuavcan/include
-- Inc/libuavcan/libuavcan_drivers/stm32/driver/include
+- Inc/libcanard/
+- Inc/libcanard/drivers/stm32
 - Inc/dsdlc_generated
-
-After that, head to the preprocessor tab and to the Defined Symbols (-D) tab, add the necessary defines:
-(These can be changed but you have to know what you're doing).
-
-Defaults:
-- UAVCAN_STM32_BAREMETAL=1
-- UAVCAN_STM32_NUM_IFACES=1
-- UAVCAN_STM32_TIMER_NUMBER=1
-
-Then we can head to the Miscellaneous tab and add the following to the "Other Flags" field:
-
-```
--fmessage-length=0 -std=gnu++11 -nodefaultlibs -lc -lgcc -nostartfiles --specs=nano.specs -flto -Os -g3 -ffunction-sections -fdata-sections -fno-common -fno-exceptions -fno-unwind-tables -fno-stack-protector -fomit-frame-pointer -ftracer -ftree-loop-distribute-patterns -frename-registers -freorder-blocks -fconserve-stack -fno-rtti -fno-threadsafe-statics
-```
 
 Then, head to Project->Properties->Resources->Resource Filters and add six filters.
 These are required so we don't compile unnecessary things at build time that we don't have libraries for.
 These filters should be exclude all folders and their children, with the filters:
-- linux
-- posix
-- kinetis
-- lpc11c24
-- tools
-- test
+- nuttx
+- avr
+- tests
+- socketcan
 
-### chip.h ###
-
-Refer to libuavcan_example/Inc/chip.h.
-This folder is required by the stm32 libuavcan driver.
-Reference [here](https://github.com/UAVCAN/libuavcan_stm32) for more info on this (and the defines further up).
-
-As far as I'm aware this is it, but we'll see.
