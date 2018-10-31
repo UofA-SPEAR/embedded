@@ -57,7 +57,7 @@ Add symlinks to libcanard and dsdlc_generated from your Inc folder.
 ```
 cd project_folder
 ln -s ../common/libcanard Inc/libcanard
-ln -s ../common/dsdlc_generated/libcanard_dsdlc_generated Inc/dsdlc_generated
+ln -s ../common/uavcan_dsdl/libcanard_dsdlc_generated Inc/dsdlc_generated
 ```
 
 Then go to Project->Properties->C/C++ Build->Settings->Includes and add in your libcanard, libcanard_stm32, and dsdlc_generated includes.
