@@ -66,7 +66,7 @@ Relevant folders to include:
 - Inc/libcanard/drivers/stm32
 - Inc/dsdlc_generated
 
-Then, head to Project->Properties->Resources->Resource Filters and add six filters.
+Then, head to Project->Properties->Resources->Resource Filters and add four filters.
 These are required so we don't compile unnecessary things at build time that we don't have libraries for.
 These filters should be exclude all folders and their children, with the filters:
 - nuttx
