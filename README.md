@@ -10,28 +10,6 @@ Obviously depends on what members we get and how willing they are.
 Install [SW4STM32](http://openstm32.org) and import the project.
 Theoretically everything should be installed and ready to go.
 
-## Importing a project ##
-
-First, run the git command:
-
-```
-git submodule update --init
-```
-
-Then create symlinks within the project you are using.
-Git doesn't preserve symlinks.
-
-```
-cd project_name/Inc
-ln -s ../../common/libuavcan libuavcan
-ln -s ../../common/dsdlc_generated dsdlc_generated
-```
-
-Then you should be able to build your project.
-If you get build errors like "undefined reference to 'blah blah blah'",
-you need to clean your build environment.
-So, select Project->Clean..., and click OK, then try and rebuild your project.
-
 ## Creating a New Project ##
 
 Before starting any of this, read through it and make sure you understand at least approximately what you're doing.
