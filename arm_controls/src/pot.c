@@ -26,6 +26,7 @@ int readPot(){
 	return val;
 }
 
+// Setup code for the ADC
 static void __MX_ADC_Init(){
 	ADC_ChannelConfTypeDef sConfig;
 	hadc1.Instance = ADC1;
@@ -45,7 +46,7 @@ static void __MX_ADC_Init(){
 	HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
 }
-
+// more setup code, this time for the pin
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc){
 	__HAL_RCC_ADC1_CLK_ENABLE();
 	__HAL_RCC_GPIOA_CLK_ENABLE();

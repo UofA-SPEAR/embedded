@@ -12058,30 +12058,30 @@ LOAD /home/jacob/Ac6/SystemWorkbench/plugins/fr.ac6.mcu.externaltools.arm-none.l
                 0x0000000000000e7a       0x1d /home/jacob/Ac6/SystemWorkbench/plugins/fr.ac6.mcu.externaltools.arm-none.linux64_1.16.0.201807130628/tools/compiler/bin/../lib/gcc/arm-none-eabi/7.2.1/thumb/v7-m/crtn.o
 OUTPUT(arm_controls.elf elf32-littlearm)
 
-.debug_line     0x0000000000000000     0xd3ef
+.debug_line     0x0000000000000000     0xd3ec
  .debug_line    0x0000000000000000       0x7d ./startup/startup_stm32f103xb.o
  .debug_line    0x000000000000007d      0x9e2 ./src/clocks.o
- .debug_line    0x0000000000000a5f      0xc10 ./src/coms.o
- .debug_line    0x000000000000166f      0xb26 ./src/main.o
- .debug_line    0x0000000000002195      0xa0e ./src/motor.o
- .debug_line    0x0000000000002ba3      0xa00 ./src/pot.o
- .debug_line    0x00000000000035a3      0x976 ./src/stm32f1xx_it.o
- .debug_line    0x0000000000003f19      0x60b ./src/syscalls.o
- .debug_line    0x0000000000004524      0x97a ./src/system_stm32f1xx.o
- .debug_line    0x0000000000004e9e      0x4c4 ./inc/spear/arm/arm_JointCommand.o
- .debug_line    0x0000000000005362      0xc8c ./inc/canard/canard.o
- .debug_line    0x0000000000005fee      0x70b ./inc/canard/canard_stm32.o
- .debug_line    0x00000000000066f9      0xaf2 ./HAL_Driver/Src/stm32f1xx_hal.o
- .debug_line    0x00000000000071eb      0xe63 ./HAL_Driver/Src/stm32f1xx_hal_adc.o
- .debug_line    0x000000000000804e      0xbe0 ./HAL_Driver/Src/stm32f1xx_hal_cortex.o
- .debug_line    0x0000000000008c2e      0xb2a ./HAL_Driver/Src/stm32f1xx_hal_gpio.o
- .debug_line    0x0000000000009758      0x984 ./HAL_Driver/Src/stm32f1xx_hal_msp_template.o
- .debug_line    0x000000000000a0dc      0xbdc ./HAL_Driver/Src/stm32f1xx_hal_rcc.o
- .debug_line    0x000000000000acb8      0x9f2 ./HAL_Driver/Src/stm32f1xx_hal_rcc_ex.o
- .debug_line    0x000000000000b6aa     0x18bc ./HAL_Driver/Src/stm32f1xx_hal_tim.o
- .debug_line    0x000000000000cf66      0x15c /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_q31_to_float.o)
- .debug_line    0x000000000000d0c2      0x1a8 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_float_to_q31.o)
- .debug_line    0x000000000000d26a      0x185 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_pid_init_q31.o)
+ .debug_line    0x0000000000000a5f      0xc0e ./src/coms.o
+ .debug_line    0x000000000000166d      0xb25 ./src/main.o
+ .debug_line    0x0000000000002192      0xa0e ./src/motor.o
+ .debug_line    0x0000000000002ba0      0xa00 ./src/pot.o
+ .debug_line    0x00000000000035a0      0x976 ./src/stm32f1xx_it.o
+ .debug_line    0x0000000000003f16      0x60b ./src/syscalls.o
+ .debug_line    0x0000000000004521      0x97a ./src/system_stm32f1xx.o
+ .debug_line    0x0000000000004e9b      0x4c4 ./inc/spear/arm/arm_JointCommand.o
+ .debug_line    0x000000000000535f      0xc8c ./inc/canard/canard.o
+ .debug_line    0x0000000000005feb      0x70b ./inc/canard/canard_stm32.o
+ .debug_line    0x00000000000066f6      0xaf2 ./HAL_Driver/Src/stm32f1xx_hal.o
+ .debug_line    0x00000000000071e8      0xe63 ./HAL_Driver/Src/stm32f1xx_hal_adc.o
+ .debug_line    0x000000000000804b      0xbe0 ./HAL_Driver/Src/stm32f1xx_hal_cortex.o
+ .debug_line    0x0000000000008c2b      0xb2a ./HAL_Driver/Src/stm32f1xx_hal_gpio.o
+ .debug_line    0x0000000000009755      0x984 ./HAL_Driver/Src/stm32f1xx_hal_msp_template.o
+ .debug_line    0x000000000000a0d9      0xbdc ./HAL_Driver/Src/stm32f1xx_hal_rcc.o
+ .debug_line    0x000000000000acb5      0x9f2 ./HAL_Driver/Src/stm32f1xx_hal_rcc_ex.o
+ .debug_line    0x000000000000b6a7     0x18bc ./HAL_Driver/Src/stm32f1xx_hal_tim.o
+ .debug_line    0x000000000000cf63      0x15c /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_q31_to_float.o)
+ .debug_line    0x000000000000d0bf      0x1a8 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_float_to_q31.o)
+ .debug_line    0x000000000000d267      0x185 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_pid_init_q31.o)
 
 .debug_info     0x0000000000000000    0x14be8
  .debug_info    0x0000000000000000       0x22 ./startup/startup_stm32f103xb.o
@@ -12181,51 +12181,51 @@ OUTPUT(arm_controls.elf elf32-littlearm)
  .debug_aranges
                 0x0000000000000c18       0x20 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_pid_init_q31.o)
 
-.debug_str      0x0000000000000000    0x8a539
+.debug_str      0x0000000000000000    0x8a560
  .debug_str     0x0000000000000000       0x5d ./startup/startup_stm32f103xb.o
  .debug_str     0x000000000000005d    0x81a30 ./src/clocks.o
                                       0x81e1b (size before relaxing)
  .debug_str     0x0000000000081a8d      0xe99 ./src/coms.o
                                       0x82872 (size before relaxing)
- .debug_str     0x0000000000082926     0x152b ./src/main.o
-                                      0x83692 (size before relaxing)
- .debug_str     0x0000000000083e51      0x144 ./src/motor.o
+ .debug_str     0x0000000000082926     0x1552 ./src/main.o
+                                      0x836b9 (size before relaxing)
+ .debug_str     0x0000000000083e78      0x144 ./src/motor.o
                                       0x81e8c (size before relaxing)
- .debug_str     0x0000000000083f95       0x71 ./src/pot.o
+ .debug_str     0x0000000000083fbc       0x71 ./src/pot.o
                                       0x81d89 (size before relaxing)
- .debug_str     0x0000000000084006       0x38 ./src/stm32f1xx_it.o
+ .debug_str     0x000000000008402d       0x38 ./src/stm32f1xx_it.o
                                       0x80ea6 (size before relaxing)
- .debug_str     0x000000000008403e     0x1103 ./src/syscalls.o
+ .debug_str     0x0000000000084065     0x1103 ./src/syscalls.o
                                        0x86bd (size before relaxing)
- .debug_str     0x0000000000085141       0xbf ./src/system_stm32f1xx.o
+ .debug_str     0x0000000000085168       0xbf ./src/system_stm32f1xx.o
                                       0x80f72 (size before relaxing)
- .debug_str     0x0000000000085200      0x19f ./inc/spear/arm/arm_JointCommand.o
+ .debug_str     0x0000000000085227      0x19f ./inc/spear/arm/arm_JointCommand.o
                                        0x4c6b (size before relaxing)
- .debug_str     0x000000000008539f      0xafe ./inc/canard/canard.o
+ .debug_str     0x00000000000853c6      0xafe ./inc/canard/canard.o
                                        0x8074 (size before relaxing)
- .debug_str     0x0000000000085e9d     0x2828 ./inc/canard/canard_stm32.o
+ .debug_str     0x0000000000085ec4     0x2828 ./inc/canard/canard_stm32.o
                                        0xa80c (size before relaxing)
- .debug_str     0x00000000000886c5      0x39e ./HAL_Driver/Src/stm32f1xx_hal.o
+ .debug_str     0x00000000000886ec      0x39e ./HAL_Driver/Src/stm32f1xx_hal.o
                                       0x81562 (size before relaxing)
- .debug_str     0x0000000000088a63      0x35f ./HAL_Driver/Src/stm32f1xx_hal_adc.o
+ .debug_str     0x0000000000088a8a      0x35f ./HAL_Driver/Src/stm32f1xx_hal_adc.o
                                       0x8155f (size before relaxing)
- .debug_str     0x0000000000088dc2      0x285 ./HAL_Driver/Src/stm32f1xx_hal_cortex.o
+ .debug_str     0x0000000000088de9      0x285 ./HAL_Driver/Src/stm32f1xx_hal_cortex.o
                                       0x81576 (size before relaxing)
- .debug_str     0x0000000000089047      0x354 ./HAL_Driver/Src/stm32f1xx_hal_gpio.o
+ .debug_str     0x000000000008906e      0x354 ./HAL_Driver/Src/stm32f1xx_hal_gpio.o
                                       0x812bd (size before relaxing)
- .debug_str     0x000000000008939b       0x51 ./HAL_Driver/Src/stm32f1xx_hal_msp_template.o
+ .debug_str     0x00000000000893c2       0x51 ./HAL_Driver/Src/stm32f1xx_hal_msp_template.o
                                       0x80ed9 (size before relaxing)
- .debug_str     0x00000000000893ec      0x246 ./HAL_Driver/Src/stm32f1xx_hal_rcc.o
+ .debug_str     0x0000000000089413      0x246 ./HAL_Driver/Src/stm32f1xx_hal_rcc.o
                                       0x812eb (size before relaxing)
- .debug_str     0x0000000000089632       0xa7 ./HAL_Driver/Src/stm32f1xx_hal_rcc_ex.o
+ .debug_str     0x0000000000089659       0xa7 ./HAL_Driver/Src/stm32f1xx_hal_rcc_ex.o
                                       0x8107d (size before relaxing)
- .debug_str     0x00000000000896d9      0xc8f ./HAL_Driver/Src/stm32f1xx_hal_tim.o
+ .debug_str     0x0000000000089700      0xc8f ./HAL_Driver/Src/stm32f1xx_hal_tim.o
                                       0x81fbd (size before relaxing)
- .debug_str     0x000000000008a368      0x138 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_q31_to_float.o)
+ .debug_str     0x000000000008a38f      0x138 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_q31_to_float.o)
                                         0x210 (size before relaxing)
- .debug_str     0x000000000008a4a0       0x48 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_float_to_q31.o)
+ .debug_str     0x000000000008a4c7       0x48 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_float_to_q31.o)
                                         0x238 (size before relaxing)
- .debug_str     0x000000000008a4e8       0x51 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_pid_init_q31.o)
+ .debug_str     0x000000000008a50f       0x51 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_pid_init_q31.o)
                                         0x233 (size before relaxing)
 
 .debug_ranges   0x0000000000000000      0xb30
@@ -12253,7 +12253,7 @@ OUTPUT(arm_controls.elf elf32-littlearm)
  .debug_ranges  0x0000000000000ae0       0x10 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_float_to_q31.o)
  .debug_ranges  0x0000000000000af0       0x40 /home/jacob/Ac6/workspace/arm_controls/CMSIS/lib/libarm_math.a(arm_pid_init_q31.o)
 
-.debug_macro    0x0000000000000000    0x1abcc
+.debug_macro    0x0000000000000000    0x1abd8
  .debug_macro   0x0000000000000000      0x415 ./src/clocks.o
  .debug_macro   0x0000000000000415      0xa72 ./src/clocks.o
  .debug_macro   0x0000000000000e87       0x28 ./src/clocks.o
@@ -12338,53 +12338,53 @@ OUTPUT(arm_controls.elf elf32-littlearm)
  .debug_macro   0x0000000000015946       0x2e ./src/coms.o
  .debug_macro   0x0000000000015974       0x4c ./src/coms.o
  .debug_macro   0x00000000000159c0       0x22 ./src/coms.o
- .debug_macro   0x00000000000159e2      0x501 ./src/main.o
- .debug_macro   0x0000000000015ee3       0x12 ./src/main.o
- .debug_macro   0x0000000000015ef5      0x1e1 ./src/main.o
- .debug_macro   0x00000000000160d6       0xe4 ./src/main.o
- .debug_macro   0x00000000000161ba       0x16 ./src/main.o
- .debug_macro   0x00000000000161d0       0x16 ./src/main.o
- .debug_macro   0x00000000000161e6       0x29 ./src/main.o
- .debug_macro   0x000000000001620f       0x16 ./src/main.o
- .debug_macro   0x0000000000016225       0x10 ./src/main.o
- .debug_macro   0x0000000000016235       0x46 ./src/main.o
- .debug_macro   0x000000000001627b      0x414 ./src/motor.o
- .debug_macro   0x000000000001668f      0x414 ./src/pot.o
- .debug_macro   0x0000000000016aa3      0x40c ./src/stm32f1xx_it.o
- .debug_macro   0x0000000000016eaf      0x243 ./src/syscalls.o
- .debug_macro   0x00000000000170f2       0x52 ./src/syscalls.o
- .debug_macro   0x0000000000017144       0x8d ./src/syscalls.o
- .debug_macro   0x00000000000171d1       0x57 ./src/syscalls.o
- .debug_macro   0x0000000000017228      0x174 ./src/syscalls.o
- .debug_macro   0x000000000001739c       0x10 ./src/syscalls.o
- .debug_macro   0x00000000000173ac       0x10 ./src/syscalls.o
- .debug_macro   0x00000000000173bc       0x10 ./src/syscalls.o
- .debug_macro   0x00000000000173cc       0x35 ./src/syscalls.o
- .debug_macro   0x0000000000017401      0x122 ./src/syscalls.o
- .debug_macro   0x0000000000017523       0x10 ./src/syscalls.o
- .debug_macro   0x0000000000017533      0x241 ./src/syscalls.o
- .debug_macro   0x0000000000017774       0x1c ./src/syscalls.o
- .debug_macro   0x0000000000017790       0x10 ./src/syscalls.o
- .debug_macro   0x00000000000177a0      0x189 ./src/syscalls.o
- .debug_macro   0x0000000000017929       0x16 ./src/syscalls.o
- .debug_macro   0x000000000001793f       0x88 ./src/syscalls.o
- .debug_macro   0x00000000000179c7      0x408 ./src/system_stm32f1xx.o
- .debug_macro   0x0000000000017dcf       0xde ./inc/spear/arm/arm_JointCommand.o
- .debug_macro   0x0000000000017ead       0x1c ./inc/spear/arm/arm_JointCommand.o
- .debug_macro   0x0000000000017ec9      0x1cb ./inc/canard/canard.o
- .debug_macro   0x0000000000018094       0x10 ./inc/canard/canard.o
- .debug_macro   0x00000000000180a4      0x212 ./inc/canard/canard_stm32.o
- .debug_macro   0x00000000000182b6      0x313 ./inc/canard/canard_stm32.o
- .debug_macro   0x00000000000185c9       0x16 ./inc/canard/canard_stm32.o
- .debug_macro   0x00000000000185df      0x51a ./inc/canard/canard_stm32.o
- .debug_macro   0x0000000000018af9      0x426 ./HAL_Driver/Src/stm32f1xx_hal.o
- .debug_macro   0x0000000000018f1f      0x41f ./HAL_Driver/Src/stm32f1xx_hal_adc.o
- .debug_macro   0x000000000001933e      0x402 ./HAL_Driver/Src/stm32f1xx_hal_cortex.o
- .debug_macro   0x0000000000019740      0x472 ./HAL_Driver/Src/stm32f1xx_hal_gpio.o
- .debug_macro   0x0000000000019bb2      0x402 ./HAL_Driver/Src/stm32f1xx_hal_msp_template.o
- .debug_macro   0x0000000000019fb4      0x414 ./HAL_Driver/Src/stm32f1xx_hal_rcc.o
- .debug_macro   0x000000000001a3c8      0x402 ./HAL_Driver/Src/stm32f1xx_hal_rcc_ex.o
- .debug_macro   0x000000000001a7ca      0x402 ./HAL_Driver/Src/stm32f1xx_hal_tim.o
+ .debug_macro   0x00000000000159e2      0x50d ./src/main.o
+ .debug_macro   0x0000000000015eef       0x12 ./src/main.o
+ .debug_macro   0x0000000000015f01      0x1e1 ./src/main.o
+ .debug_macro   0x00000000000160e2       0xe4 ./src/main.o
+ .debug_macro   0x00000000000161c6       0x16 ./src/main.o
+ .debug_macro   0x00000000000161dc       0x16 ./src/main.o
+ .debug_macro   0x00000000000161f2       0x29 ./src/main.o
+ .debug_macro   0x000000000001621b       0x16 ./src/main.o
+ .debug_macro   0x0000000000016231       0x10 ./src/main.o
+ .debug_macro   0x0000000000016241       0x46 ./src/main.o
+ .debug_macro   0x0000000000016287      0x414 ./src/motor.o
+ .debug_macro   0x000000000001669b      0x414 ./src/pot.o
+ .debug_macro   0x0000000000016aaf      0x40c ./src/stm32f1xx_it.o
+ .debug_macro   0x0000000000016ebb      0x243 ./src/syscalls.o
+ .debug_macro   0x00000000000170fe       0x52 ./src/syscalls.o
+ .debug_macro   0x0000000000017150       0x8d ./src/syscalls.o
+ .debug_macro   0x00000000000171dd       0x57 ./src/syscalls.o
+ .debug_macro   0x0000000000017234      0x174 ./src/syscalls.o
+ .debug_macro   0x00000000000173a8       0x10 ./src/syscalls.o
+ .debug_macro   0x00000000000173b8       0x10 ./src/syscalls.o
+ .debug_macro   0x00000000000173c8       0x10 ./src/syscalls.o
+ .debug_macro   0x00000000000173d8       0x35 ./src/syscalls.o
+ .debug_macro   0x000000000001740d      0x122 ./src/syscalls.o
+ .debug_macro   0x000000000001752f       0x10 ./src/syscalls.o
+ .debug_macro   0x000000000001753f      0x241 ./src/syscalls.o
+ .debug_macro   0x0000000000017780       0x1c ./src/syscalls.o
+ .debug_macro   0x000000000001779c       0x10 ./src/syscalls.o
+ .debug_macro   0x00000000000177ac      0x189 ./src/syscalls.o
+ .debug_macro   0x0000000000017935       0x16 ./src/syscalls.o
+ .debug_macro   0x000000000001794b       0x88 ./src/syscalls.o
+ .debug_macro   0x00000000000179d3      0x408 ./src/system_stm32f1xx.o
+ .debug_macro   0x0000000000017ddb       0xde ./inc/spear/arm/arm_JointCommand.o
+ .debug_macro   0x0000000000017eb9       0x1c ./inc/spear/arm/arm_JointCommand.o
+ .debug_macro   0x0000000000017ed5      0x1cb ./inc/canard/canard.o
+ .debug_macro   0x00000000000180a0       0x10 ./inc/canard/canard.o
+ .debug_macro   0x00000000000180b0      0x212 ./inc/canard/canard_stm32.o
+ .debug_macro   0x00000000000182c2      0x313 ./inc/canard/canard_stm32.o
+ .debug_macro   0x00000000000185d5       0x16 ./inc/canard/canard_stm32.o
+ .debug_macro   0x00000000000185eb      0x51a ./inc/canard/canard_stm32.o
+ .debug_macro   0x0000000000018b05      0x426 ./HAL_Driver/Src/stm32f1xx_hal.o
+ .debug_macro   0x0000000000018f2b      0x41f ./HAL_Driver/Src/stm32f1xx_hal_adc.o
+ .debug_macro   0x000000000001934a      0x402 ./HAL_Driver/Src/stm32f1xx_hal_cortex.o
+ .debug_macro   0x000000000001974c      0x472 ./HAL_Driver/Src/stm32f1xx_hal_gpio.o
+ .debug_macro   0x0000000000019bbe      0x402 ./HAL_Driver/Src/stm32f1xx_hal_msp_template.o
+ .debug_macro   0x0000000000019fc0      0x414 ./HAL_Driver/Src/stm32f1xx_hal_rcc.o
+ .debug_macro   0x000000000001a3d4      0x402 ./HAL_Driver/Src/stm32f1xx_hal_rcc_ex.o
+ .debug_macro   0x000000000001a7d6      0x402 ./HAL_Driver/Src/stm32f1xx_hal_tim.o
 
 .comment        0x0000000000000000       0xee
  .comment       0x0000000000000000       0x7e ./src/clocks.o

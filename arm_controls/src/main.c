@@ -1,13 +1,3 @@
-/**
- ******************************************************************************
- * @file    main.c
- * @author  Ac6
- * @version V1.0
- * @date    01-December-2013
- * @brief   Default main function.
- ******************************************************************************
- */
-
 #include "stm32f1xx.h"
 #include "stm32f1xx_nucleo.h"
 
@@ -27,11 +17,15 @@
 
 //////////// Needs to be set for each joint
 int joint_id  = 0;
+// per motor PID settings
 #define PID_P 0x8FFF000F
 #define PID_I 0
 #define PID_D 0
+// these bounds are needed, as not the potentiometers will not experience their full range
+#define LOWER_POT_BOUND 0
+#define UPPER_POT_BOUND 4096
 int degree_to_pot_pos(int angle){
-	return angle / 3600 * 4096;
+	return angle * (UPPER_POT_BOUND - LOWER_POT_BOUND) / 3600 + LOWER_POT_BOUND;
 }
 /////// Everything else can be made general
 
