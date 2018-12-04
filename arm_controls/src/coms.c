@@ -24,10 +24,8 @@ void updateComs(void) {
 
 void comInit() {
 
-	setup_hardware_can_filters();
-
 	libcanard_init(on_reception, should_accept, NULL, 8000000, 250000);
-
+	setup_hardware_can_filters();
 }
 
 bool should_accept(const CanardInstance* ins,
