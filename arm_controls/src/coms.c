@@ -23,9 +23,9 @@ void updateComs(void) {
 }
 
 void comInit() {
-
 	libcanard_init(on_reception, should_accept, NULL, 8000000, 250000);
 	setup_hardware_can_filters();
+
 }
 
 bool should_accept(const CanardInstance* ins,
@@ -66,9 +66,6 @@ int8_t tx_once(void) {
 		}
 
 	}
-
-	// Honestly this function is kind of poorly written right now.
-	// I just want to get something out the door.
 	return retval;
 }
 
