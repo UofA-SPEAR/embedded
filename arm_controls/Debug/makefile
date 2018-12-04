@@ -32,25 +32,25 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: Blinkv2.elf
+all: arm_controls.elf
 
 # Tool invocations
-Blinkv2.elf: $(OBJS) $(USER_OBJS)
+arm_controls.elf: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MCU GCC Linker'
-	arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -L"/home/jacob/Ac6/workspace/Blinkv2/CMSIS/lib" -T"/home/jacob/Ac6/workspace/Blinkv2/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -lm -o "Blinkv2.elf" $(OBJS) $(USER_OBJS) $(LIBS)
+	arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -L"/home/jacob/Ac6/workspace/arm_controls/CMSIS/lib" -T"/home/jacob/Ac6/workspace/arm_controls/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -lm -o "arm_controls.elf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 	$(MAKE) --no-print-directory post-build
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(S_UPPER_DEPS)$(C_DEPS) Blinkv2.elf
+	-$(RM) $(EXECUTABLES)$(OBJS)$(S_UPPER_DEPS)$(C_DEPS) arm_controls.elf
 	-@echo ' '
 
 post-build:
 	-@echo 'Generating binary and Printing size information:'
-	-arm-none-eabi-objcopy -O binary "Blinkv2.elf" "Blinkv2.bin"; arm-none-eabi-size "Blinkv2.elf"
+	-arm-none-eabi-objcopy -O binary "arm_controls.elf" "arm_controls.bin"; arm-none-eabi-size "arm_controls.elf"
 	-@echo ' '
 
 .PHONY: all clean dependents
