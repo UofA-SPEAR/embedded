@@ -89,6 +89,33 @@ int8_t rx_once() {
 	}
 }
 
+/**
+ * Initializes CAN clock and GPIO.
+ *
+ * PA11 -> CANRX
+ * PA12 -> CANTX
+ */
+static void bxcan_init(void) {
+    // Enable clocks
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_CAN_CLK_ENABLE();
+
+    GPIO_InitTypeDef GPIO_InitStruct;
+
+    // Configure PA11 as input for CAN.
+    GPIO_InitStruct.Pin = GPIO_PIN_11;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    // Configure PA12 as alternate function output for CAN.
+    GPIO_InitStruct.Pin = GPIO_PIN_12;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+}
+
 int16_t libcanard_init(CanardOnTransferReception on_reception,
 		CanardShouldAcceptTransfer should_accept, void* user_reference,
 		const uint32_t clock_rate, const uint32_t bitrate) {
@@ -106,6 +133,8 @@ int16_t libcanard_init(CanardOnTransferReception on_reception,
 		return LIBCANARD_ERR_INVALID_SETTINGS;
 	}
 
+	// Enable clocks and IO settings
+	bxcan_init();
 	// Initialize using calculated timings and in the normal mode.
 	int16_t rc = canardSTM32Init(&canbus_timings, CanardSTM32IfaceModeNormal);
 
