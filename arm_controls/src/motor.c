@@ -5,12 +5,45 @@
 #include "motor.h"
 static void __MX_TIM2_Init(void);
 
-/**
- * Speed is between 0 for stop, and 1000 for max
- */
-void setMotor(int speed, enum Direction dir) {
-	HAL_GPIO_WritePin(GPIOA, DIR_PIN, dir);
-	TIM2->CCR2 = speed;
+void motorSet(int speed, enum Direction dir) {
+	if (dir == COAST) {
+		// TODO make this not hardcoded
+		TIM2->CCR2 = 1000;
+	} else {
+		TIM2->CCR2 = speed;
+	}
+
+	// Pull both bridges high. We don't want to short the input power
+	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INA_PIN, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_SET);
+
+	/* Assuming that output A is the "positive" terminal on the motor.
+	 *
+	 * We pull B side low so current flows from A to B for forwards,
+	 * and we pull A side low for current from B to A going backwards.
+	 *
+	 * When we coast we leave both sides high, which allows current to flow through
+	 * the power path. We prefer this to the low side because we don't inject noise
+	 * into ground.
+	 *
+	 * Braking is the same but we selectively turn off the power so the chip absorbs some power.
+	 */
+	switch (dir) {
+	case (FORWARD):
+			HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_RESET);
+			break;
+	case (REVERSE):
+			HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INA_PIN, GPIO_PIN_RESET);
+			break;
+	// Do nothing, already covered these cases with the safety thing.
+	default:
+			break;
+	}
+}
+
+void motorEnable(int enable) {
+	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENA_PIN, enable);
+	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENB_PIN, enable);
 }
 
 // setup code
@@ -18,14 +51,29 @@ void motorInit() {
 	__MX_TIM2_Init();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 
-	// init pins
+	// Start with all pins low
+	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INA_PIN, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENA_PIN, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENB_PIN, GPIO_PIN_SET);
+
+	// Initialize pins
 	GPIO_InitTypeDef GPIO_InitStruct;
 
-	GPIO_InitStruct.Pin = DIR_PIN;
+	GPIO_InitStruct.Pin = MOTOR_INA_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
+	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = MOTOR_INA_PIN;
+	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = MOTOR_ENA_PIN;
+	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = MOTOR_ENB_PIN;
+	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
 }
 
 /* TIM2 init function
@@ -54,16 +102,18 @@ static void __MX_TIM2_Init(void) {
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 
 }
-// init pin for use with pwm
+
+
+// Initialize GPIO for PWM output
 void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim) {
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_TIM2_CLK_ENABLE();
 
 	GPIO_InitTypeDef GPIO_InitStruct;
 
-	GPIO_InitStruct.Pin = PWM_PIN;
+	GPIO_InitStruct.Pin = MOTOR_PWM_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
 }
