@@ -10,7 +10,7 @@
 #define MOTOR_PORT		GPIOB
 
 enum Direction {REVERSE, FORWARD, COAST, BRAKE};
-TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim4;
 
 /** @brief Set motor pwm and direction
  *

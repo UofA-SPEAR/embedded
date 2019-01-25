@@ -3,14 +3,14 @@
 #include "stm32f1xx_hal.h"
 
 #include "motor.h"
-static void __MX_TIM2_Init(void);
+static void __MX_TIM4_Init(void);
 
 void motorSet(int speed, enum Direction dir) {
 	if (dir == COAST) {
 		// TODO make this not hardcoded
-		TIM2->CCR2 = 1000;
+		TIM4->CCR2 = 1000;
 	} else {
-		TIM2->CCR2 = speed;
+		TIM4->CCR2 = speed;
 	}
 
 	// Pull both bridges high. We don't want to short the input power
@@ -42,14 +42,20 @@ void motorSet(int speed, enum Direction dir) {
 }
 
 void motorEnable(int enable) {
-	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENA_PIN, enable);
-	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENB_PIN, enable);
+	if (enable) {
+		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENA_PIN, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENB_PIN, GPIO_PIN_SET);
+	} else {
+		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENA_PIN, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENB_PIN, GPIO_PIN_RESET);
+	}
 }
 
 // setup code
 void motorInit() {
-	__MX_TIM2_Init();
+	__MX_TIM4_Init();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
 
 	// Start with all pins low
 	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INA_PIN, GPIO_PIN_RESET);
@@ -62,7 +68,7 @@ void motorInit() {
 
 	GPIO_InitStruct.Pin = MOTOR_INA_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
 	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
 
@@ -79,15 +85,15 @@ void motorInit() {
 /* TIM2 init function
  * Sets up timers
  */
-static void __MX_TIM2_Init(void) {
-	htim2.Instance = TIM2;
-	htim2.Init.Prescaler = 1;
-	htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim2.Init.Period = 1000;
-	htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+static void __MX_TIM4_Init(void) {
+	htim4.Instance = TIM4;
+	htim4.Init.Prescaler = 1;
+	htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim4.Init.Period = 1000;
+	htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
-	HAL_TIM_PWM_Init(&htim2);
+	HAL_TIM_PWM_Init(&htim4);
 
 	TIM_OC_InitTypeDef itd;
 	itd.OCMode = TIM_OCMODE_PWM1;
@@ -98,8 +104,8 @@ static void __MX_TIM2_Init(void) {
 	itd.OCNPolarity = TIM_OCNPOLARITY_LOW;
 	itd.Pulse = 0;
 
-	HAL_TIM_OC_ConfigChannel(&htim2, &itd, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+	HAL_TIM_OC_ConfigChannel(&htim4, &itd, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
 
 }
 
@@ -107,7 +113,8 @@ static void __MX_TIM2_Init(void) {
 // Initialize GPIO for PWM output
 void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim) {
 	__HAL_RCC_GPIOA_CLK_ENABLE();
-	__HAL_RCC_TIM2_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_TIM4_CLK_ENABLE();
 
 	GPIO_InitTypeDef GPIO_InitStruct;
 

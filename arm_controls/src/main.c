@@ -1,7 +1,7 @@
-#include "stm32f1xx.h"
-#include "stm32f1xx_nucleo.h"
+#include "stm32f3xx.h"
+#include "stm32f3xx_nucleo.h"
 
-#include "stm32f1xx_hal.h"
+#include "stm32f3xx_hal.h"
 
 
 #define ARM_MATH_CM3
@@ -62,9 +62,11 @@ int main(void) {
 
 
 	motorInit();
-	potInit();
-	comInit();
+	motorEnable(1);
+	//potInit();
+	//comInit();
 
+	/*
 	desiredPos = 2000;
 
 
@@ -78,13 +80,24 @@ int main(void) {
 
 	// to hold the return value of the pid
 	static float velocity;
+	*/
 
 	for (;;) {
+		/*
 		updateComs();
 		velocity = doPID(&pid);
+		*/
+		for (int i = 0; i <= 10; i++) {
+			motorSet(i * 100, FORWARD);
+			HAL_Delay(200); //
+		}
+		for (int i = 0; i <= 10; i++) {
+			motorSet(i * 100, REVERSE);
+			HAL_Delay(200);
+		}
 
-		setMotor(abs(velocity * 1000), velocity >= 0);
-		HAL_Delay(100);
+		//setMotor(abs(velocity * 1000), velocity >= 0);
+		//HAL_Delay(100);
 
 	}
 }
