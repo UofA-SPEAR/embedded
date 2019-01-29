@@ -3,7 +3,7 @@
   * @file      startup_stm32.s dedicated to STM32F303CBTx device
   * @author    Ac6
   * @version   V1.0.0
-  * @date      2019-01-25
+  * @date      2019-01-28
   ******************************************************************************
   */
 
