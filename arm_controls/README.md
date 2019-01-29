@@ -10,3 +10,4 @@ Uses STM32F303. And a (possibly two in the future?) VNH5019 motor driver.
 - Add incremental encoder inputs
 - Add configuration via CAN bus
 - Add CAN bus node id selection via switches
+- Add EMS22A encoder support
