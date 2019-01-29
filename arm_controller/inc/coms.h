@@ -30,6 +30,12 @@ void updateComs(void);
 #define LIBCANARD_MEM_POOL_SIZE 1024 // Default to 1K
 #endif
 
+// Should this go here or in another file?
+// Paramater indexes to use
+typedef enum {
+	PARAMETER_motor1_actuator_id,
+} parameter_id_t;
+
 bool should_accept(const CanardInstance* ins,
 					uint64_t* out_data_type_signature,
 					uint16_t data_type_id,
