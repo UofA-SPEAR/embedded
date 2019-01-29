@@ -1,6 +1,5 @@
-#include "stm32f1xx.h"
-#include "stm32f1xx_nucleo.h"
-#include "stm32f1xx_hal.h"
+#include "stm32f3xx.h"
+#include "stm32f3xx_hal.h"
 
 #include "motor.h"
 static void __MX_TIM4_Init(void);
@@ -12,10 +11,6 @@ void motorSet(int speed, enum Direction dir) {
 	} else {
 		TIM4->CCR2 = speed;
 	}
-
-	// Pull both bridges high. We don't want to short the input power
-	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INA_PIN, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_SET);
 
 	/* Assuming that output A is the "positive" terminal on the motor.
 	 *
@@ -30,10 +25,12 @@ void motorSet(int speed, enum Direction dir) {
 	 */
 	switch (dir) {
 	case (FORWARD):
+			HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INA_PIN, GPIO_PIN_SET);
 			HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_RESET);
 			break;
 	case (REVERSE):
 			HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INA_PIN, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_SET);
 			break;
 	// Do nothing, already covered these cases with the safety thing.
 	default:
@@ -43,13 +40,14 @@ void motorSet(int speed, enum Direction dir) {
 
 void motorEnable(int enable) {
 	if (enable) {
-		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENA_PIN, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENB_PIN, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_SET);
 	} else {
-		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENA_PIN, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENB_PIN, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_RESET);
 	}
 }
+
 
 // setup code
 void motorInit() {
@@ -72,10 +70,11 @@ void motorInit() {
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
 	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
 
-	GPIO_InitStruct.Pin = MOTOR_INA_PIN;
+	GPIO_InitStruct.Pin = MOTOR_INB_PIN;
 	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
 
 	GPIO_InitStruct.Pin = MOTOR_ENA_PIN;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
 
 	GPIO_InitStruct.Pin = MOTOR_ENB_PIN;
@@ -95,6 +94,11 @@ static void __MX_TIM4_Init(void) {
 
 	HAL_TIM_PWM_Init(&htim4);
 
+	TIM_MasterConfigTypeDef sMasterConfig;
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig);
+
 	TIM_OC_InitTypeDef itd;
 	itd.OCMode = TIM_OCMODE_PWM1;
 	itd.OCFastMode = TIM_OCFAST_DISABLE;
@@ -112,7 +116,6 @@ static void __MX_TIM4_Init(void) {
 
 // Initialize GPIO for PWM output
 void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim) {
-	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	__HAL_RCC_TIM4_CLK_ENABLE();
 
@@ -122,5 +125,6 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim) {
 	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
 	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
 }

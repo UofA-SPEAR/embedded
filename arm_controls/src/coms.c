@@ -1,13 +1,13 @@
-#include "stm32f1xx.h"
-#include "stm32f1xx_nucleo.h"
-#include "stm32f1xx_hal.h"
+#include "stm32f3xx.h"
+#include "stm32f3xx_hal.h"
 #include <stdbool.h>
 
 #include "canard.h"
 #include "canard_stm32.h"
 #include "coms.h"
 
-#include "spear/arm/JointCommand.h"
+#include "uavcan/equipment/actuator/ArrayCommand.h"
+
 
 
 CanardInstance m_canard_instance;
@@ -34,18 +34,10 @@ bool should_accept(const CanardInstance* ins,
 					CanardTransferType transfer_type,
 					uint8_t source_node_id) {
 
-	return data_type_id == SPEAR_ARM_JOINTCOMMAND_ID;
+	return data_type_id == UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID;
 }
 
 void on_reception(CanardInstance* ins, CanardRxTransfer* transfer){
-	if (transfer->data_type_id == SPEAR_ARM_JOINTCOMMAND_ID) {
-		spear_arm_JointCommand msg;
-		spear_arm_JointCommand_decode(transfer, transfer->payload_len,
-								&msg, NULL);
-		if(msg.joint == joint_id){
-			desiredPos = degree_to_pot_pos(msg.angle);
-		}
-	}
 }
 
 int8_t tx_once(void) {
@@ -95,7 +87,7 @@ int8_t rx_once() {
 static void bxcan_init(void) {
     // Enable clocks
     __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_CAN_CLK_ENABLE();
+    __HAL_RCC_CAN1_CLK_ENABLE();
 
     GPIO_InitTypeDef GPIO_InitStruct;
 

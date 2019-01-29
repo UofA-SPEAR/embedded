@@ -19,13 +19,7 @@ TIM_HandleTypeDef htim4;
  */
 void motorSet(int speed, enum Direction dir);
 
-
-/** @brief Enable or disable motor
- *
- * @param enable 1 to enable 0 to disable.
- */
 void motorEnable(int enable);
-
 
 /** @brief Initialize motor.
  */
