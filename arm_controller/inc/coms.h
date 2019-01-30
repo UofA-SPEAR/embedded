@@ -50,4 +50,8 @@ int16_t libcanard_init(CanardOnTransferReception on_reception,
 		CanardShouldAcceptTransfer should_accept, void* user_reference,
 		const uint32_t clock_rate, const uint32_t bitrate);
 int16_t setup_hardware_can_filters(void);
+
+void publish_nodeStatus(void);
+
+
 #endif

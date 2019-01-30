@@ -8,6 +8,7 @@
 
 #include "uavcan/equipment/actuator/ArrayCommand.h"
 #include "uavcan/protocol/param/GetSet.h"
+#include "uavcan/protocol/NodeStatus.h"
 
 // Small enough to not be too bad, large enough to be useful
 #define DYNAMIC_ARRAY_BUF_SIZE 300
@@ -221,6 +222,7 @@ static void bxcan_init(void) {
     GPIO_InitStruct.Pin = GPIO_PIN_12;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF7_CAN;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
@@ -258,4 +260,31 @@ int16_t setup_hardware_can_filters(void) {
 
 	return canardSTM32ConfigureAcceptanceFilters(
 			(const CanardSTM32AcceptanceFilterConfiguration* const ) &conf, 1);
+}
+
+void publish_nodeStatus(void) {
+	static uint32_t last_time = 0;
+
+	if (HAL_GetTick() - last_time > 1000) {
+		last_time = HAL_GetTick();
+
+		uavcan_protocol_NodeStatus msg;
+		uint8_t msg_buf[20];
+
+		msg.health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
+		msg.mode   = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
+		msg.sub_mode = 0;
+		msg.vendor_specific_status_code = 0;
+		msg.uptime_sec = 0;
+
+		uint16_t len = uavcan_protocol_NodeStatus_encode(&msg, &msg_buf);
+
+		canardBroadcast(&m_canard_instance,
+				UAVCAN_PROTOCOL_NODESTATUS_SIGNATURE,
+				UAVCAN_PROTOCOL_NODESTATUS_ID,
+				&inout_transfer_id,
+				30,
+				&msg_buf,
+				len);
+	}
 }

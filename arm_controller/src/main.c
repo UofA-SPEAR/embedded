@@ -24,7 +24,7 @@
 #define UPPER_POT_BOUND 4096
 
 //////////// Needs to be set for each joint
-int joint_id  = 0;
+int64_t actuator_id  = 0;
 int16_t desiredPos; // where we want the pot to be
 
 void setup(){
@@ -50,17 +50,16 @@ float doPID(arm_pid_instance_f32* pid){
 int main(void) {
 	setup();
 
-
 	motorInit();
 	motorEnable(1);
 	potInit();
-	//comInit();
+	comInit();
+	publish_nodeStatus();
 
 	desiredPos = 2000;
 
 
 	// setup PID
-	// TODO convert to float, the f303 has an FPU
 	arm_pid_instance_f32 pid;
 	memset(&pid, 0, sizeof(arm_pid_instance_f32));
 	pid.Kp = PID_P;
@@ -76,6 +75,7 @@ int main(void) {
 
 		motorSet(abs(velocity * 1000), (velocity >= 0) ? FORWARD : REVERSE);
 		HAL_Delay(100);
+		publish_nodeStatus();
 
 	}
 }
