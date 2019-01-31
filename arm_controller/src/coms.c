@@ -60,7 +60,7 @@ static void handle_actuator_command(CanardRxTransfer* transfer) {
 }
 
 static void parameter_respond_from_id(CanardInstance* ins, uint16_t index) {
-	// TODO respond to parameter requests without ids
+	// TODO respond to parameter requests without names
 }
 
 /** @brief Reads and writes to settings.
@@ -125,6 +125,8 @@ bool should_accept(const CanardInstance* ins,
 
 		case (UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID):
 			return true;
+		case (UAVCAN_PROTOCOL_NODESTATUS_ID):
+			return false;
 		default:
 			return false;
 		}
@@ -212,19 +214,13 @@ static void bxcan_init(void) {
 
     GPIO_InitTypeDef GPIO_InitStruct;
 
-    // Configure PA11 as input for CAN.
-    GPIO_InitStruct.Pin = GPIO_PIN_11;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    // Configure PA12 as alternate function output for CAN.
-    GPIO_InitStruct.Pin = GPIO_PIN_12;
+    // Configure PA11 & PA12 with CAN AF.
+    GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_12;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF7_CAN;
+    GPIO_InitStruct.Alternate = GPIO_AF9_CAN;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
 }
 
 int16_t libcanard_init(CanardOnTransferReception on_reception,
@@ -283,8 +279,13 @@ void publish_nodeStatus(void) {
 				UAVCAN_PROTOCOL_NODESTATUS_SIGNATURE,
 				UAVCAN_PROTOCOL_NODESTATUS_ID,
 				&inout_transfer_id,
-				30,
+				0,
 				&msg_buf,
 				len);
+
+		tx_once();
+		rx_once();
+
+		uint32_t thing = CAN->TSR;
 	}
 }

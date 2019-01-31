@@ -76,6 +76,8 @@ int main(void) {
 		motorSet(abs(velocity * 1000), (velocity >= 0) ? FORWARD : REVERSE);
 		HAL_Delay(100);
 		publish_nodeStatus();
+		tx_once();
+		rx_once();
 
 	}
 }
