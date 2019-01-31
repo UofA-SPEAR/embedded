@@ -20,6 +20,8 @@ static uint8_t libcanard_memory_pool[LIBCANARD_MEM_POOL_SIZE];
 static uint8_t dynamic_array_buf[DYNAMIC_ARRAY_BUF_SIZE];
 static uint8_t* p_dynamic_array_buf = dynamic_array_buf;
 
+uint8_t out_buf[100];
+
 static uint8_t inout_transfer_id;
 
 extern int16_t desiredPos;
@@ -243,7 +245,7 @@ int16_t libcanard_init(CanardOnTransferReception on_reception,
 	// Enable clocks and IO settings
 	bxcan_init();
 	// Initialize using calculated timings and in the normal mode.
-	int16_t rc = canardSTM32Init(&canbus_timings, CanardSTM32IfaceModeNormal);
+	int16_t rc = canardSTM32Init(&canbus_timings, CanardSTM32IfaceModeAutomaticTxAbortOnError);
 
 	// Temporary thing
 	canardSetLocalNodeID(&m_canard_instance, 42);
@@ -265,27 +267,25 @@ void publish_nodeStatus(void) {
 		last_time = HAL_GetTick();
 
 		uavcan_protocol_NodeStatus msg;
-		uint8_t msg_buf[20];
 
 		msg.health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
 		msg.mode   = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
 		msg.sub_mode = 0;
-		msg.vendor_specific_status_code = 0;
-		msg.uptime_sec = 0;
+		msg.vendor_specific_status_code = 14;
+		msg.uptime_sec = 300;
 
-		uint16_t len = uavcan_protocol_NodeStatus_encode(&msg, &msg_buf);
+		uint16_t len = uavcan_protocol_NodeStatus_encode(&msg, &out_buf);
 
 		canardBroadcast(&m_canard_instance,
 				UAVCAN_PROTOCOL_NODESTATUS_SIGNATURE,
 				UAVCAN_PROTOCOL_NODESTATUS_ID,
 				&inout_transfer_id,
 				0,
-				&msg_buf,
+				&out_buf,
 				len);
 
-		tx_once();
-		rx_once();
 
 		uint32_t thing = CAN->TSR;
 	}
+
 }
