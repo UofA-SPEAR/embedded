@@ -245,7 +245,7 @@ int16_t libcanard_init(CanardOnTransferReception on_reception,
 	// Enable clocks and IO settings
 	bxcan_init();
 	// Initialize using calculated timings and in the normal mode.
-	int16_t rc = canardSTM32Init(&canbus_timings, CanardSTM32IfaceModeAutomaticTxAbortOnError);
+	int16_t rc = canardSTM32Init(&canbus_timings, CanardSTM32IfaceModeNormal);
 
 	// Temporary thing
 	canardSetLocalNodeID(&m_canard_instance, 42);
