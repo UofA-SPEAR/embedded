@@ -11,6 +11,7 @@
 #include "main.h"
 
 typedef struct {
+	uint8_t enabled;
 	uint8_t actuator_id;
 	float Kp;
 	float Ki;
@@ -22,6 +23,6 @@ typedef struct {
 	motor_settings_t motor1;
 } flash_settings_t;
 
-void do_thing(void);
+HAL_StatusTypeDef program_settings(void);
 
 #endif /* FLASH_SETTINGS_H_ */

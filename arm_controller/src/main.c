@@ -14,12 +14,6 @@
 #define ARM_MATH_CM4
 #include "arm_math.h"
 
-// Initial motor PID settings.
-// Eventually we will actually set stuff in flash.
-#define PID_P 1.0
-#define PID_I 0.0
-#define PID_D 0.0
-
 // these bounds are needed, as not the potentiometers will not experience their full range
 #define LOWER_POT_BOUND 0
 #define UPPER_POT_BOUND 4096
@@ -47,6 +41,24 @@ float doPID(arm_pid_instance_f32* pid){
 	return arm_pid_f32(pid, position);
 }
 
+// If this is the first boot, settings in the flash will be garbage.
+// PID settings should theoretically reflect this
+// NOT foolproof by any means but should help avoid a few major issues
+void firstboot_check(void) {
+	// Kp should be between -1 and 1, if not it was misconfigured.
+	// Start with sane settings.
+	if (saved_settings.motor1.Kp > 1 || saved_settings.motor1.Kp < -1) {
+		current_settings.motor1.enabled = 0;
+		current_settings.motor1.actuator_id = 42; // Realistically, there will never be 42 actuators
+		current_settings.motor1.Kp = 0;
+		current_settings.motor1.Ki = 0;
+		current_settings.motor1.Kd = 0;
+
+		program_settings();
+	}
+
+}
+
 
 int main(void) {
 	setup();
@@ -63,9 +75,9 @@ int main(void) {
 	// setup PID
 	arm_pid_instance_f32 pid;
 	memset(&pid, 0, sizeof(arm_pid_instance_f32));
-	pid.Kp = PID_P;
-	pid.Ki = PID_I;
-	pid.Kd = PID_D;
+	pid.Kp = saved_settings.motor1.Kp;
+	pid.Ki = saved_settings.motor1.Ki;
+	pid.Kd = saved_settings.motor1.Kd;
 	arm_pid_init_f32(&pid, 1);
 
 	// to hold the return value of the pid

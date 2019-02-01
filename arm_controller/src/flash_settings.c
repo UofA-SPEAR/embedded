@@ -15,13 +15,11 @@ __attribute__((section("._user_settings"))) flash_settings_t saved_settings;
 // Settings in use.
 flash_settings_t current_settings;
 
-void do_thing(void) {
-	saved_settings.motor1.actuator_id++;
-}
 
 HAL_StatusTypeDef program_settings(void) {
 	HAL_StatusTypeDef rc;
 
+	// Need to unlock the flash before we start
 	rc = HAL_FLASH_Unlock();
 
 	if (rc != HAL_OK) { while(1); }
@@ -34,8 +32,10 @@ HAL_StatusTypeDef program_settings(void) {
 	Erase_Init.TypeErase = FLASH_TYPEERASE_PAGES;
 	HAL_FLASHEx_Erase(&Erase_Init, &page_error);
 
+	// More to this, but page_error will be 0xFFFFFFFF if it works.
 	if (page_error != 0xFFFFFFFF) { while(1); }
 
+	// Pointer assignments to make things look pretty
 	uint32_t* p_saved_settings = (uint32_t*) &saved_settings;
 	uint32_t* p_current_settings = (uint32_t*) &current_settings;
 
