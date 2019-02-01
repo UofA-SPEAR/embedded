@@ -9,15 +9,16 @@
 #include "pot.h"
 #include "clocks.h"
 #include "coms.h"
+#include "flash_settings.h"
 
 #define ARM_MATH_CM4
 #include "arm_math.h"
 
 // Initial motor PID settings.
 // Eventually we will actually set stuff in flash.
-#define PID_P 0x8FFF000F
-#define PID_I 0
-#define PID_D 0
+#define PID_P 1.0
+#define PID_I 0.0
+#define PID_D 0.0
 
 // these bounds are needed, as not the potentiometers will not experience their full range
 #define LOWER_POT_BOUND 0
@@ -78,6 +79,7 @@ int main(void) {
 		publish_nodeStatus();
 		tx_once();
 		rx_once();
+		do_thing();
 
 	}
 }

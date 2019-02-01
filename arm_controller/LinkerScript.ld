@@ -62,7 +62,8 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 MEMORY
 {
   RAM (xrw)		: ORIGIN = 0x20000000, LENGTH = 32K
-  ROM (rx)		: ORIGIN = 0x8000000, LENGTH = 128K
+  ROM (rx)		: ORIGIN = 0x8000000, LENGTH = 126K
+  SETTINGS (rw) : ORIGIN = ORIGIN(ROM) + LENGTH(ROM), LENGTH = 2K
 }
 
 /* Sections */
@@ -160,6 +161,14 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT> ROM
 
+  ._user_settings :
+  {
+  	. = ALIGN(4);
+  	*(._user_settings)
+  	*(._user_settings*)
+  	. = ALIGN(4);
+  } >SETTINGS
+
   
   /* Uninitialized data section into RAM memory */
   . = ALIGN(4);
@@ -187,7 +196,7 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >RAM
-
+  
   
 
   /* Remove information from the compiler libraries */

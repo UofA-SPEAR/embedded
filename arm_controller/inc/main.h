@@ -10,6 +10,11 @@
 
 #include "stm32f3xx.h"
 
+typedef enum {
+	ENCODER_POTENTIOMETER, // Analog potentiometer (or any analog value)
+	ENCODER_QUADRATURE, // Any quadrature encoder
+	ENCODER_ABSOLUTE_DIGITAL, // specifically the digital encoder we are using
+} encoder_type_t;
 
 
 #endif /* MAIN_H_ */
