@@ -10,6 +10,8 @@
 
 #include "stm32f3xx.h"
 
+#define ROUND_UP(dividend, divisor) ((dividend + (divisor - 1)) / divisor)
+
 typedef enum {
 	ENCODER_POTENTIOMETER, // Analog potentiometer (or any analog value)
 	ENCODER_QUADRATURE, // Any quadrature encoder

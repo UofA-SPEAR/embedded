@@ -79,8 +79,6 @@ int main(void) {
 		publish_nodeStatus();
 		tx_once();
 		rx_once();
-		do_thing();
-
 	}
 }
 
