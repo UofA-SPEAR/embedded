@@ -16,6 +16,45 @@ __attribute__((section("._user_settings"))) flash_settings_t saved_settings;
 flash_settings_t current_settings;
 
 
+// If this is the first boot, settings in the flash will be garbage.
+// PID settings should theoretically reflect this
+// NOT foolproof by any means but should help avoid a few major issues
+static void firstboot_check(void) {
+	// Kp should be between -1 and 1, if not it was misconfigured.
+	// Start with sane settings.
+	if (saved_settings.boot == 0) {
+		current_settings.boot = 1;
+		for (int i = 0; i < 2; i++) {
+			current_settings.motor[i].enabled = 0;
+			current_settings.motor[i].actuator_id = 42; // Realistically, there will never be 42 actuators
+			current_settings.motor[i].reversed = 0;
+			current_settings.motor[i].continuous = 0;
+
+			current_settings.motor[i].pid.Kp = 0;
+			current_settings.motor[i].pid.Ki = 0;
+			current_settings.motor[i].pid.Kd = 0;
+
+			current_settings.motor[i].encoder.type = ENCODER_POTENTIOMETER;
+			current_settings.motor[i].encoder.min = 0;
+			current_settings.motor[i].encoder.max = 0;
+			current_settings.motor[i].encoder.to_radians = 0;
+			current_settings.motor[i].encoder.to_metres = 0;
+			current_settings.motor[i].encoder.endstop_min = ENDSTOP_DISABLED;
+			current_settings.motor[i].encoder.endstop_max = ENDSTOP_DISABLED;
+		}
+		program_settings(); // Write settings to flash
+	}
+
+}
+
+// Load settings from flash
+void load_settings(void) {
+	firstboot_check();
+
+	current_settings = saved_settings;
+}
+
+
 HAL_StatusTypeDef program_settings(void) {
 	HAL_StatusTypeDef rc;
 

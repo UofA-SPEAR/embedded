@@ -41,28 +41,11 @@ float doPID(arm_pid_instance_f32* pid){
 	return arm_pid_f32(pid, position);
 }
 
-// If this is the first boot, settings in the flash will be garbage.
-// PID settings should theoretically reflect this
-// NOT foolproof by any means but should help avoid a few major issues
-void firstboot_check(void) {
-	// Kp should be between -1 and 1, if not it was misconfigured.
-	// Start with sane settings.
-	if (saved_settings.motor1.Kp > 1 || saved_settings.motor1.Kp < -1) {
-		current_settings.motor1.enabled = 0;
-		current_settings.motor1.actuator_id = 42; // Realistically, there will never be 42 actuators
-		current_settings.motor1.Kp = 0;
-		current_settings.motor1.Ki = 0;
-		current_settings.motor1.Kd = 0;
-
-		program_settings();
-	}
-
-}
-
 
 int main(void) {
 	setup();
 
+	load_settings();
 	motorInit();
 	motorEnable(1);
 	potInit();
@@ -75,9 +58,9 @@ int main(void) {
 	// setup PID
 	arm_pid_instance_f32 pid;
 	memset(&pid, 0, sizeof(arm_pid_instance_f32));
-	pid.Kp = saved_settings.motor1.Kp;
-	pid.Ki = saved_settings.motor1.Ki;
-	pid.Kd = saved_settings.motor1.Kd;
+	pid.Kp = saved_settings.motor[0].pid.Kp;
+	pid.Ki = saved_settings.motor[0].pid.Ki;
+	pid.Kd = saved_settings.motor[0].pid.Kd;
 	arm_pid_init_f32(&pid, 1);
 
 	// to hold the return value of the pid
