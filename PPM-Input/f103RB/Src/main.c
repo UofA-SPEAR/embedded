@@ -43,7 +43,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "canard.h"
+#include "canard_stm32.h"
+#include "libcanard_wrapper.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +61,7 @@ typedef struct {
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define RESET_TIME_IN_MS 10
+#define TIME_BETWEEN_PULSES_IN_MS 4
 #define TICKS_PER_MS 100
 
 /* USER CODE END PD */
@@ -79,6 +81,7 @@ RC_Data ppmData;
 uint8_t channel;
 uint32_t startTimer;
 uint32_t channelTimer;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -192,6 +195,7 @@ int main(void)
   {
   	ppmData.data[i] = 200;
   }
+  libcanard_init(on_reception, should_accept, 8000000, 250000);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -227,7 +231,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  if ((Check_Int_WrapAround(TIM1->ARR - startTimer) > TICKS_PER_MS / RESET_TIME_IN_MS) &&
+	  if ((Check_Int_WrapAround(TIM1->ARR - channelTimer) > TICKS_PER_MS / TIME_BETWEEN_PULSES_IN_MS) &&
 			  (startTimer != 0))
 	  {
 		  Reset_State();
