@@ -35,7 +35,7 @@ void updateComs(void) {
 	rx_once();
 }
 
-void comInit() {
+void comInit(void) {
 	libcanard_init(on_reception, should_accept, NULL, 8000000, 250000);
 	setup_hardware_can_filters();
 
@@ -247,9 +247,6 @@ int16_t libcanard_init(CanardOnTransferReception on_reception,
 	// Initialize using calculated timings and in the normal mode.
 	int16_t rc = canardSTM32Init(&canbus_timings, CanardSTM32IfaceModeNormal);
 
-	// Temporary thing
-	canardSetLocalNodeID(&m_canard_instance, 42);
-
 	return rc;
 }
 int16_t setup_hardware_can_filters(void) {
@@ -274,18 +271,15 @@ void publish_nodeStatus(void) {
 		msg.vendor_specific_status_code = 14;
 		msg.uptime_sec = 300;
 
-		uint16_t len = uavcan_protocol_NodeStatus_encode(&msg, &out_buf);
+		uint16_t len = uavcan_protocol_NodeStatus_encode(&msg, out_buf);
 
 		canardBroadcast(&m_canard_instance,
 				UAVCAN_PROTOCOL_NODESTATUS_SIGNATURE,
 				UAVCAN_PROTOCOL_NODESTATUS_ID,
 				&inout_transfer_id,
 				0,
-				&out_buf,
+				out_buf,
 				len);
-
-
-		uint32_t thing = CAN->TSR;
 	}
 
 }

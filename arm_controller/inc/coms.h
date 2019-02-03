@@ -36,6 +36,8 @@ typedef enum {
 	PARAMETER_motor1_actuator_id,
 } parameter_id_t;
 
+extern CanardInstance m_canard_instance;
+
 bool should_accept(const CanardInstance* ins,
 					uint64_t* out_data_type_signature,
 					uint16_t data_type_id,

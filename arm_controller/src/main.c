@@ -4,6 +4,7 @@
 
 #include "stm32f3xx.h"
 #include "stm32f3xx_hal.h"
+#include "core_cm4.h"
 
 #include "motor.h"
 #include "pot.h"
@@ -17,6 +18,8 @@
 // these bounds are needed, as not the potentiometers will not experience their full range
 #define LOWER_POT_BOUND 0
 #define UPPER_POT_BOUND 4096
+
+#define BASE_NODE_ID 30
 
 //////////// Needs to be set for each joint
 int64_t actuator_id  = 0;
@@ -41,16 +44,42 @@ float doPID(arm_pid_instance_f32* pid){
 	return arm_pid_f32(pid, position);
 }
 
+uint8_t read_node_id(void) {
+	// Enable GPIO clock
+	__HAL_RCC_GPIOB_CLK_ENABLE();
 
+	GPIO_InitTypeDef GPIO_InitStruct;
+	GPIO_InitStruct.Pin = GPIO_PIN_15 | GPIO_PIN_14 |
+			GPIO_PIN_13 | GPIO_PIN_12;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	uint8_t node_id = BASE_NODE_ID;
+	uint8_t tmp = 0;
+
+	tmp =  HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_15) << 3;
+	tmp |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14) << 2;
+	tmp |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13) << 1;
+	tmp |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12);
+
+	node_id += tmp;
+	return node_id;
+}
+
+// To make a system reset, use NVIC_SystemReset()
 int main(void) {
+	uint8_t node_id = 0;
 	setup();
 
 	load_settings();
 	motorInit();
 	motorEnable(1);
 	potInit();
+
 	comInit();
-	publish_nodeStatus();
+	node_id = read_node_id();
+	canardSetLocalNodeID(&m_canard_instance, node_id);
 
 	desiredPos = 2000;
 
