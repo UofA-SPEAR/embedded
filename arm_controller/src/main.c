@@ -6,7 +6,7 @@
 #include "stm32f3xx_hal.h"
 #include "core_cm4.h"
 
-#include "motor.h"
+#include "vnh5019.h"
 #include "pot.h"
 #include "clocks.h"
 #include "coms.h"
@@ -25,6 +25,8 @@
 int64_t actuator_id  = 0;
 int16_t desiredPos; // where we want the pot to be
 
+vnh5019_t motor1, motor2;
+
 void setup(){
 	HAL_Init();
 
@@ -42,6 +44,20 @@ float doPID(arm_pid_instance_f32* pid){
 	position = (readPot() - desiredPos) / 4096.0;
 
 	return arm_pid_f32(pid, position);
+}
+
+void motor_init() {
+	motor1.digital.in_a = GPIO_PIN_4;
+	motor1.digital.in_b = GPIO_PIN_3;
+	motor1.digital.en_a = GPIO_PIN_6;
+	motor1.digital.en_b = GPIO_PIN_5;
+	motor1.digital.port = GPIOB;
+
+	motor1.pwm.pin 		= GPIO_PIN_7;
+	motor1.pwm.port 	= GPIOB;
+	motor1.pwm.tim_af	= GPIO_AF2_TIM4;
+
+	vnh5019_init(&motor1);
 }
 
 uint8_t read_node_id(void) {
@@ -73,7 +89,7 @@ int main(void) {
 	setup();
 
 	load_settings();
-	motorInit();
+	motor_init();
 	motorEnable(1);
 	potInit();
 

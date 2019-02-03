@@ -1,8 +1,11 @@
 #include "stm32f3xx.h"
 #include "stm32f3xx_hal.h"
 
-#include "motor.h"
-static void __MX_TIM4_Init(void);
+#include "vnh5019.h"
+
+static void vnh5019_pwm_init(vnh5019_t* settings);
+
+uint8_t timer_initialized = 0;
 
 void motorSet(int speed, enum Direction dir) {
 	if (dir == COAST) {
@@ -50,10 +53,25 @@ void motorEnable(int enable) {
 
 
 // setup code
-void motorInit() {
-	__MX_TIM4_Init();
+void vnh5019_init(vnh5019_t* settings) {
+	// Enable timer clock
+	VNH5019_TIM_CLK_ENABLE();
+	// Enable GPIO clocks (A, B, and C just to be sure)
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+
+	// Initialize PWM pins
+	GPIO_InitTypeDef GPIO_InitStruct;
+	GPIO_InitStruct.Pin 		= settings->pwm.pin;
+	GPIO_InitStruct.Alternate 	= settings->pwm.tim_af;
+	GPIO_InitStruct.Mode 		= GPIO_MODE_AF_PP;
+	GPIO_InitStruct.Pull 		= GPIO_NOPULL;
+	GPIO_InitStruct.Speed 		= GPIO_SPEED_FREQ_HIGH;
+	HAL_GPIO_Init(settings->pwm.port, &GPIO_InitStruct);
+
+	// Initialize timer and channelf for PWM.
+	vnh5019_pwm_init(settings);
 
 	// Start with all pins low
 	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INA_PIN, GPIO_PIN_RESET);
@@ -62,43 +80,38 @@ void motorInit() {
 	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENB_PIN, GPIO_PIN_SET);
 
 	// Initialize pins
-	GPIO_InitTypeDef GPIO_InitStruct;
 
-	GPIO_InitStruct.Pin = MOTOR_INA_PIN;
+	GPIO_InitStruct.Pin = MOTOR_INA_PIN | MOTOR_INB_PIN |
+			MOTOR_ENA_PIN | MOTOR_ENB_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
 	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
-
-	GPIO_InitStruct.Pin = MOTOR_INB_PIN;
-	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
-
-	GPIO_InitStruct.Pin = MOTOR_ENA_PIN;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
-
-	GPIO_InitStruct.Pin = MOTOR_ENB_PIN;
-	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
 }
 
-/* TIM2 init function
- * Sets up timers
- */
-static void __MX_TIM4_Init(void) {
-	htim4.Instance = TIM4;
-	htim4.Init.Prescaler = 1;
-	htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim4.Init.Period = 1000;
-	htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
-	HAL_TIM_PWM_Init(&htim4);
+// Pins and clocks HAVE to be configured before this is called.
+static void vnh5019_pwm_init(vnh5019_t* settings) {
+	if (!timer_initialized) {
+		// Initialize timer for PWM
+		htim4.Instance = VNH5019_TIM_INSTANCE;
+		htim4.Init.Prescaler = 1;
+		htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+		htim4.Init.Period = 1000;
+		htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+		htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+		HAL_TIM_PWM_Init(&htim4);
 
-	TIM_MasterConfigTypeDef sMasterConfig;
-	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-	HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig);
+		// Make timer run independantly
+		TIM_MasterConfigTypeDef sMasterConfig;
+		sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+		sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+		HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig);
 
+		timer_initialized = 1;
+	}
+
+	// Configure output compare channel to actually use PWM
 	TIM_OC_InitTypeDef itd;
 	itd.OCMode = TIM_OCMODE_PWM1;
 	itd.OCFastMode = TIM_OCFAST_DISABLE;
@@ -107,24 +120,6 @@ static void __MX_TIM4_Init(void) {
 	itd.OCPolarity = TIM_OCPOLARITY_HIGH;
 	itd.OCNPolarity = TIM_OCNPOLARITY_LOW;
 	itd.Pulse = 0;
-
-	HAL_TIM_OC_ConfigChannel(&htim4, &itd, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-
-}
-
-
-// Initialize GPIO for PWM output
-void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim) {
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-	__HAL_RCC_TIM4_CLK_ENABLE();
-
-	GPIO_InitTypeDef GPIO_InitStruct;
-
-	GPIO_InitStruct.Pin = MOTOR_PWM_PIN;
-	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
-	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
+	HAL_TIM_OC_ConfigChannel(&htim4, &itd, settings->pwm.tim_ch);
+	HAL_TIM_PWM_Start(&htim4, settings->pwm.tim_ch);
 }
