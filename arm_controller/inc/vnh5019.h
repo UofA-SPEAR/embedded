@@ -61,15 +61,6 @@ typedef struct {
  */
 void vnh5019_set(vnh5019_t* motor, int16_t speed);
 
-/** @brief Enable motor driver.
- *
- * @param motor pointer to motor instance
- * @param enable If >0, enable the motor driver
- *
- * @note Simply sets ENA and ENB high
- */
-void vnh5019_enable(vnh5019_t* motor, uint8_t enable);
-
 /** @brief Initialize motor.
  *
  * @param settings Pointer to motor config

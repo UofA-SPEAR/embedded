@@ -1,10 +1,13 @@
+#include <stdbool.h>
+
 #include "stm32f3xx.h"
 #include "stm32f3xx_hal.h"
-#include <stdbool.h>
 
 #include "canard.h"
 #include "canard_stm32.h"
 #include "coms.h"
+#include "main.h"
+#include "flash_settings.h"
 
 #include "uavcan/equipment/actuator/ArrayCommand.h"
 #include "uavcan/protocol/param/GetSet.h"
@@ -24,8 +27,8 @@ uint8_t out_buf[100];
 
 static uint8_t inout_transfer_id;
 
-extern int16_t desiredPos;
 extern int64_t actuator_id;
+
 
 // Parameter names
 char* parameter_motor1_actuator_id_name = "spear.arm.motor1.actuator-id";
@@ -54,8 +57,19 @@ static void handle_actuator_command(CanardRxTransfer* transfer) {
 
 	for (int i = 0; i < msg.commands.len; i++) {
 		uavcan_equipment_actuator_Command* cmd = &msg.commands.data[i];
-		if (cmd->actuator_id == 1) { // super simple for now, will need to set this
-			desiredPos = cmd->command_value;
+		if (cmd->actuator_id == saved_settings.motor[0].actuator_id) {
+			motorA_desired_position = cmd->command_value;
+			// "Start" motor A if unstarted
+			if (last_runA == INT16_MAX) {
+				last_runA = HAL_GetTick();
+			}
+		} else if (cmd->actuator_id == saved_settings.motor[1].actuator_id) {
+			// Set position
+			motorB_desired_position = cmd->command_value;
+			// "Start" motor B if unstarted
+			if (last_runB == INT16_MAX) {
+				last_runB = HAL_GetTick();
+			}
 		}
 	}
 

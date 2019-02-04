@@ -42,7 +42,14 @@ void vnh5019_set(vnh5019_t* motor, int16_t speed) {
 	}
 }
 
-void vnh5019_enable(vnh5019_t* motor, uint8_t enable) {
+/** @brief Enable motor driver.
+ *
+ * @param motor pointer to motor instance
+ * @param enable If >0, enable the motor driver
+ *
+ * @note Simply sets ENA and ENB high
+ */
+static void vnh5019_enable(vnh5019_t* motor, uint8_t enable) {
 	if (enable) {
 		HAL_GPIO_WritePin(motor->digital.port, motor->digital.en_a, GPIO_PIN_SET);
 		HAL_GPIO_WritePin(motor->digital.port, motor->digital.en_b, GPIO_PIN_SET);
@@ -88,6 +95,8 @@ void vnh5019_init(vnh5019_t* settings) {
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
 	HAL_GPIO_Init(settings->digital.port, &GPIO_InitStruct);
+
+	vnh5019_enable(settings, 1);
 }
 
 

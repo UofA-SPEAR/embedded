@@ -19,4 +19,12 @@ typedef enum {
 } encoder_type_t;
 
 
+extern float motorA_desired_position;
+extern float motorB_desired_position;
+
+// Insanely large number, so no motor checks should happen.
+extern int32_t last_runA;
+extern int32_t last_runB;
+
+
 #endif /* MAIN_H_ */

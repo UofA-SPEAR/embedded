@@ -15,8 +15,6 @@
 #define ARM_MATH_CM4
 #include "arm_math.h"
 
-#define INT32_MAX 2147483647
-
 // these bounds are needed, as not the potentiometers will not experience their full range
 #define LOWER_POT_BOUND 0
 #define UPPER_POT_BOUND 4096
@@ -32,6 +30,10 @@ arm_pid_instance_f32 pidA, pidB;
 float motorA_desired_position;
 float motorB_desired_position;
 
+	// Insanely large number, so no motor checks should happen.
+int32_t last_runA = INT32_MAX;
+int32_t last_runB = INT32_MAX;
+
 void setup(){
 	HAL_Init();
 
@@ -41,14 +43,6 @@ void setup(){
 
 	SystemCoreClockUpdate();
 	SystemClock_Config();
-}
-
-float doPID(arm_pid_instance_f32* pid){
-	static float32_t position; // position is the value directly from the pot
-
-	position = (potA_read() - desiredPos) / 4096.0;
-
-	return arm_pid_f32(pid, position);
 }
 
 // Run PID and motor control
@@ -123,7 +117,6 @@ int main(void) {
 
 	load_settings();
 	motor_init();
-	vnh5019_enable(&motorA, 1);
 	potA_init();
 
 	comInit();
@@ -137,12 +130,10 @@ int main(void) {
 	pidA.Kd = saved_settings.motor[0].pid.Kd;
 	arm_pid_init_f32(&pidA, 1);
 
-	// Insanely large number, so no motor checks should happen.
-	int32_t last_runA = INT32_MAX;
 
 	for (;;) {
 
-		if (HAL_GetTick() - last_runA >= 100) {
+		if ((HAL_GetTick() - last_runA >= 100) && saved_settings.motor[0].enabled) {
 			run_motorA();
 			last_runA = HAL_GetTick();
 		}
