@@ -32,8 +32,8 @@ typedef struct {
 	// Encoder/positioning settings
 	struct {
 		encoder_type_t type;	//< Encoder type
-		uint64_t min;			//< Minimum bound of acceptable encoder value
-		uint64_t max;			//< Maximum bound of acceptable encoder value
+		int64_t min;			//< Minimum bound of acceptable encoder value
+		int64_t max;			//< Maximum bound of acceptable encoder value
 		/*
 		 * Make to_radian negative to invert the encoder "direction"
 		 *

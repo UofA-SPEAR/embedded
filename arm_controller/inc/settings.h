@@ -5,6 +5,9 @@
  *      Author: David lenfesty
  *
  *  Handles settings requests and the such coming in from CAN.
+ *
+ *  Assumes you know what you're doing when you set the values.
+ *  If you don't, very bad things could happen and you should realise that.
  */
 
 #ifndef SETTINGS_H_
