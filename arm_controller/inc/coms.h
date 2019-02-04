@@ -30,6 +30,9 @@ void updateComs(void);
 #define LIBCANARD_MEM_POOL_SIZE 1024 // Default to 1K
 #endif
 
+// TODO check these priorities
+#define CAN_GETSET_PRIORITY 30
+
 // Should this go here or in another file?
 // Paramater indexes to use
 typedef enum {

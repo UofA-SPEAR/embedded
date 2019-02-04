@@ -31,6 +31,9 @@ float motorB_desired_position;
 int32_t last_runA = INT32_MAX;
 int32_t last_runB = INT32_MAX;
 
+// Settings to be used for actually running the motor
+flash_settings_t run_settings;
+
 void setup(){
 	HAL_Init();
 
@@ -44,11 +47,11 @@ void setup(){
 
 // Run PID and motor control
 void run_motorA() {
-	if (saved_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
+	if (run_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
 		uint32_t current_position = potA_read();
 
 		// radians / (radians/int_position) - current_position = error
-		float error = ((motorA_desired_position / saved_settings.motor[0].encoder.to_radians)
+		float error = ((motorA_desired_position / run_settings.motor[0].encoder.to_radians)
 				- current_position) / 4096.0;
 
 		float out = arm_pid_f32(&pidA, error);
@@ -59,11 +62,11 @@ void run_motorA() {
 }
 
 void motor_init() {
-	motorA.digital.in_a = GPIO_PIN_4;		if (saved_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
+	motorA.digital.in_a = GPIO_PIN_4;		if (run_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
 		uint32_t current_position = potA_read();
 
 		// radians / (radians/int_position) - current_position = error
-		float error = ((motorA_desired_position / saved_settings.motor[0].encoder.to_radians)
+		float error = ((motorA_desired_position / run_settings.motor[0].encoder.to_radians)
 				- current_position) / 4096.0;
 
 		float out = arm_pid_f32(&pidA, error);
@@ -113,6 +116,7 @@ int main(void) {
 	setup();
 
 	load_settings();
+	run_settings = saved_settings;
 	motor_init();
 	potA_init();
 
@@ -122,15 +126,15 @@ int main(void) {
 
 	// setup PID
 	memset(&pidA, 0, sizeof(arm_pid_instance_f32));
-	pidA.Kp = saved_settings.motor[0].pid.Kp;
-	pidA.Ki = saved_settings.motor[0].pid.Ki;
-	pidA.Kd = saved_settings.motor[0].pid.Kd;
+	pidA.Kp = run_settings.motor[0].pid.Kp;
+	pidA.Ki = run_settings.motor[0].pid.Ki;
+	pidA.Kd = run_settings.motor[0].pid.Kd;
 	arm_pid_init_f32(&pidA, 1);
 
 
 	for (;;) {
 
-		if ((HAL_GetTick() - last_runA >= 100) && saved_settings.motor[0].enabled) {
+		if ((HAL_GetTick() - last_runA >= 100) && run_settings.motor[0].enabled) {
 			run_motorA();
 			last_runA = HAL_GetTick();
 		}
