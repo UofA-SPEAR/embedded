@@ -26,9 +26,9 @@ int64_t actuator_id  = 0;
 int16_t desiredPos; // where we want the pot to be
 
 vnh5019_t motorA, motorB;
-arm_pid_instance_f32 pid_A, pid_B;
+arm_pid_instance_f32 pidA, pidB;
 
-uint32_t time_since_run = 0;
+float motorA_desired_position, motorB_desired_position;
 
 void setup(){
 	HAL_Init();
@@ -54,8 +54,14 @@ void run_motors() {
 	if (saved_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
 		uint32_t current_position = potA_read();
 
-		arm_pid_f32(&pid_A, error);
+		// radians / (radians/int_position) - current_position = error
+		float error = ((motorA_desired_position / saved_settings.motor[0].encoder.to_radians)
+				- current_position) / 4096.0;
 
+		float out = arm_pid_f32(&pidA, error);
+		int16_t out_int = out * 1000;
+
+		vnh5019_set(&motorA, out_int);
 	}
 
 }
@@ -115,22 +121,26 @@ int main(void) {
 
 
 	// setup PID
-	memset(&pid_A, 0, sizeof(arm_pid_instance_f32));
-	pid_A.Kp = saved_settings.motor[0].pid.Kp;
-	pid_A.Ki = saved_settings.motor[0].pid.Ki;
-	pid_A.Kd = saved_settings.motor[0].pid.Kd;
-	arm_pid_A_init_f32(&pid_A, 1);
+	memset(&pidA, 0, sizeof(arm_pid_instance_f32));
+	pidA.Kp = saved_settings.motor[0].pid.Kp;
+	pidA.Ki = saved_settings.motor[0].pid.Ki;
+	pidA.Kd = saved_settings.motor[0].pid.Kd;
+	arm_pid_init_f32(&pidA, 1);
 
 	// to hold the return value of the pid_A
 	static float velocity;
 
+	uint32_t last_run = HAL_GetTick();
+
 	for (;;) {
 
-		velocity = doPID(&pid_A);
+		if (HAL_GetTick() - last_run >= 100) {
+			run_motors();
+			last_run = HAL_GetTick();
+		}
 
-		motor_set(&motorA, abs(velocity * 1000), (velocity >= 0) ? FORWARD : REVERSE);
-		HAL_Delay(100);
 		publish_nodeStatus();
+
 		tx_once();
 		rx_once();
 	}

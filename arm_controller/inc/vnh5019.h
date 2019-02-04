@@ -59,7 +59,7 @@ typedef struct {
  * @param speed PWM duty cycle - 0 to 1000
  * @param dir 	Direction to set motor.
  */
-void motor_set(vnh5019_t* motor, int speed, enum Direction dir);
+void vnh5019_set(vnh5019_t* motor, int speed, enum Direction dir);
 
 /** @brief Enable motor driver.
  *
@@ -68,7 +68,7 @@ void motor_set(vnh5019_t* motor, int speed, enum Direction dir);
  *
  * @note Simply sets ENA and ENB high
  */
-void motor_enable(vnh5019_t* motor, uint8_t enable);
+void vnh5019_enable(vnh5019_t* motor, uint8_t enable);
 
 /** @brief Initialize motor.
  *

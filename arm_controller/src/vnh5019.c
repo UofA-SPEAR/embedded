@@ -7,14 +7,7 @@ static void vnh5019_pwm_init(vnh5019_t* settings);
 
 uint8_t timer_initialized = 0;
 
-void motor_set(vnh5019_t* motor, int speed, enum Direction dir) {
-	if (dir == COAST) {
-		// TODO make this not hardcoded
-		VNH5019_TIM_INSTANCE->CCR2 = 1000;
-	} else {
-		VNH5019_TIM_INSTANCE->CCR2 = speed;
-	}
-
+void vnh5019_set(vnh5019_t* motor, int16_t speed) {
 	/* Assuming that output A is the "positive" terminal on the motor.
 	 *
 	 * We pull B side low so current flows from A to B for forwards,
@@ -26,22 +19,16 @@ void motor_set(vnh5019_t* motor, int speed, enum Direction dir) {
 	 *
 	 * Braking is the same but we selectively turn off the power so the chip absorbs some power.
 	 */
-	switch (dir) {
-	case (FORWARD):
+	if (speed >= 0) { // Forwards
 			HAL_GPIO_WritePin(motor->digital.port, motor->digital.in_a, GPIO_PIN_SET);
 			HAL_GPIO_WritePin(motor->digital.port, motor->digital.in_b, GPIO_PIN_RESET);
-			break;
-	case (REVERSE):
+	} else { // Backwards
 			HAL_GPIO_WritePin(motor->digital.port, motor->digital.in_a, GPIO_PIN_RESET);
 			HAL_GPIO_WritePin(motor->digital.port, motor->digital.in_b, GPIO_PIN_SET);
-			break;
-	// Do nothing, already covered these cases with the safety thing.
-	default:
-			break;
 	}
 }
 
-void motor_enable(vnh5019_t* motor, uint8_t enable) {
+void vnh5019_enable(vnh5019_t* motor, uint8_t enable) {
 	if (enable) {
 		HAL_GPIO_WritePin(motor->digital.port, motor->digital.en_a, GPIO_PIN_SET);
 		HAL_GPIO_WritePin(motor->digital.port, motor->digital.en_b, GPIO_PIN_SET);
