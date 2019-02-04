@@ -27,7 +27,7 @@
 
 enum Direction {REVERSE, FORWARD, COAST, BRAKE};
 
-TIM_HandleTypeDef htim4;
+TIM_HandleTypeDef h_timer;
 
 typedef struct {
 	struct {

@@ -1,34 +1,15 @@
 #include "stm32f3xx.h"
 #include "stm32f3xx_hal.h"
 
-#include "pot.h"
-static void __MX_ADC_Init();
+#include "encoders.h"
+
+ADC_HandleTypeDef hadc3;
 
 void potInit(){
 	__MX_ADC_Init();
 }
 
-/**
- * returns a number between [0, x) representing the turn
- * returns -1 in an error
- */
-int readPot(){
-	static int val;
-	val = -1;
-
-	HAL_ADC_Start(&hadc3);
-	if (HAL_ADC_PollForConversion(&hadc3, 1000) == HAL_OK){
-		val = HAL_ADC_GetValue(&hadc3);
-	} else {
-		while(1); // Getto debugging
-	}
-    HAL_ADC_Stop(&hadc3);
-
-	return val;
-}
-
-// Setup code for the ADC
-static void __MX_ADC_Init(){
+void potA_init(void) {
 	ADC_ChannelConfTypeDef sConfig;
 	hadc3.Instance = ADC3;
 	hadc3.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
@@ -67,16 +48,35 @@ static void __MX_ADC_Init(){
 	if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK) {
 		while(1);
 	}
-
 }
+
+/**
+ * returns a number between [0, x) representing the turn
+ * returns -1 in an error
+ */
+uint32_t potA_read(){
+	static int val;
+	val = -1;
+
+	HAL_ADC_Start(&hadc3);
+	if (HAL_ADC_PollForConversion(&hadc3, 1000) == HAL_OK){
+		val = HAL_ADC_GetValue(&hadc3);
+	}
+    HAL_ADC_Stop(&hadc3);
+
+	return val;
+}
+
 // more setup code, this time for the pin
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc){
-	__HAL_RCC_ADC34_CLK_ENABLE();
-	__HAL_RCC_GPIOB_CLK_ENABLE();
+	if (hadc->Instance == ADC3) {
+		__HAL_RCC_ADC34_CLK_ENABLE();
+		__HAL_RCC_GPIOB_CLK_ENABLE();
 
-	GPIO_InitTypeDef GPIO_InitStruct;
-	GPIO_InitStruct.Pin = GPIO_PIN_0;
-	GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+		GPIO_InitTypeDef GPIO_InitStruct;
+		GPIO_InitStruct.Pin = POTA_PIN;
+		GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+		GPIO_InitStruct.Pull = GPIO_NOPULL;
+		HAL_GPIO_Init(POTA_PORT, &GPIO_InitStruct);
+	}
 }

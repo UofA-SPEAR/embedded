@@ -94,19 +94,19 @@ void vnh5019_init(vnh5019_t* settings) {
 static void vnh5019_pwm_init(vnh5019_t* settings) {
 	if (!timer_initialized) {
 		// Initialize timer for PWM
-		htim4.Instance = VNH5019_TIM_INSTANCE;
-		htim4.Init.Prescaler = 1;
-		htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-		htim4.Init.Period = 1000;
-		htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-		htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-		HAL_TIM_PWM_Init(&htim4);
+		h_timer.Instance = VNH5019_TIM_INSTANCE;
+		h_timer.Init.Prescaler = 1;
+		h_timer.Init.CounterMode = TIM_COUNTERMODE_UP;
+		h_timer.Init.Period = 1000;
+		h_timer.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+		h_timer.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+		HAL_TIM_PWM_Init(&h_timer);
 
 		// Make timer run independently
 		TIM_MasterConfigTypeDef sMasterConfig;
 		sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
 		sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-		HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig);
+		HAL_TIMEx_MasterConfigSynchronization(&h_timer, &sMasterConfig);
 
 		timer_initialized = 1;
 	}
@@ -120,6 +120,6 @@ static void vnh5019_pwm_init(vnh5019_t* settings) {
 	itd.OCPolarity = TIM_OCPOLARITY_HIGH;
 	itd.OCNPolarity = TIM_OCNPOLARITY_LOW;
 	itd.Pulse = 0;
-	HAL_TIM_OC_ConfigChannel(&htim4, &itd, settings->pwm.tim_ch);
-	HAL_TIM_PWM_Start(&htim4, settings->pwm.tim_ch);
+	HAL_TIM_OC_ConfigChannel(&h_timer, &itd, settings->pwm.tim_ch);
+	HAL_TIM_PWM_Start(&h_timer, settings->pwm.tim_ch);
 }

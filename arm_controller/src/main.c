@@ -7,7 +7,7 @@
 #include "core_cm4.h"
 
 #include "vnh5019.h"
-#include "pot.h"
+#include "encoders.h"
 #include "clocks.h"
 #include "coms.h"
 #include "flash_settings.h"
@@ -25,7 +25,10 @@
 int64_t actuator_id  = 0;
 int16_t desiredPos; // where we want the pot to be
 
-vnh5019_t motor1, motor2;
+vnh5019_t motorA, motorB;
+arm_pid_instance_f32 pid_A, pid_B;
+
+uint32_t time_since_run = 0;
 
 void setup(){
 	HAL_Init();
@@ -41,23 +44,34 @@ void setup(){
 float doPID(arm_pid_instance_f32* pid){
 	static float32_t position; // position is the value directly from the pot
 
-	position = (readPot() - desiredPos) / 4096.0;
+	position = (potA_read() - desiredPos) / 4096.0;
 
 	return arm_pid_f32(pid, position);
 }
 
+// Run PID and motor control
+void run_motors() {
+	if (saved_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
+		uint32_t current_position = potA_read();
+
+		arm_pid_f32(&pid_A, error);
+
+	}
+
+}
+
 void motor_init() {
-	motor1.digital.in_a = GPIO_PIN_4;
-	motor1.digital.in_b = GPIO_PIN_3;
-	motor1.digital.en_a = GPIO_PIN_6;
-	motor1.digital.en_b = GPIO_PIN_5;
-	motor1.digital.port = GPIOB;
+	motorA.digital.in_a = GPIO_PIN_4;
+	motorA.digital.in_b = GPIO_PIN_3;
+	motorA.digital.en_a = GPIO_PIN_6;
+	motorA.digital.en_b = GPIO_PIN_5;
+	motorA.digital.port = GPIOB;
 
-	motor1.pwm.pin 		= GPIO_PIN_7;
-	motor1.pwm.port 	= GPIOB;
-	motor1.pwm.tim_af	= GPIO_AF2_TIM4;
+	motorA.pwm.pin 		= GPIO_PIN_7;
+	motorA.pwm.port 	= GPIOB;
+	motorA.pwm.tim_af	= GPIO_AF2_TIM4;
 
-	vnh5019_init(&motor1);
+	vnh5019_init(&motorA);
 }
 
 uint8_t read_node_id(void) {
@@ -90,7 +104,7 @@ int main(void) {
 
 	load_settings();
 	motor_init();
-	motor_enable(&motor1, 1);
+	motor_enable(&motorA, 1);
 	potInit();
 
 	comInit();
@@ -101,20 +115,20 @@ int main(void) {
 
 
 	// setup PID
-	arm_pid_instance_f32 pid;
-	memset(&pid, 0, sizeof(arm_pid_instance_f32));
-	pid.Kp = saved_settings.motor[0].pid.Kp;
-	pid.Ki = saved_settings.motor[0].pid.Ki;
-	pid.Kd = saved_settings.motor[0].pid.Kd;
-	arm_pid_init_f32(&pid, 1);
+	memset(&pid_A, 0, sizeof(arm_pid_instance_f32));
+	pid_A.Kp = saved_settings.motor[0].pid.Kp;
+	pid_A.Ki = saved_settings.motor[0].pid.Ki;
+	pid_A.Kd = saved_settings.motor[0].pid.Kd;
+	arm_pid_A_init_f32(&pid_A, 1);
 
-	// to hold the return value of the pid
+	// to hold the return value of the pid_A
 	static float velocity;
 
 	for (;;) {
-		velocity = doPID(&pid);
 
-		motor_set(&motor1, abs(velocity * 1000), (velocity >= 0) ? FORWARD : REVERSE);
+		velocity = doPID(&pid_A);
+
+		motor_set(&motorA, abs(velocity * 1000), (velocity >= 0) ? FORWARD : REVERSE);
 		HAL_Delay(100);
 		publish_nodeStatus();
 		tx_once();
