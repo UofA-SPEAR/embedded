@@ -28,6 +28,12 @@ uint8_t out_buf[100];
 
 uint8_t inout_transfer_id;
 
+TIM_HandleTypeDef htim7;
+
+static uint64_t can_timestamp_usec;
+
+static void timestamp_tim_init(void);
+
 
 void updateComs(void) {
 	tx_once();
@@ -35,6 +41,7 @@ void updateComs(void) {
 }
 
 void comInit(void) {
+	timestamp_tim_init();
 	libcanard_init(on_reception, should_accept, NULL, 8000000, 250000);
 	setup_hardware_can_filters();
 
@@ -150,7 +157,7 @@ int8_t rx_once() {
 	switch (rc) {
 	case 1:
 		// TODO setup timer for timestamp
-		canardHandleRxFrame(&m_canard_instance, &in_frame, 100000);
+		canardHandleRxFrame(&m_canard_instance, &in_frame, can_timestamp_usec + TIM7->CNT);
 		return LIBCANARD_SUCCESS;
 	case 0:
 		return LIBCANARD_NO_QUEUE;
@@ -180,6 +187,42 @@ static void bxcan_init(void) {
     GPIO_InitStruct.Alternate = GPIO_AF9_CAN;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
+
+static void timestamp_tim_init(void) {
+	__HAL_RCC_TIM7_CLK_ENABLE();
+
+	// Initialize to run at 1MHz
+	// Reset every 1ms
+	htim7.Instance = TIM7;
+	htim7.Init.Prescaler = 8;
+	htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim7.Init.Period = 1000;
+	htim7.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	HAL_TIM_Base_Init(&htim7);
+
+	// Make it independent
+	TIM_MasterConfigTypeDef sMasterConfig;
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig);
+
+
+	// Enable interrupts
+	NVIC_SetPriority(TIM7_IRQn, 0);
+	NVIC_EnableIRQ(TIM7_IRQn);
+
+	// Start interrupts
+	HAL_TIM_Base_Start_IT(&htim7);
+}
+
+void TIM7_IRQHandler() {
+	__HAL_TIM_CLEAR_IT(&htim7, TIM_IT_UPDATE);
+	can_timestamp_usec += TIM2->CNT;
+	// Updates once a millisecond
+}
+
+
 
 int16_t libcanard_init(CanardOnTransferReception on_reception,
 		CanardShouldAcceptTransfer should_accept, void* user_reference,

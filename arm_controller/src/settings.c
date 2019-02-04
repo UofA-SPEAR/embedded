@@ -140,6 +140,9 @@ static void parameter_return_empty(CanardInstance* ins,
 
 	msg.name.len = 0;
 	msg.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
+	msg.default_value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
+	msg.min_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
+	msg.max_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
 
 	uint8_t len = uavcan_protocol_param_GetSetResponse_encode(&msg, msg_buf);
 
@@ -175,6 +178,9 @@ static void parameter_return_value(CanardInstance* ins,
 		if (p_msg->index > 13) {
 			index = p_msg->index - 14;
 			motor_select = 1;
+		} else {
+			index = p_msg->index;
+			motor_select = 0;
 		}
 
 		// This should probably be another function
@@ -257,6 +263,9 @@ static void parameter_return_value(CanardInstance* ins,
 
 		response.name.data = (uint8_t *) parameters[index];
 		response.name.len = strlen(parameters[index]);
+		response.default_value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
+		response.min_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
+		response.max_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
 
 		uint8_t len = uavcan_protocol_param_GetSetResponse_encode(&response, out_buf);
 

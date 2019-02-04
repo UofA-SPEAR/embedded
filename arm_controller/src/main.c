@@ -47,34 +47,24 @@ void setup(){
 
 // Run PID and motor control
 void run_motorA() {
-	if (run_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
-		uint32_t current_position = potA_read();
+	if (run_settings.motor[0].enabled) {
+		if (run_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
+			uint32_t current_position = potA_read();
 
-		// radians / (radians/int_position) - current_position = error
-		float error = ((motorA_desired_position / run_settings.motor[0].encoder.to_radians)
-				- current_position) / 4096.0;
+			// radians / (radians/int_position) - current_position = error
+			float error = ((motorA_desired_position / run_settings.motor[0].encoder.to_radians)
+					- current_position) / 4096.0;
 
-		float out = arm_pid_f32(&pidA, error);
-		int16_t out_int = out * 1000;
+			float out = arm_pid_f32(&pidA, error);
+			int16_t out_int = out * 1000;
 
-		vnh5019_set(&motorA, out_int);
+			vnh5019_set(&motorA, out_int);
+		}
 	}
 }
 
 void motor_init() {
-	motorA.digital.in_a = GPIO_PIN_4;		if (run_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
-		uint32_t current_position = potA_read();
-
-		// radians / (radians/int_position) - current_position = error
-		float error = ((motorA_desired_position / run_settings.motor[0].encoder.to_radians)
-				- current_position) / 4096.0;
-
-		float out = arm_pid_f32(&pidA, error);
-		int16_t out_int = out * 1000;
-
-		vnh5019_set(&motorA, out_int);
-	}
-
+	motorA.digital.in_a = GPIO_PIN_4;
 	motorA.digital.in_b = GPIO_PIN_3;
 	motorA.digital.en_a = GPIO_PIN_6;
 	motorA.digital.en_b = GPIO_PIN_5;
