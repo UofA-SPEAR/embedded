@@ -15,6 +15,8 @@
 #define ARM_MATH_CM4
 #include "arm_math.h"
 
+#define INT32_MAX 2147483647
+
 // these bounds are needed, as not the potentiometers will not experience their full range
 #define LOWER_POT_BOUND 0
 #define UPPER_POT_BOUND 4096
@@ -23,12 +25,12 @@
 
 //////////// Needs to be set for each joint
 int64_t actuator_id  = 0;
-int16_t desiredPos; // where we want the pot to be
 
 vnh5019_t motorA, motorB;
 arm_pid_instance_f32 pidA, pidB;
 
-float motorA_desired_position, motorB_desired_position;
+float motorA_desired_position;
+float motorB_desired_position;
 
 void setup(){
 	HAL_Init();
@@ -50,7 +52,7 @@ float doPID(arm_pid_instance_f32* pid){
 }
 
 // Run PID and motor control
-void run_motors() {
+void run_motorA() {
 	if (saved_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
 		uint32_t current_position = potA_read();
 
@@ -63,11 +65,22 @@ void run_motors() {
 
 		vnh5019_set(&motorA, out_int);
 	}
-
 }
 
 void motor_init() {
-	motorA.digital.in_a = GPIO_PIN_4;
+	motorA.digital.in_a = GPIO_PIN_4;		if (saved_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
+		uint32_t current_position = potA_read();
+
+		// radians / (radians/int_position) - current_position = error
+		float error = ((motorA_desired_position / saved_settings.motor[0].encoder.to_radians)
+				- current_position) / 4096.0;
+
+		float out = arm_pid_f32(&pidA, error);
+		int16_t out_int = out * 1000;
+
+		vnh5019_set(&motorA, out_int);
+	}
+
 	motorA.digital.in_b = GPIO_PIN_3;
 	motorA.digital.en_a = GPIO_PIN_6;
 	motorA.digital.en_b = GPIO_PIN_5;
@@ -117,9 +130,6 @@ int main(void) {
 	node_id = read_node_id();
 	canardSetLocalNodeID(&m_canard_instance, node_id);
 
-	desiredPos = 2000;
-
-
 	// setup PID
 	memset(&pidA, 0, sizeof(arm_pid_instance_f32));
 	pidA.Kp = saved_settings.motor[0].pid.Kp;
@@ -127,13 +137,14 @@ int main(void) {
 	pidA.Kd = saved_settings.motor[0].pid.Kd;
 	arm_pid_init_f32(&pidA, 1);
 
-	uint32_t last_run = HAL_GetTick();
+	// Insanely large number, so no motor checks should happen.
+	int32_t last_runA = INT32_MAX;
 
 	for (;;) {
 
-		if (HAL_GetTick() - last_run >= 100) {
-			run_motors();
-			last_run = HAL_GetTick();
+		if (HAL_GetTick() - last_runA >= 100) {
+			run_motorA();
+			last_runA = HAL_GetTick();
 		}
 
 		publish_nodeStatus();
