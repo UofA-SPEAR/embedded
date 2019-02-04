@@ -3,6 +3,19 @@
  *
  *  Created on: Feb 3, 2019
  *      Author: David Lenfesty
+ *
+ *
+ *  General flow:
+ *
+ *  - Receives the GetSet request.
+ *  - Decides whether to evaluate based on the name or the index (based on whether there is a name)
+ *  - Evaluates which index it should be (if done by ID, already done)
+ *  - If there is data, it takes that data and stores it in flash, then responds with that set value
+ *  - If there isn't data, just responds with name of parameter, and current value of parameter in flash
+ *  - If any cases fail, just responds with an empty message. That signifies there is no such parameter
+ *
+ *  Probably doesn't work right now.
+ *  It does compile though, which is nice.
  */
 #include <stdlib.h>
 #include <string.h>
@@ -56,7 +69,6 @@ void handle_getSet(CanardInstance* ins, CanardRxTransfer* transfer) {
 	} else if (msg.index >= NUM_PARAMETERS) { // If there is no such parameter
 		parameter_return_empty(ins, transfer);
 	} else {
-		// No defined behaviour when setting parameter with ID
 		parameter_respond_from_id(ins, transfer, &msg);
 	}
 }
