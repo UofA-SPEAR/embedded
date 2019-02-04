@@ -110,8 +110,8 @@ int main(void) {
 
 	load_settings();
 	motor_init();
-	motor_enable(&motorA, 1);
-	potInit();
+	vnh5019_enable(&motorA, 1);
+	potA_init();
 
 	comInit();
 	node_id = read_node_id();
@@ -126,9 +126,6 @@ int main(void) {
 	pidA.Ki = saved_settings.motor[0].pid.Ki;
 	pidA.Kd = saved_settings.motor[0].pid.Kd;
 	arm_pid_init_f32(&pidA, 1);
-
-	// to hold the return value of the pid_A
-	static float velocity;
 
 	uint32_t last_run = HAL_GetTick();
 

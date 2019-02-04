@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "stm32f3xx.h"
 #include "stm32f3xx_hal.h"
 
@@ -8,6 +10,18 @@ static void vnh5019_pwm_init(vnh5019_t* settings);
 uint8_t timer_initialized = 0;
 
 void vnh5019_set(vnh5019_t* motor, int16_t speed) {
+	//TODO add more cases
+
+	uint16_t unsigned_speed = abs(speed);
+	switch (motor->pwm.tim_ch) {
+	case (TIM_CHANNEL_1):
+		VNH5019_TIM_INSTANCE->CCR1 = unsigned_speed;
+		break;
+	case (TIM_CHANNEL_2):
+		VNH5019_TIM_INSTANCE->CCR2 = unsigned_speed;
+		break;
+	}
+
 	/* Assuming that output A is the "positive" terminal on the motor.
 	 *
 	 * We pull B side low so current flows from A to B for forwards,

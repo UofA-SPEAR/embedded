@@ -5,10 +5,6 @@
 
 ADC_HandleTypeDef hadc3;
 
-void potInit(){
-	__MX_ADC_Init();
-}
-
 void potA_init(void) {
 	ADC_ChannelConfTypeDef sConfig;
 	hadc3.Instance = ADC3;
