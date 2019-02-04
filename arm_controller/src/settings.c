@@ -97,14 +97,11 @@ static void parameter_respond_from_name(CanardInstance* ins,
 
 	// Copy name into temporary buffer
 	memcpy(name_buf, p_msg->name.data, p_msg->name.len);
+	name_buf[p_msg->name.len] = 0;
 
-	if (strcmp(name_buf, "spear.arm.motor") == 0) { // ignore stuff not in the right namespace
-
-		// Take off the already checked bit so we can save time.
-		uint8_t len = strlen("spear.arm.motor");
-
+	if (strstr((char*)p_msg->name.data, "spear.arm.motor") != NULL) { // ignore stuff not in the right namespace
 		for (int i = 0; i < NUM_PARAMETERS; i++) {
-			if (strcmp(name_buf + len, parameters[i] + len) == 0) {
+			if (strcmp(name_buf, parameters[i]) == 0) {
 				// Make sure that the index is the correct value to pass it on
 				// If the index is not correct the next functions WILL fail
 				p_msg->index = i;
@@ -116,6 +113,7 @@ static void parameter_respond_from_name(CanardInstance* ins,
 				}
 
 
+				correct_name = 1;
 				break; // Don't waste cycles
 			}
 		}
@@ -301,6 +299,9 @@ static void parameter_set_value(CanardInstance* ins,
 		if (p_msg->index > 13) {
 			index = p_msg->index - 14;
 			motor_select = 1;
+		} else {
+			index = p_msg->index;
+			motor_select = 0;
 		}
 
 		// This should probably be another function

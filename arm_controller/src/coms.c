@@ -13,9 +13,10 @@
 #include "uavcan/equipment/actuator/ArrayCommand.h"
 #include "uavcan/protocol/param/GetSet.h"
 #include "uavcan/protocol/NodeStatus.h"
+#include "uavcan/protocol/RestartNode.h"
 
 // Small enough to not be too bad, large enough to be useful
-#define DYNAMIC_ARRAY_BUF_SIZE 300
+#define DYNAMIC_ARRAY_BUF_SIZE 1000
 
 CanardInstance m_canard_instance;
 static uint8_t libcanard_memory_pool[LIBCANARD_MEM_POOL_SIZE];
@@ -33,6 +34,7 @@ TIM_HandleTypeDef htim7;
 static uint64_t can_timestamp_usec;
 
 static void timestamp_tim_init(void);
+static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);
 
 
 void updateComs(void) {
@@ -42,7 +44,7 @@ void updateComs(void) {
 
 void comInit(void) {
 	timestamp_tim_init();
-	libcanard_init(on_reception, should_accept, NULL, 8000000, 250000);
+	libcanard_init(on_reception, should_accept, NULL, 32000000, 250000);
 	setup_hardware_can_filters();
 
 }
@@ -89,6 +91,7 @@ bool should_accept(const CanardInstance* ins,
 		switch (data_type_id) {
 
 		case (UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID):
+			*out_data_type_signature = UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_SIGNATURE;
 			return true;
 		case (UAVCAN_PROTOCOL_NODESTATUS_ID):
 			return false;
@@ -98,7 +101,15 @@ bool should_accept(const CanardInstance* ins,
 	}
 
 	if (transfer_type == CanardTransferTypeRequest) {
-		return true;
+		switch (data_type_id) {
+		case (UAVCAN_PROTOCOL_PARAM_GETSET_ID):
+			*out_data_type_signature = UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE;
+			return true;
+		case (UAVCAN_PROTOCOL_RESTARTNODE_ID):
+				return true;
+		default:
+			return false;
+		}
 	}
 
 	return false;
@@ -120,11 +131,26 @@ void on_reception(CanardInstance* ins, CanardRxTransfer* transfer){
 		case(UAVCAN_PROTOCOL_PARAM_GETSET_ID):
 			handle_getSet(ins, transfer);
 			break;
+		case (UAVCAN_PROTOCOL_RESTARTNODE_ID):
+			restart_node(ins, transfer);
+			break;
 		default:
 			break;
 		}
 	}
 
+}
+
+static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer) {
+	uavcan_protocol_RestartNodeRequest msg;
+
+	uavcan_protocol_RestartNodeRequest_decode(transfer, transfer->payload_len,
+			&msg, &p_dynamic_array_buf);
+
+
+	if (msg.magic_number == UAVCAN_PROTOCOL_RESTARTNODE_REQUEST_MAGIC_NUMBER) {
+		NVIC_SystemReset();
+	}
 }
 
 int8_t tx_once(void) {
@@ -194,7 +220,7 @@ static void timestamp_tim_init(void) {
 	// Initialize to run at 1MHz
 	// Reset every 1ms
 	htim7.Instance = TIM7;
-	htim7.Init.Prescaler = 8;
+	htim7.Init.Prescaler = 32;
 	htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
 	htim7.Init.Period = 1000;
 	htim7.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;

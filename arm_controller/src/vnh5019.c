@@ -105,7 +105,7 @@ static void vnh5019_pwm_init(vnh5019_t* settings) {
 	if (!timer_initialized) {
 		// Initialize timer for PWM
 		h_timer.Instance = VNH5019_TIM_INSTANCE;
-		h_timer.Init.Prescaler = 1;
+		h_timer.Init.Prescaler = 4;
 		h_timer.Init.CounterMode = TIM_COUNTERMODE_UP;
 		h_timer.Init.Period = 1000;
 		h_timer.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
