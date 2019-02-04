@@ -7,12 +7,12 @@ static void vnh5019_pwm_init(vnh5019_t* settings);
 
 uint8_t timer_initialized = 0;
 
-void motorSet(int speed, enum Direction dir) {
+void motor_set(vnh5019_t* motor, int speed, enum Direction dir) {
 	if (dir == COAST) {
 		// TODO make this not hardcoded
-		TIM4->CCR2 = 1000;
+		VNH5019_TIM_INSTANCE->CCR2 = 1000;
 	} else {
-		TIM4->CCR2 = speed;
+		VNH5019_TIM_INSTANCE->CCR2 = speed;
 	}
 
 	/* Assuming that output A is the "positive" terminal on the motor.
@@ -28,12 +28,12 @@ void motorSet(int speed, enum Direction dir) {
 	 */
 	switch (dir) {
 	case (FORWARD):
-			HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INA_PIN, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(motor->digital.port, motor->digital.in_a, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(motor->digital.port, motor->digital.in_b, GPIO_PIN_RESET);
 			break;
 	case (REVERSE):
-			HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INA_PIN, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(motor->digital.port, motor->digital.in_a, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(motor->digital.port, motor->digital.in_b, GPIO_PIN_SET);
 			break;
 	// Do nothing, already covered these cases with the safety thing.
 	default:
@@ -41,13 +41,13 @@ void motorSet(int speed, enum Direction dir) {
 	}
 }
 
-void motorEnable(int enable) {
+void motor_enable(vnh5019_t* motor, uint8_t enable) {
 	if (enable) {
-		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(motor->digital.port, motor->digital.en_a, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(motor->digital.port, motor->digital.en_b, GPIO_PIN_SET);
 	} else {
-		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(motor->digital.port, motor->digital.en_a, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(motor->digital.port, motor->digital.en_b, GPIO_PIN_RESET);
 	}
 }
 
@@ -74,10 +74,10 @@ void vnh5019_init(vnh5019_t* settings) {
 	vnh5019_pwm_init(settings);
 
 	// Start with all pins low
-	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INA_PIN, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_INB_PIN, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENA_PIN, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(MOTOR_PORT, MOTOR_ENB_PIN, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(settings->digital.port, settings->digital.in_a, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(settings->digital.port, settings->digital.in_b, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(settings->digital.port, settings->digital.en_a, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(settings->digital.port, settings->digital.en_b, GPIO_PIN_RESET);
 
 	// Initialize pins
 
@@ -86,7 +86,7 @@ void vnh5019_init(vnh5019_t* settings) {
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
-	HAL_GPIO_Init(MOTOR_PORT, &GPIO_InitStruct);
+	HAL_GPIO_Init(settings->digital.port, &GPIO_InitStruct);
 }
 
 
@@ -102,7 +102,7 @@ static void vnh5019_pwm_init(vnh5019_t* settings) {
 		htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 		HAL_TIM_PWM_Init(&htim4);
 
-		// Make timer run independantly
+		// Make timer run independently
 		TIM_MasterConfigTypeDef sMasterConfig;
 		sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
 		sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;

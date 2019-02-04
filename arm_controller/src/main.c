@@ -90,7 +90,7 @@ int main(void) {
 
 	load_settings();
 	motor_init();
-	motorEnable(1);
+	motor_enable(&motor1, 1);
 	potInit();
 
 	comInit();
@@ -114,7 +114,7 @@ int main(void) {
 	for (;;) {
 		velocity = doPID(&pid);
 
-		motorSet(abs(velocity * 1000), (velocity >= 0) ? FORWARD : REVERSE);
+		motor_set(&motor1, abs(velocity * 1000), (velocity >= 0) ? FORWARD : REVERSE);
 		HAL_Delay(100);
 		publish_nodeStatus();
 		tx_once();

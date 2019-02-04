@@ -4,7 +4,11 @@
  * - Using STM32F303
  * - Only using one timer
  * - Digital pins are all on one GPIO port
- * - Only using one ADC???
+ *
+ * To Configure:
+ * - Build up a vnh5019_t variable with the appropriate gpio settings
+ * - call vnh5019_init() with you settings struct
+ * - you should be done
  */
 
 #ifndef _VNH5019_H_
@@ -41,8 +45,9 @@ typedef struct {
 		uint16_t tim_ch;
 	} pwm;
 
-	// TODO Add current sense stuff here
-
+	// I think I'll keep current sensing external.
+	// It's a bit too complicated to do in a generic function
+	// and it isn't necessary to use the drivers.
 } vnh5019_t;
 
 
@@ -50,14 +55,24 @@ typedef struct {
 
 /** @brief Set motor pwm and direction
  *
+ * @param motor pointer to motor instance
  * @param speed PWM duty cycle - 0 to 1000
  * @param dir 	Direction to set motor.
  */
-void motorSet(int speed, enum Direction dir);
+void motor_set(vnh5019_t* motor, int speed, enum Direction dir);
 
-void motorEnable(int enable);
+/** @brief Enable motor driver.
+ *
+ * @param motor pointer to motor instance
+ * @param enable If >0, enable the motor driver
+ *
+ * @note Simply sets ENA and ENB high
+ */
+void motor_enable(vnh5019_t* motor, uint8_t enable);
 
 /** @brief Initialize motor.
+ *
+ * @param settings Pointer to motor config
  */
 void vnh5019_init(vnh5019_t* settings);
 
