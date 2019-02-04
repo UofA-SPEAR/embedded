@@ -21,9 +21,6 @@
 
 #define BASE_NODE_ID 30
 
-//////////// Needs to be set for each joint
-int64_t actuator_id  = 0;
-
 vnh5019_t motorA, motorB;
 arm_pid_instance_f32 pidA, pidB;
 
