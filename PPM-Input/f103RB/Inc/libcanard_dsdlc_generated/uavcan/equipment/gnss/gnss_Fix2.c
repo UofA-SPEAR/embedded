@@ -12,8 +12,15 @@
 #define CANARD_INTERNAL_SATURATE(x, max) ( ((x) > max) ? max : ( (-(x) > max) ? (-max) : (x) ) );
 #endif
 
-#define CANARD_INTERNAL_ENABLE_TAO  ((uint8_t) 1)
-#define CANARD_INTERNAL_DISABLE_TAO ((uint8_t) 0)
+#ifndef CANARD_INTERNAL_SATURATE_UNSIGNED
+#define CANARD_INTERNAL_SATURATE_UNSIGNED(x, max) ( ((x) > max) ? max : (x) );
+#endif
+
+#if defined(__GNUC__)
+# define CANARD_MAYBE_UNUSED(x) x __attribute__((unused))
+#else
+# define CANARD_MAYBE_UNUSED(x) x
+#endif
 
 /**
   * @brief uavcan_equipment_gnss_Fix2_encode_internal
@@ -23,7 +30,10 @@
   * @param root_item: for detecting if TAO should be used
   * @retval returns offset
   */
-uint32_t uavcan_equipment_gnss_Fix2_encode_internal(uavcan_equipment_gnss_Fix2* source, void* msg_buf, uint32_t offset, uint8_t root_item)
+uint32_t uavcan_equipment_gnss_Fix2_encode_internal(uavcan_equipment_gnss_Fix2* source,
+  void* msg_buf,
+  uint32_t offset,
+  uint8_t CANARD_MAYBE_UNUSED(root_item))
 {
     uint32_t c = 0;
 #ifndef CANARD_USE_FLOAT16_CAST
@@ -33,11 +43,11 @@ uint32_t uavcan_equipment_gnss_Fix2_encode_internal(uavcan_equipment_gnss_Fix2* 
 #endif
 
     // Compound
-    offset = uavcan_Timestamp_encode_internal((void*)&source->timestamp, msg_buf, offset, 0);
+    offset = uavcan_Timestamp_encode_internal(&source->timestamp, msg_buf, offset, 0);
 
     // Compound
-    offset = uavcan_Timestamp_encode_internal((void*)&source->gnss_timestamp, msg_buf, offset, 0);
-    source->gnss_time_standard = CANARD_INTERNAL_SATURATE(source->gnss_time_standard, 7)
+    offset = uavcan_Timestamp_encode_internal(&source->gnss_timestamp, msg_buf, offset, 0);
+    source->gnss_time_standard = CANARD_INTERNAL_SATURATE_UNSIGNED(source->gnss_time_standard, 7)
     canardEncodeScalar(msg_buf, offset, 3, (void*)&source->gnss_time_standard); // 7
     offset += 3;
 
@@ -69,19 +79,19 @@ uint32_t uavcan_equipment_gnss_Fix2_encode_internal(uavcan_equipment_gnss_Fix2* 
         offset += 32;
     }
 
-    source->sats_used = CANARD_INTERNAL_SATURATE(source->sats_used, 63)
+    source->sats_used = CANARD_INTERNAL_SATURATE_UNSIGNED(source->sats_used, 63)
     canardEncodeScalar(msg_buf, offset, 6, (void*)&source->sats_used); // 63
     offset += 6;
 
-    source->status = CANARD_INTERNAL_SATURATE(source->status, 3)
+    source->status = CANARD_INTERNAL_SATURATE_UNSIGNED(source->status, 3)
     canardEncodeScalar(msg_buf, offset, 2, (void*)&source->status); // 3
     offset += 2;
 
-    source->mode = CANARD_INTERNAL_SATURATE(source->mode, 15)
+    source->mode = CANARD_INTERNAL_SATURATE_UNSIGNED(source->mode, 15)
     canardEncodeScalar(msg_buf, offset, 4, (void*)&source->mode); // 15
     offset += 4;
 
-    source->sub_mode = CANARD_INTERNAL_SATURATE(source->sub_mode, 63)
+    source->sub_mode = CANARD_INTERNAL_SATURATE_UNSIGNED(source->sub_mode, 63)
     canardEncodeScalar(msg_buf, offset, 6, (void*)&source->sub_mode); // 63
     offset += 6;
 
@@ -93,7 +103,10 @@ uint32_t uavcan_equipment_gnss_Fix2_encode_internal(uavcan_equipment_gnss_Fix2* 
     // - Add array items
     for (c = 0; c < source->covariance.len; c++)
     {
-        canardEncodeScalar(msg_buf, offset, 16, (void*)(source->covariance.data + c));// 32767
+        canardEncodeScalar(msg_buf,
+                           offset,
+                           16,
+                           (void*)(source->covariance.data + c));// 32767
         offset += 16;
     }
 
@@ -147,10 +160,14 @@ uint32_t uavcan_equipment_gnss_Fix2_encode(uavcan_equipment_gnss_Fix2* source, v
   *                     uavcan_equipment_gnss_Fix2 dyn memory will point to dyn_arr_buf memory.
   *                     NULL will ignore dynamic arrays decoding.
   * @param offset: Call with 0, bit offset to msg storage
-  * @param tao: is tail array optimization used
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_equipment_gnss_Fix2_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_equipment_gnss_Fix2* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao)
+int32_t uavcan_equipment_gnss_Fix2_decode_internal(
+  const CanardRxTransfer* transfer,
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  uavcan_equipment_gnss_Fix2* dest,
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
+  int32_t offset)
 {
     int32_t ret = 0;
     uint32_t c = 0;
@@ -161,7 +178,7 @@ int32_t uavcan_equipment_gnss_Fix2_decode_internal(const CanardRxTransfer* trans
 #endif
 
     // Compound
-    offset = uavcan_Timestamp_decode_internal(transfer, 0, (void*)&dest->timestamp, dyn_arr_buf, offset, tao);
+    offset = uavcan_Timestamp_decode_internal(transfer, 0, &dest->timestamp, dyn_arr_buf, offset);
     if (offset < 0)
     {
         ret = offset;
@@ -169,7 +186,7 @@ int32_t uavcan_equipment_gnss_Fix2_decode_internal(const CanardRxTransfer* trans
     }
 
     // Compound
-    offset = uavcan_Timestamp_decode_internal(transfer, 0, (void*)&dest->gnss_timestamp, dyn_arr_buf, offset, tao);
+    offset = uavcan_Timestamp_decode_internal(transfer, 0, &dest->gnss_timestamp, dyn_arr_buf, offset);
     if (offset < 0)
     {
         ret = offset;
@@ -262,7 +279,11 @@ int32_t uavcan_equipment_gnss_Fix2_decode_internal(const CanardRxTransfer* trans
 
     // Dynamic Array (covariance)
     //  - Array length, not last item 6 bits
-    ret = canardDecodeScalar(transfer, offset, 6, false, (void*)&dest->covariance.len); // 32767
+    ret = canardDecodeScalar(transfer,
+                             offset,
+                             6,
+                             false,
+                             (void*)&dest->covariance.len); // 32767
     if (ret != 6)
     {
         goto uavcan_equipment_gnss_Fix2_error_exit;
@@ -279,7 +300,11 @@ int32_t uavcan_equipment_gnss_Fix2_decode_internal(const CanardRxTransfer* trans
     {
         if (dyn_arr_buf)
         {
-            ret = canardDecodeScalar(transfer, offset, 16, false, (void*)*dyn_arr_buf); // 32767
+            ret = canardDecodeScalar(transfer,
+                                     offset,
+                                     16,
+                                     false,
+                                     (void*)*dyn_arr_buf); // 32767
             if (ret != 16)
             {
                 goto uavcan_equipment_gnss_Fix2_error_exit;
@@ -305,7 +330,7 @@ int32_t uavcan_equipment_gnss_Fix2_decode_internal(const CanardRxTransfer* trans
 
     // Dynamic Array (ecef_position_velocity)
     //  - Last item in struct & Root item & (Array Size > 8 bit), tail array optimization
-    if (payload_len && tao == CANARD_INTERNAL_ENABLE_TAO)
+    if (payload_len)
     {
         //  - Calculate Array length from MSG length
         dest->ecef_position_velocity.len = ((payload_len * 8) - offset ) / 792; // 792 bit array item size
@@ -313,7 +338,11 @@ int32_t uavcan_equipment_gnss_Fix2_decode_internal(const CanardRxTransfer* trans
     else
     {
         // - Array length 1 bits
-        ret = canardDecodeScalar(transfer, offset, 1, false, (void*)&dest->ecef_position_velocity.len); // 0
+        ret = canardDecodeScalar(transfer,
+                                 offset,
+                                 1,
+                                 false,
+                                 (void*)&dest->ecef_position_velocity.len); // 0
         if (ret != 1)
         {
             goto uavcan_equipment_gnss_Fix2_error_exit;
@@ -329,7 +358,11 @@ int32_t uavcan_equipment_gnss_Fix2_decode_internal(const CanardRxTransfer* trans
 
     for (c = 0; c < dest->ecef_position_velocity.len; c++)
     {
-        offset += uavcan_equipment_gnss_ECEFPositionVelocity_decode_internal(transfer, 0, (void*)&dest->ecef_position_velocity.data[c], dyn_arr_buf, offset, tao);
+        offset += uavcan_equipment_gnss_ECEFPositionVelocity_decode_internal(transfer,
+                                                0,
+                                                (void*)&dest->ecef_position_velocity.data[c],
+                                                dyn_arr_buf,
+                                                offset);
     }
     return offset;
 
@@ -354,38 +387,21 @@ uavcan_equipment_gnss_Fix2_error_exit:
   *                     NULL will ignore dynamic arrays decoding.
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_equipment_gnss_Fix2_decode(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_equipment_gnss_Fix2* dest, uint8_t** dyn_arr_buf)
+int32_t uavcan_equipment_gnss_Fix2_decode(const CanardRxTransfer* transfer,
+  uint16_t payload_len,
+  uavcan_equipment_gnss_Fix2* dest,
+  uint8_t** dyn_arr_buf)
 {
     const int32_t offset = 0;
     int32_t ret = 0;
 
-    /* Backward compatibility support for removing TAO
-     *  - first try to decode with TAO DISABLED
-     *  - if it fails fall back to TAO ENABLED
-     */
-    uint8_t tao = CANARD_INTERNAL_DISABLE_TAO;
-
-    while (1)
+    // Clear the destination struct
+    for (uint32_t c = 0; c < sizeof(uavcan_equipment_gnss_Fix2); c++)
     {
-        // Clear the destination struct
-        for (uint32_t c = 0; c < sizeof(uavcan_equipment_gnss_Fix2); c++)
-        {
-            ((uint8_t*)dest)[c] = 0x00;
-        }
-
-        ret = uavcan_equipment_gnss_Fix2_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset, tao);
-
-        if (ret >= 0)
-        {
-            break;
-        }
-
-        if (tao == CANARD_INTERNAL_ENABLE_TAO)
-        {
-            break;
-        }
-        tao = CANARD_INTERNAL_ENABLE_TAO;
+        ((uint8_t*)dest)[c] = 0x00;
     }
+
+    ret = uavcan_equipment_gnss_Fix2_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset);
 
     return ret;
 }

@@ -80,7 +80,7 @@ extern
 uint32_t uavcan_protocol_GetNodeInfoRequest_encode_internal(uavcan_protocol_GetNodeInfoRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_GetNodeInfoRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_GetNodeInfoRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_GetNodeInfoRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_GetNodeInfoRequest* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #define UAVCAN_PROTOCOL_GETNODEINFO_RESPONSE_MAX_SIZE      ((3015 + 7)/8)
 
@@ -112,7 +112,7 @@ extern
 uint32_t uavcan_protocol_GetNodeInfoResponse_encode_internal(uavcan_protocol_GetNodeInfoResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_GetNodeInfoResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_GetNodeInfoResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_GetNodeInfoResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_GetNodeInfoResponse* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

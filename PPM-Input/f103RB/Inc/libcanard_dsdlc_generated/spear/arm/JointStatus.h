@@ -61,7 +61,7 @@ extern
 uint32_t spear_arm_JointStatus_encode_internal(spear_arm_JointStatus* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t spear_arm_JointStatus_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, spear_arm_JointStatus* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t spear_arm_JointStatus_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, spear_arm_JointStatus* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

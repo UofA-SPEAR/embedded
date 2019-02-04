@@ -63,8 +63,8 @@ saturated uint8 error
 #define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_REQUEST_MAX_SIZE ((759 + 7)/8)
 
 // Constants
-#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_TIMEOUT_CANCEL                      0 // 0
-#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_TIMEOUT_INFINITE                65535 // 65535
+#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_REQUEST_TIMEOUT_CANCEL              0 // 0
+#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_REQUEST_TIMEOUT_INFINITE        65535 // 65535
 
 #define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_REQUEST_PARAMETER_NAME_MAX_LENGTH              92
 
@@ -90,16 +90,16 @@ extern
 uint32_t uavcan_protocol_enumeration_BeginRequest_encode_internal(uavcan_protocol_enumeration_BeginRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_enumeration_BeginRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_enumeration_BeginRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_enumeration_BeginRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_enumeration_BeginRequest* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_RESPONSE_MAX_SIZE ((8 + 7)/8)
 
 // Constants
-#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_ERROR_OK                            0 // 0
-#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_ERROR_INVALID_MODE                  1 // 1
-#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_ERROR_INVALID_PARAMETER             2 // 2
-#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_ERROR_UNSUPPORTED                   3 // 3
-#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_ERROR_UNKNOWN                     255 // 255
+#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_RESPONSE_ERROR_OK                   0 // 0
+#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_RESPONSE_ERROR_INVALID_MODE          1 // 1
+#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_RESPONSE_ERROR_INVALID_PARAMETER          2 // 2
+#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_RESPONSE_ERROR_UNSUPPORTED          3 // 3
+#define UAVCAN_PROTOCOL_ENUMERATION_BEGIN_RESPONSE_ERROR_UNKNOWN            255 // 255
 
 typedef struct
 {
@@ -118,7 +118,7 @@ extern
 uint32_t uavcan_protocol_enumeration_BeginResponse_encode_internal(uavcan_protocol_enumeration_BeginResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_enumeration_BeginResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_enumeration_BeginResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_enumeration_BeginResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_enumeration_BeginResponse* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

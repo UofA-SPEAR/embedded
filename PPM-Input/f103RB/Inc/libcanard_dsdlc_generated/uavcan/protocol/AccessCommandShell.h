@@ -106,12 +106,12 @@ saturated uint8[<=256] output
 #define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_REQUEST_MAX_SIZE ((1040 + 7)/8)
 
 // Constants
-#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_NEWLINE                         '\n' // '\n'
-#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_MIN_OUTPUT_LIFETIME_SEC           10 // 10
-#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_FLAG_RESET_SHELL                   1 // 1
-#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_FLAG_CLEAR_OUTPUT_BUFFERS          2 // 2
-#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_FLAG_READ_STDOUT                  64 // 64
-#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_FLAG_READ_STDERR                 128 // 128
+#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_REQUEST_NEWLINE                 '\n' // '\n'
+#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_REQUEST_MIN_OUTPUT_LIFETIME_SEC         10 // 10
+#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_REQUEST_FLAG_RESET_SHELL           1 // 1
+#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_REQUEST_FLAG_CLEAR_OUTPUT_BUFFERS          2 // 2
+#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_REQUEST_FLAG_READ_STDOUT          64 // 64
+#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_REQUEST_FLAG_READ_STDERR         128 // 128
 
 #define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_REQUEST_INPUT_MAX_LENGTH                      128
 
@@ -137,15 +137,15 @@ extern
 uint32_t uavcan_protocol_AccessCommandShellRequest_encode_internal(uavcan_protocol_AccessCommandShellRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_AccessCommandShellRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_AccessCommandShellRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_AccessCommandShellRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_AccessCommandShellRequest* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_RESPONSE_MAX_SIZE ((2097 + 7)/8)
 
 // Constants
-#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_FLAG_RUNNING                       1 // 1
-#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_FLAG_SHELL_ERROR                   2 // 2
-#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_FLAG_HAS_PENDING_STDOUT           64 // 64
-#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_FLAG_HAS_PENDING_STDERR          128 // 128
+#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_RESPONSE_FLAG_RUNNING              1 // 1
+#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_RESPONSE_FLAG_SHELL_ERROR          2 // 2
+#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_RESPONSE_FLAG_HAS_PENDING_STDOUT         64 // 64
+#define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_RESPONSE_FLAG_HAS_PENDING_STDERR        128 // 128
 
 #define UAVCAN_PROTOCOL_ACCESSCOMMANDSHELL_RESPONSE_OUTPUT_MAX_LENGTH                    256
 
@@ -172,7 +172,7 @@ extern
 uint32_t uavcan_protocol_AccessCommandShellResponse_encode_internal(uavcan_protocol_AccessCommandShellResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_AccessCommandShellResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_AccessCommandShellResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_AccessCommandShellResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_AccessCommandShellResponse* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

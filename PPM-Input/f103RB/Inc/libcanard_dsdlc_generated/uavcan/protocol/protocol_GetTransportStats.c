@@ -12,25 +12,42 @@
 #define CANARD_INTERNAL_SATURATE(x, max) ( ((x) > max) ? max : ( (-(x) > max) ? (-max) : (x) ) );
 #endif
 
-#define CANARD_INTERNAL_ENABLE_TAO  ((uint8_t) 1)
-#define CANARD_INTERNAL_DISABLE_TAO ((uint8_t) 0)
+#ifndef CANARD_INTERNAL_SATURATE_UNSIGNED
+#define CANARD_INTERNAL_SATURATE_UNSIGNED(x, max) ( ((x) > max) ? max : (x) );
+#endif
 
-uint32_t uavcan_protocol_GetTransportStatsRequest_encode_internal(uavcan_protocol_GetTransportStatsRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item)
+#if defined(__GNUC__)
+# define CANARD_MAYBE_UNUSED(x) x __attribute__((unused))
+#else
+# define CANARD_MAYBE_UNUSED(x) x
+#endif
+
+uint32_t uavcan_protocol_GetTransportStatsRequest_encode_internal(uavcan_protocol_GetTransportStatsRequest* CANARD_MAYBE_UNUSED(source),
+  void* CANARD_MAYBE_UNUSED(msg_buf),
+  uint32_t offset,
+  uint8_t CANARD_MAYBE_UNUSED(root_item))
 {
     return offset;
 }
 
-uint32_t uavcan_protocol_GetTransportStatsRequest_encode(uavcan_protocol_GetTransportStatsRequest* source, void* msg_buf)
+uint32_t uavcan_protocol_GetTransportStatsRequest_encode(uavcan_protocol_GetTransportStatsRequest* CANARD_MAYBE_UNUSED(source), void* CANARD_MAYBE_UNUSED(msg_buf))
 {
     return 0;
 }
 
-int32_t uavcan_protocol_GetTransportStatsRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_GetTransportStatsRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao)
+int32_t uavcan_protocol_GetTransportStatsRequest_decode_internal(const CanardRxTransfer* CANARD_MAYBE_UNUSED(transfer),
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  uavcan_protocol_GetTransportStatsRequest* CANARD_MAYBE_UNUSED(dest),
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
+  int32_t offset)
 {
     return offset;
 }
 
-int32_t uavcan_protocol_GetTransportStatsRequest_decode(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_GetTransportStatsRequest* dest, uint8_t** dyn_arr_buf)
+int32_t uavcan_protocol_GetTransportStatsRequest_decode(const CanardRxTransfer* CANARD_MAYBE_UNUSED(transfer),
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  uavcan_protocol_GetTransportStatsRequest* CANARD_MAYBE_UNUSED(dest),
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf))
 {
     return 0;
 }
@@ -43,19 +60,22 @@ int32_t uavcan_protocol_GetTransportStatsRequest_decode(const CanardRxTransfer* 
   * @param root_item: for detecting if TAO should be used
   * @retval returns offset
   */
-uint32_t uavcan_protocol_GetTransportStatsResponse_encode_internal(uavcan_protocol_GetTransportStatsResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item)
+uint32_t uavcan_protocol_GetTransportStatsResponse_encode_internal(uavcan_protocol_GetTransportStatsResponse* source,
+  void* msg_buf,
+  uint32_t offset,
+  uint8_t CANARD_MAYBE_UNUSED(root_item))
 {
     uint32_t c = 0;
 
-    source->transfers_tx = CANARD_INTERNAL_SATURATE(source->transfers_tx, 281474976710655)
+    source->transfers_tx = CANARD_INTERNAL_SATURATE_UNSIGNED(source->transfers_tx, 281474976710655)
     canardEncodeScalar(msg_buf, offset, 48, (void*)&source->transfers_tx); // 281474976710655
     offset += 48;
 
-    source->transfers_rx = CANARD_INTERNAL_SATURATE(source->transfers_rx, 281474976710655)
+    source->transfers_rx = CANARD_INTERNAL_SATURATE_UNSIGNED(source->transfers_rx, 281474976710655)
     canardEncodeScalar(msg_buf, offset, 48, (void*)&source->transfers_rx); // 281474976710655
     offset += 48;
 
-    source->transfer_errors = CANARD_INTERNAL_SATURATE(source->transfer_errors, 281474976710655)
+    source->transfer_errors = CANARD_INTERNAL_SATURATE_UNSIGNED(source->transfer_errors, 281474976710655)
     canardEncodeScalar(msg_buf, offset, 48, (void*)&source->transfer_errors); // 281474976710655
     offset += 48;
 
@@ -100,10 +120,14 @@ uint32_t uavcan_protocol_GetTransportStatsResponse_encode(uavcan_protocol_GetTra
   *                     uavcan_protocol_GetTransportStatsResponse dyn memory will point to dyn_arr_buf memory.
   *                     NULL will ignore dynamic arrays decoding.
   * @param offset: Call with 0, bit offset to msg storage
-  * @param tao: is tail array optimization used
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_GetTransportStatsResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_GetTransportStatsResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao)
+int32_t uavcan_protocol_GetTransportStatsResponse_decode_internal(
+  const CanardRxTransfer* transfer,
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  uavcan_protocol_GetTransportStatsResponse* dest,
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
+  int32_t offset)
 {
     int32_t ret = 0;
     uint32_t c = 0;
@@ -131,7 +155,7 @@ int32_t uavcan_protocol_GetTransportStatsResponse_decode_internal(const CanardRx
 
     // Dynamic Array (can_iface_stats)
     //  - Last item in struct & Root item & (Array Size > 8 bit), tail array optimization
-    if (payload_len && tao == CANARD_INTERNAL_ENABLE_TAO)
+    if (payload_len)
     {
         //  - Calculate Array length from MSG length
         dest->can_iface_stats.len = ((payload_len * 8) - offset ) / 144; // 144 bit array item size
@@ -139,7 +163,11 @@ int32_t uavcan_protocol_GetTransportStatsResponse_decode_internal(const CanardRx
     else
     {
         // - Array length 2 bits
-        ret = canardDecodeScalar(transfer, offset, 2, false, (void*)&dest->can_iface_stats.len); // 0
+        ret = canardDecodeScalar(transfer,
+                                 offset,
+                                 2,
+                                 false,
+                                 (void*)&dest->can_iface_stats.len); // 0
         if (ret != 2)
         {
             goto uavcan_protocol_GetTransportStatsResponse_error_exit;
@@ -155,7 +183,11 @@ int32_t uavcan_protocol_GetTransportStatsResponse_decode_internal(const CanardRx
 
     for (c = 0; c < dest->can_iface_stats.len; c++)
     {
-        offset += uavcan_protocol_CANIfaceStats_decode_internal(transfer, 0, (void*)&dest->can_iface_stats.data[c], dyn_arr_buf, offset, tao);
+        offset += uavcan_protocol_CANIfaceStats_decode_internal(transfer,
+                                                0,
+                                                (void*)&dest->can_iface_stats.data[c],
+                                                dyn_arr_buf,
+                                                offset);
     }
     return offset;
 
@@ -180,38 +212,21 @@ uavcan_protocol_GetTransportStatsResponse_error_exit:
   *                     NULL will ignore dynamic arrays decoding.
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_GetTransportStatsResponse_decode(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_GetTransportStatsResponse* dest, uint8_t** dyn_arr_buf)
+int32_t uavcan_protocol_GetTransportStatsResponse_decode(const CanardRxTransfer* transfer,
+  uint16_t payload_len,
+  uavcan_protocol_GetTransportStatsResponse* dest,
+  uint8_t** dyn_arr_buf)
 {
     const int32_t offset = 0;
     int32_t ret = 0;
 
-    /* Backward compatibility support for removing TAO
-     *  - first try to decode with TAO DISABLED
-     *  - if it fails fall back to TAO ENABLED
-     */
-    uint8_t tao = CANARD_INTERNAL_DISABLE_TAO;
-
-    while (1)
+    // Clear the destination struct
+    for (uint32_t c = 0; c < sizeof(uavcan_protocol_GetTransportStatsResponse); c++)
     {
-        // Clear the destination struct
-        for (uint32_t c = 0; c < sizeof(uavcan_protocol_GetTransportStatsResponse); c++)
-        {
-            ((uint8_t*)dest)[c] = 0x00;
-        }
-
-        ret = uavcan_protocol_GetTransportStatsResponse_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset, tao);
-
-        if (ret >= 0)
-        {
-            break;
-        }
-
-        if (tao == CANARD_INTERNAL_ENABLE_TAO)
-        {
-            break;
-        }
-        tao = CANARD_INTERNAL_ENABLE_TAO;
+        ((uint8_t*)dest)[c] = 0x00;
     }
+
+    ret = uavcan_protocol_GetTransportStatsResponse_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset);
 
     return ret;
 }

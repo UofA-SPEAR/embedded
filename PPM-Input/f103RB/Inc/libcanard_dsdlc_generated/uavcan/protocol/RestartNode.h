@@ -48,7 +48,7 @@ saturated bool ok
 #define UAVCAN_PROTOCOL_RESTARTNODE_REQUEST_MAX_SIZE       ((40 + 7)/8)
 
 // Constants
-#define UAVCAN_PROTOCOL_RESTARTNODE_MAGIC_NUMBER                     0xACCE551B1E // 0xACCE551B1E
+#define UAVCAN_PROTOCOL_RESTARTNODE_REQUEST_MAGIC_NUMBER             0xACCE551B1E // 0xACCE551B1E
 
 typedef struct
 {
@@ -67,7 +67,7 @@ extern
 uint32_t uavcan_protocol_RestartNodeRequest_encode_internal(uavcan_protocol_RestartNodeRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_RestartNodeRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_RestartNodeRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_RestartNodeRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_RestartNodeRequest* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #define UAVCAN_PROTOCOL_RESTARTNODE_RESPONSE_MAX_SIZE      ((1 + 7)/8)
 
@@ -90,7 +90,7 @@ extern
 uint32_t uavcan_protocol_RestartNodeResponse_encode_internal(uavcan_protocol_RestartNodeResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_RestartNodeResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_RestartNodeResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_RestartNodeResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_RestartNodeResponse* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

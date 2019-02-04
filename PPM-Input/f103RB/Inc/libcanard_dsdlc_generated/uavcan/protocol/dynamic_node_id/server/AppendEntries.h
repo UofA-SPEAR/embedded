@@ -85,8 +85,8 @@ saturated bool success
 #define UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_SERVER_APPENDENTRIES_REQUEST_MAX_SIZE ((249 + 7)/8)
 
 // Constants
-#define UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_SERVER_APPENDENTRIES_DEFAULT_MIN_ELECTION_TIMEOUT_MS       2000 // 2000
-#define UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_SERVER_APPENDENTRIES_DEFAULT_MAX_ELECTION_TIMEOUT_MS       4000 // 4000
+#define UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_SERVER_APPENDENTRIES_REQUEST_DEFAULT_MIN_ELECTION_TIMEOUT_MS       2000 // 2000
+#define UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_SERVER_APPENDENTRIES_REQUEST_DEFAULT_MAX_ELECTION_TIMEOUT_MS       4000 // 4000
 
 #define UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_SERVER_APPENDENTRIES_REQUEST_ENTRIES_MAX_LENGTH  1
 
@@ -115,7 +115,7 @@ extern
 uint32_t uavcan_protocol_dynamic_node_id_server_AppendEntriesRequest_encode_internal(uavcan_protocol_dynamic_node_id_server_AppendEntriesRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_dynamic_node_id_server_AppendEntriesRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_dynamic_node_id_server_AppendEntriesRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_dynamic_node_id_server_AppendEntriesRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_dynamic_node_id_server_AppendEntriesRequest* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #define UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_SERVER_APPENDENTRIES_RESPONSE_MAX_SIZE ((33 + 7)/8)
 
@@ -139,7 +139,7 @@ extern
 uint32_t uavcan_protocol_dynamic_node_id_server_AppendEntriesResponse_encode_internal(uavcan_protocol_dynamic_node_id_server_AppendEntriesResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_dynamic_node_id_server_AppendEntriesResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_dynamic_node_id_server_AppendEntriesResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_dynamic_node_id_server_AppendEntriesResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_dynamic_node_id_server_AppendEntriesResponse* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

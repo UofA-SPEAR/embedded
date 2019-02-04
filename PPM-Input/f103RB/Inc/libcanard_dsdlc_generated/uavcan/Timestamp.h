@@ -59,7 +59,7 @@ extern
 uint32_t uavcan_Timestamp_encode_internal(uavcan_Timestamp* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_Timestamp_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_Timestamp* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_Timestamp_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_Timestamp* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

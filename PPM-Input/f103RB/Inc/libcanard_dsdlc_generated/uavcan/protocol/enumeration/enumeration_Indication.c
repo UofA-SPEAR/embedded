@@ -12,8 +12,15 @@
 #define CANARD_INTERNAL_SATURATE(x, max) ( ((x) > max) ? max : ( (-(x) > max) ? (-max) : (x) ) );
 #endif
 
-#define CANARD_INTERNAL_ENABLE_TAO  ((uint8_t) 1)
-#define CANARD_INTERNAL_DISABLE_TAO ((uint8_t) 0)
+#ifndef CANARD_INTERNAL_SATURATE_UNSIGNED
+#define CANARD_INTERNAL_SATURATE_UNSIGNED(x, max) ( ((x) > max) ? max : (x) );
+#endif
+
+#if defined(__GNUC__)
+# define CANARD_MAYBE_UNUSED(x) x __attribute__((unused))
+#else
+# define CANARD_MAYBE_UNUSED(x) x
+#endif
 
 /**
   * @brief uavcan_protocol_enumeration_Indication_encode_internal
@@ -23,7 +30,10 @@
   * @param root_item: for detecting if TAO should be used
   * @retval returns offset
   */
-uint32_t uavcan_protocol_enumeration_Indication_encode_internal(uavcan_protocol_enumeration_Indication* source, void* msg_buf, uint32_t offset, uint8_t root_item)
+uint32_t uavcan_protocol_enumeration_Indication_encode_internal(uavcan_protocol_enumeration_Indication* source,
+  void* msg_buf,
+  uint32_t offset,
+  uint8_t CANARD_MAYBE_UNUSED(root_item))
 {
     uint32_t c = 0;
 
@@ -31,7 +41,7 @@ uint32_t uavcan_protocol_enumeration_Indication_encode_internal(uavcan_protocol_
     offset += 6;
 
     // Compound
-    offset = uavcan_protocol_param_NumericValue_encode_internal((void*)&source->value, msg_buf, offset, 0);
+    offset = uavcan_protocol_param_NumericValue_encode_internal(&source->value, msg_buf, offset, 0);
 
     // Dynamic Array (parameter_name)
     if (! root_item)
@@ -44,7 +54,10 @@ uint32_t uavcan_protocol_enumeration_Indication_encode_internal(uavcan_protocol_
     // - Add array items
     for (c = 0; c < source->parameter_name.len; c++)
     {
-        canardEncodeScalar(msg_buf, offset, 8, (void*)(source->parameter_name.data + c));// 255
+        canardEncodeScalar(msg_buf,
+                           offset,
+                           8,
+                           (void*)(source->parameter_name.data + c));// 255
         offset += 8;
     }
 
@@ -75,10 +88,14 @@ uint32_t uavcan_protocol_enumeration_Indication_encode(uavcan_protocol_enumerati
   *                     uavcan_protocol_enumeration_Indication dyn memory will point to dyn_arr_buf memory.
   *                     NULL will ignore dynamic arrays decoding.
   * @param offset: Call with 0, bit offset to msg storage
-  * @param tao: is tail array optimization used
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_enumeration_Indication_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_enumeration_Indication* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao)
+int32_t uavcan_protocol_enumeration_Indication_decode_internal(
+  const CanardRxTransfer* transfer,
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  uavcan_protocol_enumeration_Indication* dest,
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
+  int32_t offset)
 {
     int32_t ret = 0;
     uint32_t c = 0;
@@ -87,7 +104,7 @@ int32_t uavcan_protocol_enumeration_Indication_decode_internal(const CanardRxTra
     offset += 6;
 
     // Compound
-    offset = uavcan_protocol_param_NumericValue_decode_internal(transfer, 0, (void*)&dest->value, dyn_arr_buf, offset, tao);
+    offset = uavcan_protocol_param_NumericValue_decode_internal(transfer, 0, &dest->value, dyn_arr_buf, offset);
     if (offset < 0)
     {
         ret = offset;
@@ -96,7 +113,7 @@ int32_t uavcan_protocol_enumeration_Indication_decode_internal(const CanardRxTra
 
     // Dynamic Array (parameter_name)
     //  - Last item in struct & Root item & (Array Size > 8 bit), tail array optimization
-    if (payload_len && tao == CANARD_INTERNAL_ENABLE_TAO)
+    if (payload_len)
     {
         //  - Calculate Array length from MSG length
         dest->parameter_name.len = ((payload_len * 8) - offset ) / 8; // 8 bit array item size
@@ -104,7 +121,11 @@ int32_t uavcan_protocol_enumeration_Indication_decode_internal(const CanardRxTra
     else
     {
         // - Array length 7 bits
-        ret = canardDecodeScalar(transfer, offset, 7, false, (void*)&dest->parameter_name.len); // 255
+        ret = canardDecodeScalar(transfer,
+                                 offset,
+                                 7,
+                                 false,
+                                 (void*)&dest->parameter_name.len); // 255
         if (ret != 7)
         {
             goto uavcan_protocol_enumeration_Indication_error_exit;
@@ -122,7 +143,11 @@ int32_t uavcan_protocol_enumeration_Indication_decode_internal(const CanardRxTra
     {
         if (dyn_arr_buf)
         {
-            ret = canardDecodeScalar(transfer, offset, 8, false, (void*)*dyn_arr_buf); // 255
+            ret = canardDecodeScalar(transfer,
+                                     offset,
+                                     8,
+                                     false,
+                                     (void*)*dyn_arr_buf); // 255
             if (ret != 8)
             {
                 goto uavcan_protocol_enumeration_Indication_error_exit;
@@ -154,38 +179,21 @@ uavcan_protocol_enumeration_Indication_error_exit:
   *                     NULL will ignore dynamic arrays decoding.
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_enumeration_Indication_decode(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_enumeration_Indication* dest, uint8_t** dyn_arr_buf)
+int32_t uavcan_protocol_enumeration_Indication_decode(const CanardRxTransfer* transfer,
+  uint16_t payload_len,
+  uavcan_protocol_enumeration_Indication* dest,
+  uint8_t** dyn_arr_buf)
 {
     const int32_t offset = 0;
     int32_t ret = 0;
 
-    /* Backward compatibility support for removing TAO
-     *  - first try to decode with TAO DISABLED
-     *  - if it fails fall back to TAO ENABLED
-     */
-    uint8_t tao = CANARD_INTERNAL_DISABLE_TAO;
-
-    while (1)
+    // Clear the destination struct
+    for (uint32_t c = 0; c < sizeof(uavcan_protocol_enumeration_Indication); c++)
     {
-        // Clear the destination struct
-        for (uint32_t c = 0; c < sizeof(uavcan_protocol_enumeration_Indication); c++)
-        {
-            ((uint8_t*)dest)[c] = 0x00;
-        }
-
-        ret = uavcan_protocol_enumeration_Indication_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset, tao);
-
-        if (ret >= 0)
-        {
-            break;
-        }
-
-        if (tao == CANARD_INTERNAL_ENABLE_TAO)
-        {
-            break;
-        }
-        tao = CANARD_INTERNAL_ENABLE_TAO;
+        ((uint8_t*)dest)[c] = 0x00;
     }
+
+    ret = uavcan_protocol_enumeration_Indication_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset);
 
     return ret;
 }

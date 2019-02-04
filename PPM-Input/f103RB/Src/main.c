@@ -46,6 +46,7 @@
 #include "canard.h"
 #include "canard_stm32.h"
 #include "libcanard_wrapper.h"
+#include "spear/general/PpmMessage.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,7 +54,6 @@
 #define MAX_NUM_OF_CHANNELS 8
 
 typedef struct {
-	uint8_t channels;
 	uint8_t data[MAX_NUM_OF_CHANNELS];
 } RC_Data;
 
@@ -63,7 +63,8 @@ typedef struct {
 /* USER CODE BEGIN PD */
 #define TIME_BETWEEN_PULSES_IN_MS 4
 #define TICKS_PER_MS 100
-
+#define CLOCK_RATE 8000000
+#define CAN_RATE 250000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -79,9 +80,9 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 RC_Data ppmData;
 uint8_t channel;
-uint32_t startTimer;
 uint32_t channelTimer;
-
+uint8_t msgBuffer[SPEAR_GENERAL_PPMMESSAGE_MAX_SIZE];
+uint32_t inout_transfer_id;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,6 +97,14 @@ void Interupt_Falling(uint16_t GPIO_Pin);
 void Reset_State();
 void Transmit_Data();
 uint32_t Check_Int_WrapAround(uint32_t);
+void on_reception(CanardInstance* ins,                		///< Library instance
+                        CanardRxTransfer* transfer);
+bool should_accept(const CanardInstance* ins,         		///< Library instance
+                        uint64_t* out_data_type_signature,  ///< Must be set by the application!
+                        uint16_t data_type_id,              ///< Refer to the specification
+						CanardTransferType transfer_type,   ///< Refer to CanardTransferType
+                        uint8_t source_node_id);            ///< Source node ID or Broadcast (0)
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -119,11 +128,6 @@ void Interupt_Rising(uint16_t GPIO_Pin)
 	// code for handling a rising edge
 	// record time
 	channelTimer = TIM1->CNT;
-	if (!startTimer)
-	{
-		// if time elapsed is 0 set time to start
-		startTimer = channelTimer;
-	}
 }
 
 void Interupt_Falling(uint16_t GPIO_Pin)
@@ -150,21 +154,29 @@ void Reset_State()
 	// code for sending, and resetting data
 	Transmit_Data();
 	// reset stuff
-	startTimer = 0;
 	channelTimer = 0;
 	channel = 0;
-	ppmData.channels = 0;
-	for (int i = 0; i < MAX_NUM_OF_CHANNELS; i++)
-	{
-		ppmData.data[i] = 200;
-	}
 }
 
 void Transmit_Data()
 {
-	ppmData.channels = channel;
 	// TODO: Send data to tx in can format
-
+	// wrap in CAN frame
+	spear_general_PpmMessage msg;
+	msg.channel_data.len = channel;
+	for (int i = 0; i < channel; i++)
+	{
+		msg.channel_data.data[i] = ppmData.data[i];
+	}
+	uint8_t len = spear_general_PpmMessage_encode(&msg, msgBuffer);
+	// add to message stack
+	canardBroadcast(&m_canard_instance,
+			SPEAR_GENERAL_PPMMESSAGE_SIGNATURE,
+			SPEAR_GENERAL_PPMMESSAGE_ID,
+			&inout_transfer_id,
+			0,
+			msgBuffer,
+			len);
 }
 
 uint32_t Check_Int_WrapAround(uint32_t main_elapsed)
@@ -179,6 +191,23 @@ uint32_t Check_Int_WrapAround(uint32_t main_elapsed)
 	}
 }
 
+void on_reception(CanardInstance* ins,                		///< Library instance
+                        CanardRxTransfer* transfer)
+{
+	// do nothing
+	return;
+}
+
+// never accept, no msgs are expected
+bool should_accept(const CanardInstance* ins,         		///< Library instance
+                        uint64_t* out_data_type_signature,  ///< Must be set by the application!
+                        uint16_t data_type_id,              ///< Refer to the specification
+						CanardTransferType transfer_type,   ///< Refer to CanardTransferType
+                        uint8_t source_node_id)             ///< Source node ID or Broadcast (0)
+{
+	return false;
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -188,14 +217,14 @@ uint32_t Check_Int_WrapAround(uint32_t main_elapsed)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  startTimer = 0;
   channelTimer = 0;
   channel = 0;
   for (int i = 0; i < MAX_NUM_OF_CHANNELS; i++)
   {
   	ppmData.data[i] = 200;
   }
-  libcanard_init(on_reception, should_accept, 8000000, 250000);
+  libcanard_init(on_reception, should_accept, CLOCK_RATE, CAN_RATE);
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -232,10 +261,11 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  if ((Check_Int_WrapAround(TIM1->ARR - channelTimer) > TICKS_PER_MS / TIME_BETWEEN_PULSES_IN_MS) &&
-			  (startTimer != 0))
+			  (channelTimer != 0))
 	  {
 		  Reset_State();
 	  }
+	  tx_once;
   }
   /* USER CODE END 3 */
 }

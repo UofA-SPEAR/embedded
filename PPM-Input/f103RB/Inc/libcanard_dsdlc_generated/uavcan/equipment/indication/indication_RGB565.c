@@ -12,8 +12,15 @@
 #define CANARD_INTERNAL_SATURATE(x, max) ( ((x) > max) ? max : ( (-(x) > max) ? (-max) : (x) ) );
 #endif
 
-#define CANARD_INTERNAL_ENABLE_TAO  ((uint8_t) 1)
-#define CANARD_INTERNAL_DISABLE_TAO ((uint8_t) 0)
+#ifndef CANARD_INTERNAL_SATURATE_UNSIGNED
+#define CANARD_INTERNAL_SATURATE_UNSIGNED(x, max) ( ((x) > max) ? max : (x) );
+#endif
+
+#if defined(__GNUC__)
+# define CANARD_MAYBE_UNUSED(x) x __attribute__((unused))
+#else
+# define CANARD_MAYBE_UNUSED(x) x
+#endif
 
 /**
   * @brief uavcan_equipment_indication_RGB565_encode_internal
@@ -23,17 +30,20 @@
   * @param root_item: for detecting if TAO should be used
   * @retval returns offset
   */
-uint32_t uavcan_equipment_indication_RGB565_encode_internal(uavcan_equipment_indication_RGB565* source, void* msg_buf, uint32_t offset, uint8_t root_item)
+uint32_t uavcan_equipment_indication_RGB565_encode_internal(uavcan_equipment_indication_RGB565* source,
+  void* msg_buf,
+  uint32_t offset,
+  uint8_t CANARD_MAYBE_UNUSED(root_item))
 {
-    source->red = CANARD_INTERNAL_SATURATE(source->red, 31)
+    source->red = CANARD_INTERNAL_SATURATE_UNSIGNED(source->red, 31)
     canardEncodeScalar(msg_buf, offset, 5, (void*)&source->red); // 31
     offset += 5;
 
-    source->green = CANARD_INTERNAL_SATURATE(source->green, 63)
+    source->green = CANARD_INTERNAL_SATURATE_UNSIGNED(source->green, 63)
     canardEncodeScalar(msg_buf, offset, 6, (void*)&source->green); // 63
     offset += 6;
 
-    source->blue = CANARD_INTERNAL_SATURATE(source->blue, 31)
+    source->blue = CANARD_INTERNAL_SATURATE_UNSIGNED(source->blue, 31)
     canardEncodeScalar(msg_buf, offset, 5, (void*)&source->blue); // 31
     offset += 5;
 
@@ -64,10 +74,14 @@ uint32_t uavcan_equipment_indication_RGB565_encode(uavcan_equipment_indication_R
   *                     uavcan_equipment_indication_RGB565 dyn memory will point to dyn_arr_buf memory.
   *                     NULL will ignore dynamic arrays decoding.
   * @param offset: Call with 0, bit offset to msg storage
-  * @param tao: is tail array optimization used
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_equipment_indication_RGB565_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_equipment_indication_RGB565* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao)
+int32_t uavcan_equipment_indication_RGB565_decode_internal(
+  const CanardRxTransfer* transfer,
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  uavcan_equipment_indication_RGB565* dest,
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
+  int32_t offset)
 {
     int32_t ret = 0;
 
@@ -114,38 +128,21 @@ uavcan_equipment_indication_RGB565_error_exit:
   *                     NULL will ignore dynamic arrays decoding.
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_equipment_indication_RGB565_decode(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_equipment_indication_RGB565* dest, uint8_t** dyn_arr_buf)
+int32_t uavcan_equipment_indication_RGB565_decode(const CanardRxTransfer* transfer,
+  uint16_t payload_len,
+  uavcan_equipment_indication_RGB565* dest,
+  uint8_t** dyn_arr_buf)
 {
     const int32_t offset = 0;
     int32_t ret = 0;
 
-    /* Backward compatibility support for removing TAO
-     *  - first try to decode with TAO DISABLED
-     *  - if it fails fall back to TAO ENABLED
-     */
-    uint8_t tao = CANARD_INTERNAL_DISABLE_TAO;
-
-    while (1)
+    // Clear the destination struct
+    for (uint32_t c = 0; c < sizeof(uavcan_equipment_indication_RGB565); c++)
     {
-        // Clear the destination struct
-        for (uint32_t c = 0; c < sizeof(uavcan_equipment_indication_RGB565); c++)
-        {
-            ((uint8_t*)dest)[c] = 0x00;
-        }
-
-        ret = uavcan_equipment_indication_RGB565_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset, tao);
-
-        if (ret >= 0)
-        {
-            break;
-        }
-
-        if (tao == CANARD_INTERNAL_ENABLE_TAO)
-        {
-            break;
-        }
-        tao = CANARD_INTERNAL_ENABLE_TAO;
+        ((uint8_t*)dest)[c] = 0x00;
     }
+
+    ret = uavcan_equipment_indication_RGB565_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset);
 
     return ret;
 }

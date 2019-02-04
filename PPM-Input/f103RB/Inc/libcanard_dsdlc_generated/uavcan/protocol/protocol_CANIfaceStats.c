@@ -12,8 +12,15 @@
 #define CANARD_INTERNAL_SATURATE(x, max) ( ((x) > max) ? max : ( (-(x) > max) ? (-max) : (x) ) );
 #endif
 
-#define CANARD_INTERNAL_ENABLE_TAO  ((uint8_t) 1)
-#define CANARD_INTERNAL_DISABLE_TAO ((uint8_t) 0)
+#ifndef CANARD_INTERNAL_SATURATE_UNSIGNED
+#define CANARD_INTERNAL_SATURATE_UNSIGNED(x, max) ( ((x) > max) ? max : (x) );
+#endif
+
+#if defined(__GNUC__)
+# define CANARD_MAYBE_UNUSED(x) x __attribute__((unused))
+#else
+# define CANARD_MAYBE_UNUSED(x) x
+#endif
 
 /**
   * @brief uavcan_protocol_CANIfaceStats_encode_internal
@@ -23,17 +30,20 @@
   * @param root_item: for detecting if TAO should be used
   * @retval returns offset
   */
-uint32_t uavcan_protocol_CANIfaceStats_encode_internal(uavcan_protocol_CANIfaceStats* source, void* msg_buf, uint32_t offset, uint8_t root_item)
+uint32_t uavcan_protocol_CANIfaceStats_encode_internal(uavcan_protocol_CANIfaceStats* source,
+  void* msg_buf,
+  uint32_t offset,
+  uint8_t CANARD_MAYBE_UNUSED(root_item))
 {
-    source->frames_tx = CANARD_INTERNAL_SATURATE(source->frames_tx, 281474976710655)
+    source->frames_tx = CANARD_INTERNAL_SATURATE_UNSIGNED(source->frames_tx, 281474976710655)
     canardEncodeScalar(msg_buf, offset, 48, (void*)&source->frames_tx); // 281474976710655
     offset += 48;
 
-    source->frames_rx = CANARD_INTERNAL_SATURATE(source->frames_rx, 281474976710655)
+    source->frames_rx = CANARD_INTERNAL_SATURATE_UNSIGNED(source->frames_rx, 281474976710655)
     canardEncodeScalar(msg_buf, offset, 48, (void*)&source->frames_rx); // 281474976710655
     offset += 48;
 
-    source->errors = CANARD_INTERNAL_SATURATE(source->errors, 281474976710655)
+    source->errors = CANARD_INTERNAL_SATURATE_UNSIGNED(source->errors, 281474976710655)
     canardEncodeScalar(msg_buf, offset, 48, (void*)&source->errors); // 281474976710655
     offset += 48;
 
@@ -64,10 +74,14 @@ uint32_t uavcan_protocol_CANIfaceStats_encode(uavcan_protocol_CANIfaceStats* sou
   *                     uavcan_protocol_CANIfaceStats dyn memory will point to dyn_arr_buf memory.
   *                     NULL will ignore dynamic arrays decoding.
   * @param offset: Call with 0, bit offset to msg storage
-  * @param tao: is tail array optimization used
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_CANIfaceStats_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_CANIfaceStats* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao)
+int32_t uavcan_protocol_CANIfaceStats_decode_internal(
+  const CanardRxTransfer* transfer,
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  uavcan_protocol_CANIfaceStats* dest,
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
+  int32_t offset)
 {
     int32_t ret = 0;
 
@@ -114,38 +128,21 @@ uavcan_protocol_CANIfaceStats_error_exit:
   *                     NULL will ignore dynamic arrays decoding.
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_CANIfaceStats_decode(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_CANIfaceStats* dest, uint8_t** dyn_arr_buf)
+int32_t uavcan_protocol_CANIfaceStats_decode(const CanardRxTransfer* transfer,
+  uint16_t payload_len,
+  uavcan_protocol_CANIfaceStats* dest,
+  uint8_t** dyn_arr_buf)
 {
     const int32_t offset = 0;
     int32_t ret = 0;
 
-    /* Backward compatibility support for removing TAO
-     *  - first try to decode with TAO DISABLED
-     *  - if it fails fall back to TAO ENABLED
-     */
-    uint8_t tao = CANARD_INTERNAL_DISABLE_TAO;
-
-    while (1)
+    // Clear the destination struct
+    for (uint32_t c = 0; c < sizeof(uavcan_protocol_CANIfaceStats); c++)
     {
-        // Clear the destination struct
-        for (uint32_t c = 0; c < sizeof(uavcan_protocol_CANIfaceStats); c++)
-        {
-            ((uint8_t*)dest)[c] = 0x00;
-        }
-
-        ret = uavcan_protocol_CANIfaceStats_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset, tao);
-
-        if (ret >= 0)
-        {
-            break;
-        }
-
-        if (tao == CANARD_INTERNAL_ENABLE_TAO)
-        {
-            break;
-        }
-        tao = CANARD_INTERNAL_ENABLE_TAO;
+        ((uint8_t*)dest)[c] = 0x00;
     }
+
+    ret = uavcan_protocol_CANIfaceStats_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset);
 
     return ret;
 }

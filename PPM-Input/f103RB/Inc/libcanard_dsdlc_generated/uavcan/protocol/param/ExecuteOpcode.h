@@ -70,8 +70,8 @@ saturated bool ok
 #define UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_REQUEST_MAX_SIZE ((56 + 7)/8)
 
 // Constants
-#define UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_OPCODE_SAVE                       0 // 0
-#define UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_OPCODE_ERASE                      1 // 1
+#define UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_REQUEST_OPCODE_SAVE               0 // 0
+#define UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_REQUEST_OPCODE_ERASE              1 // 1
 
 typedef struct
 {
@@ -91,7 +91,7 @@ extern
 uint32_t uavcan_protocol_param_ExecuteOpcodeRequest_encode_internal(uavcan_protocol_param_ExecuteOpcodeRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_param_ExecuteOpcodeRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_param_ExecuteOpcodeRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_param_ExecuteOpcodeRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_param_ExecuteOpcodeRequest* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #define UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_RESPONSE_MAX_SIZE ((49 + 7)/8)
 
@@ -115,7 +115,7 @@ extern
 uint32_t uavcan_protocol_param_ExecuteOpcodeResponse_encode_internal(uavcan_protocol_param_ExecuteOpcodeResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_param_ExecuteOpcodeResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_param_ExecuteOpcodeResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_param_ExecuteOpcodeResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_param_ExecuteOpcodeResponse* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

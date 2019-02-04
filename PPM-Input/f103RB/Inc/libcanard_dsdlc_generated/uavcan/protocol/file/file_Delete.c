@@ -12,8 +12,15 @@
 #define CANARD_INTERNAL_SATURATE(x, max) ( ((x) > max) ? max : ( (-(x) > max) ? (-max) : (x) ) );
 #endif
 
-#define CANARD_INTERNAL_ENABLE_TAO  ((uint8_t) 1)
-#define CANARD_INTERNAL_DISABLE_TAO ((uint8_t) 0)
+#ifndef CANARD_INTERNAL_SATURATE_UNSIGNED
+#define CANARD_INTERNAL_SATURATE_UNSIGNED(x, max) ( ((x) > max) ? max : (x) );
+#endif
+
+#if defined(__GNUC__)
+# define CANARD_MAYBE_UNUSED(x) x __attribute__((unused))
+#else
+# define CANARD_MAYBE_UNUSED(x) x
+#endif
 
 /**
   * @brief uavcan_protocol_file_DeleteRequest_encode_internal
@@ -23,10 +30,13 @@
   * @param root_item: for detecting if TAO should be used
   * @retval returns offset
   */
-uint32_t uavcan_protocol_file_DeleteRequest_encode_internal(uavcan_protocol_file_DeleteRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item)
+uint32_t uavcan_protocol_file_DeleteRequest_encode_internal(uavcan_protocol_file_DeleteRequest* source,
+  void* msg_buf,
+  uint32_t offset,
+  uint8_t CANARD_MAYBE_UNUSED(root_item))
 {
     // Compound
-    offset = uavcan_protocol_file_Path_encode_internal((void*)&source->path, msg_buf, offset, 0);
+    offset = uavcan_protocol_file_Path_encode_internal(&source->path, msg_buf, offset, 0);
 
     return offset;
 }
@@ -55,15 +65,19 @@ uint32_t uavcan_protocol_file_DeleteRequest_encode(uavcan_protocol_file_DeleteRe
   *                     uavcan_protocol_file_DeleteRequest dyn memory will point to dyn_arr_buf memory.
   *                     NULL will ignore dynamic arrays decoding.
   * @param offset: Call with 0, bit offset to msg storage
-  * @param tao: is tail array optimization used
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_file_DeleteRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_file_DeleteRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao)
+int32_t uavcan_protocol_file_DeleteRequest_decode_internal(
+  const CanardRxTransfer* transfer,
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  uavcan_protocol_file_DeleteRequest* dest,
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
+  int32_t offset)
 {
     int32_t ret = 0;
 
     // Compound
-    offset = uavcan_protocol_file_Path_decode_internal(transfer, 0, (void*)&dest->path, dyn_arr_buf, offset, tao);
+    offset = uavcan_protocol_file_Path_decode_internal(transfer, 0, &dest->path, dyn_arr_buf, offset);
     if (offset < 0)
     {
         ret = offset;
@@ -92,38 +106,21 @@ uavcan_protocol_file_DeleteRequest_error_exit:
   *                     NULL will ignore dynamic arrays decoding.
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_file_DeleteRequest_decode(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_file_DeleteRequest* dest, uint8_t** dyn_arr_buf)
+int32_t uavcan_protocol_file_DeleteRequest_decode(const CanardRxTransfer* transfer,
+  uint16_t payload_len,
+  uavcan_protocol_file_DeleteRequest* dest,
+  uint8_t** dyn_arr_buf)
 {
     const int32_t offset = 0;
     int32_t ret = 0;
 
-    /* Backward compatibility support for removing TAO
-     *  - first try to decode with TAO DISABLED
-     *  - if it fails fall back to TAO ENABLED
-     */
-    uint8_t tao = CANARD_INTERNAL_DISABLE_TAO;
-
-    while (1)
+    // Clear the destination struct
+    for (uint32_t c = 0; c < sizeof(uavcan_protocol_file_DeleteRequest); c++)
     {
-        // Clear the destination struct
-        for (uint32_t c = 0; c < sizeof(uavcan_protocol_file_DeleteRequest); c++)
-        {
-            ((uint8_t*)dest)[c] = 0x00;
-        }
-
-        ret = uavcan_protocol_file_DeleteRequest_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset, tao);
-
-        if (ret >= 0)
-        {
-            break;
-        }
-
-        if (tao == CANARD_INTERNAL_ENABLE_TAO)
-        {
-            break;
-        }
-        tao = CANARD_INTERNAL_ENABLE_TAO;
+        ((uint8_t*)dest)[c] = 0x00;
     }
+
+    ret = uavcan_protocol_file_DeleteRequest_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset);
 
     return ret;
 }
@@ -136,10 +133,13 @@ int32_t uavcan_protocol_file_DeleteRequest_decode(const CanardRxTransfer* transf
   * @param root_item: for detecting if TAO should be used
   * @retval returns offset
   */
-uint32_t uavcan_protocol_file_DeleteResponse_encode_internal(uavcan_protocol_file_DeleteResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item)
+uint32_t uavcan_protocol_file_DeleteResponse_encode_internal(uavcan_protocol_file_DeleteResponse* source,
+  void* msg_buf,
+  uint32_t offset,
+  uint8_t CANARD_MAYBE_UNUSED(root_item))
 {
     // Compound
-    offset = uavcan_protocol_file_Error_encode_internal((void*)&source->error, msg_buf, offset, 0);
+    offset = uavcan_protocol_file_Error_encode_internal(&source->error, msg_buf, offset, 0);
 
     return offset;
 }
@@ -168,15 +168,19 @@ uint32_t uavcan_protocol_file_DeleteResponse_encode(uavcan_protocol_file_DeleteR
   *                     uavcan_protocol_file_DeleteResponse dyn memory will point to dyn_arr_buf memory.
   *                     NULL will ignore dynamic arrays decoding.
   * @param offset: Call with 0, bit offset to msg storage
-  * @param tao: is tail array optimization used
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_file_DeleteResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_file_DeleteResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao)
+int32_t uavcan_protocol_file_DeleteResponse_decode_internal(
+  const CanardRxTransfer* transfer,
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  uavcan_protocol_file_DeleteResponse* dest,
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
+  int32_t offset)
 {
     int32_t ret = 0;
 
     // Compound
-    offset = uavcan_protocol_file_Error_decode_internal(transfer, 0, (void*)&dest->error, dyn_arr_buf, offset, tao);
+    offset = uavcan_protocol_file_Error_decode_internal(transfer, 0, &dest->error, dyn_arr_buf, offset);
     if (offset < 0)
     {
         ret = offset;
@@ -205,38 +209,21 @@ uavcan_protocol_file_DeleteResponse_error_exit:
   *                     NULL will ignore dynamic arrays decoding.
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_file_DeleteResponse_decode(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_file_DeleteResponse* dest, uint8_t** dyn_arr_buf)
+int32_t uavcan_protocol_file_DeleteResponse_decode(const CanardRxTransfer* transfer,
+  uint16_t payload_len,
+  uavcan_protocol_file_DeleteResponse* dest,
+  uint8_t** dyn_arr_buf)
 {
     const int32_t offset = 0;
     int32_t ret = 0;
 
-    /* Backward compatibility support for removing TAO
-     *  - first try to decode with TAO DISABLED
-     *  - if it fails fall back to TAO ENABLED
-     */
-    uint8_t tao = CANARD_INTERNAL_DISABLE_TAO;
-
-    while (1)
+    // Clear the destination struct
+    for (uint32_t c = 0; c < sizeof(uavcan_protocol_file_DeleteResponse); c++)
     {
-        // Clear the destination struct
-        for (uint32_t c = 0; c < sizeof(uavcan_protocol_file_DeleteResponse); c++)
-        {
-            ((uint8_t*)dest)[c] = 0x00;
-        }
-
-        ret = uavcan_protocol_file_DeleteResponse_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset, tao);
-
-        if (ret >= 0)
-        {
-            break;
-        }
-
-        if (tao == CANARD_INTERNAL_ENABLE_TAO)
-        {
-            break;
-        }
-        tao = CANARD_INTERNAL_ENABLE_TAO;
+        ((uint8_t*)dest)[c] = 0x00;
     }
+
+    ret = uavcan_protocol_file_DeleteResponse_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset);
 
     return ret;
 }

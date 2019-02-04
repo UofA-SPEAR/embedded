@@ -19,25 +19,25 @@ extern "C"
 
 /******************************* Source text **********************************
 #
-# Command to move arm joints
+# Command message for drive motors
 #
 
-# ID of joint
-uint4 joint
+# ID of wheel
+uint3 wheel
 
-# Angle to move to (unsigned tenths of a degree)
-uint12 angle
+# Speed to set wheel at (signed mm/s)
+int13 speed
 ******************************************************************************/
 
 /********************* DSDL signature source definition ***********************
 spear.drive.DriveCommand
-saturated uint4 joint
-saturated uint12 angle
+saturated uint3 wheel
+saturated int13 speed
 ******************************************************************************/
 
 #define SPEAR_DRIVE_DRIVECOMMAND_ID                        20000
 #define SPEAR_DRIVE_DRIVECOMMAND_NAME                      "spear.drive.DriveCommand"
-#define SPEAR_DRIVE_DRIVECOMMAND_SIGNATURE                 (0x700D36E8F04E585FULL)
+#define SPEAR_DRIVE_DRIVECOMMAND_SIGNATURE                 (0xD8B5FC68C185F0F5ULL)
 
 #define SPEAR_DRIVE_DRIVECOMMAND_MAX_SIZE                  ((16 + 7)/8)
 
@@ -46,8 +46,8 @@ saturated uint12 angle
 typedef struct
 {
     // FieldTypes
-    uint8_t    joint;                         // bit len 4
-    uint16_t   angle;                         // bit len 12
+    uint8_t    wheel;                         // bit len 3
+    int16_t    speed;                         // bit len 13
 
 } spear_drive_DriveCommand;
 
@@ -61,7 +61,7 @@ extern
 uint32_t spear_drive_DriveCommand_encode_internal(spear_drive_DriveCommand* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t spear_drive_DriveCommand_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, spear_drive_DriveCommand* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t spear_drive_DriveCommand_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, spear_drive_DriveCommand* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -12,8 +12,15 @@
 #define CANARD_INTERNAL_SATURATE(x, max) ( ((x) > max) ? max : ( (-(x) > max) ? (-max) : (x) ) );
 #endif
 
-#define CANARD_INTERNAL_ENABLE_TAO  ((uint8_t) 1)
-#define CANARD_INTERNAL_DISABLE_TAO ((uint8_t) 0)
+#ifndef CANARD_INTERNAL_SATURATE_UNSIGNED
+#define CANARD_INTERNAL_SATURATE_UNSIGNED(x, max) ( ((x) > max) ? max : (x) );
+#endif
+
+#if defined(__GNUC__)
+# define CANARD_MAYBE_UNUSED(x) x __attribute__((unused))
+#else
+# define CANARD_MAYBE_UNUSED(x) x
+#endif
 
 /**
   * @brief spear_arm_JointStatus_encode_internal
@@ -23,13 +30,16 @@
   * @param root_item: for detecting if TAO should be used
   * @retval returns offset
   */
-uint32_t spear_arm_JointStatus_encode_internal(spear_arm_JointStatus* source, void* msg_buf, uint32_t offset, uint8_t root_item)
+uint32_t spear_arm_JointStatus_encode_internal(spear_arm_JointStatus* source,
+  void* msg_buf,
+  uint32_t offset,
+  uint8_t CANARD_MAYBE_UNUSED(root_item))
 {
-    source->joint = CANARD_INTERNAL_SATURATE(source->joint, 15)
+    source->joint = CANARD_INTERNAL_SATURATE_UNSIGNED(source->joint, 15)
     canardEncodeScalar(msg_buf, offset, 4, (void*)&source->joint); // 15
     offset += 4;
 
-    source->angle = CANARD_INTERNAL_SATURATE(source->angle, 4095)
+    source->angle = CANARD_INTERNAL_SATURATE_UNSIGNED(source->angle, 4095)
     canardEncodeScalar(msg_buf, offset, 12, (void*)&source->angle); // 4095
     offset += 12;
 
@@ -60,10 +70,14 @@ uint32_t spear_arm_JointStatus_encode(spear_arm_JointStatus* source, void* msg_b
   *                     spear_arm_JointStatus dyn memory will point to dyn_arr_buf memory.
   *                     NULL will ignore dynamic arrays decoding.
   * @param offset: Call with 0, bit offset to msg storage
-  * @param tao: is tail array optimization used
   * @retval offset or ERROR value if < 0
   */
-int32_t spear_arm_JointStatus_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, spear_arm_JointStatus* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao)
+int32_t spear_arm_JointStatus_decode_internal(
+  const CanardRxTransfer* transfer,
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  spear_arm_JointStatus* dest,
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
+  int32_t offset)
 {
     int32_t ret = 0;
 
@@ -103,38 +117,21 @@ spear_arm_JointStatus_error_exit:
   *                     NULL will ignore dynamic arrays decoding.
   * @retval offset or ERROR value if < 0
   */
-int32_t spear_arm_JointStatus_decode(const CanardRxTransfer* transfer, uint16_t payload_len, spear_arm_JointStatus* dest, uint8_t** dyn_arr_buf)
+int32_t spear_arm_JointStatus_decode(const CanardRxTransfer* transfer,
+  uint16_t payload_len,
+  spear_arm_JointStatus* dest,
+  uint8_t** dyn_arr_buf)
 {
     const int32_t offset = 0;
     int32_t ret = 0;
 
-    /* Backward compatibility support for removing TAO
-     *  - first try to decode with TAO DISABLED
-     *  - if it fails fall back to TAO ENABLED
-     */
-    uint8_t tao = CANARD_INTERNAL_DISABLE_TAO;
-
-    while (1)
+    // Clear the destination struct
+    for (uint32_t c = 0; c < sizeof(spear_arm_JointStatus); c++)
     {
-        // Clear the destination struct
-        for (uint32_t c = 0; c < sizeof(spear_arm_JointStatus); c++)
-        {
-            ((uint8_t*)dest)[c] = 0x00;
-        }
-
-        ret = spear_arm_JointStatus_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset, tao);
-
-        if (ret >= 0)
-        {
-            break;
-        }
-
-        if (tao == CANARD_INTERNAL_ENABLE_TAO)
-        {
-            break;
-        }
-        tao = CANARD_INTERNAL_ENABLE_TAO;
+        ((uint8_t*)dest)[c] = 0x00;
     }
+
+    ret = spear_arm_JointStatus_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset);
 
     return ret;
 }

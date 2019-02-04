@@ -127,7 +127,7 @@ extern
 uint32_t uavcan_protocol_param_GetSetRequest_encode_internal(uavcan_protocol_param_GetSetRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_param_GetSetRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_param_GetSetRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_param_GetSetRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_param_GetSetRequest* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #define UAVCAN_PROTOCOL_PARAM_GETSET_RESPONSE_MAX_SIZE     ((2967 + 7)/8)
 
@@ -164,7 +164,7 @@ extern
 uint32_t uavcan_protocol_param_GetSetResponse_encode_internal(uavcan_protocol_param_GetSetResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_param_GetSetResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_param_GetSetResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_param_GetSetResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_param_GetSetResponse* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

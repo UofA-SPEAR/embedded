@@ -63,7 +63,7 @@ extern
 uint32_t uavcan_equipment_esc_RawCommand_encode_internal(uavcan_equipment_esc_RawCommand* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_equipment_esc_RawCommand_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_equipment_esc_RawCommand* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_equipment_esc_RawCommand_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_equipment_esc_RawCommand* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

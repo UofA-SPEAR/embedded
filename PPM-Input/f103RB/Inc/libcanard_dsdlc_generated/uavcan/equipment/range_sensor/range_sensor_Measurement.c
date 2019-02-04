@@ -12,8 +12,15 @@
 #define CANARD_INTERNAL_SATURATE(x, max) ( ((x) > max) ? max : ( (-(x) > max) ? (-max) : (x) ) );
 #endif
 
-#define CANARD_INTERNAL_ENABLE_TAO  ((uint8_t) 1)
-#define CANARD_INTERNAL_DISABLE_TAO ((uint8_t) 0)
+#ifndef CANARD_INTERNAL_SATURATE_UNSIGNED
+#define CANARD_INTERNAL_SATURATE_UNSIGNED(x, max) ( ((x) > max) ? max : (x) );
+#endif
+
+#if defined(__GNUC__)
+# define CANARD_MAYBE_UNUSED(x) x __attribute__((unused))
+#else
+# define CANARD_MAYBE_UNUSED(x) x
+#endif
 
 /**
   * @brief uavcan_equipment_range_sensor_Measurement_encode_internal
@@ -23,7 +30,10 @@
   * @param root_item: for detecting if TAO should be used
   * @retval returns offset
   */
-uint32_t uavcan_equipment_range_sensor_Measurement_encode_internal(uavcan_equipment_range_sensor_Measurement* source, void* msg_buf, uint32_t offset, uint8_t root_item)
+uint32_t uavcan_equipment_range_sensor_Measurement_encode_internal(uavcan_equipment_range_sensor_Measurement* source,
+  void* msg_buf,
+  uint32_t offset,
+  uint8_t CANARD_MAYBE_UNUSED(root_item))
 {
 #ifndef CANARD_USE_FLOAT16_CAST
     uint16_t tmp_float = 0;
@@ -32,12 +42,12 @@ uint32_t uavcan_equipment_range_sensor_Measurement_encode_internal(uavcan_equipm
 #endif
 
     // Compound
-    offset = uavcan_Timestamp_encode_internal((void*)&source->timestamp, msg_buf, offset, 0);
+    offset = uavcan_Timestamp_encode_internal(&source->timestamp, msg_buf, offset, 0);
     canardEncodeScalar(msg_buf, offset, 8, (void*)&source->sensor_id); // 255
     offset += 8;
 
     // Compound
-    offset = uavcan_CoarseOrientation_encode_internal((void*)&source->beam_orientation_in_body_frame, msg_buf, offset, 0);
+    offset = uavcan_CoarseOrientation_encode_internal(&source->beam_orientation_in_body_frame, msg_buf, offset, 0);
 
     // float16 special handling
 #ifndef CANARD_USE_FLOAT16_CAST
@@ -47,11 +57,11 @@ uint32_t uavcan_equipment_range_sensor_Measurement_encode_internal(uavcan_equipm
 #endif
     canardEncodeScalar(msg_buf, offset, 16, (void*)&tmp_float); // 32767
     offset += 16;
-    source->sensor_type = CANARD_INTERNAL_SATURATE(source->sensor_type, 31)
+    source->sensor_type = CANARD_INTERNAL_SATURATE_UNSIGNED(source->sensor_type, 31)
     canardEncodeScalar(msg_buf, offset, 5, (void*)&source->sensor_type); // 31
     offset += 5;
 
-    source->reading_type = CANARD_INTERNAL_SATURATE(source->reading_type, 7)
+    source->reading_type = CANARD_INTERNAL_SATURATE_UNSIGNED(source->reading_type, 7)
     canardEncodeScalar(msg_buf, offset, 3, (void*)&source->reading_type); // 7
     offset += 3;
 
@@ -91,10 +101,14 @@ uint32_t uavcan_equipment_range_sensor_Measurement_encode(uavcan_equipment_range
   *                     uavcan_equipment_range_sensor_Measurement dyn memory will point to dyn_arr_buf memory.
   *                     NULL will ignore dynamic arrays decoding.
   * @param offset: Call with 0, bit offset to msg storage
-  * @param tao: is tail array optimization used
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_equipment_range_sensor_Measurement_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_equipment_range_sensor_Measurement* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao)
+int32_t uavcan_equipment_range_sensor_Measurement_decode_internal(
+  const CanardRxTransfer* transfer,
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  uavcan_equipment_range_sensor_Measurement* dest,
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
+  int32_t offset)
 {
     int32_t ret = 0;
 #ifndef CANARD_USE_FLOAT16_CAST
@@ -104,7 +118,7 @@ int32_t uavcan_equipment_range_sensor_Measurement_decode_internal(const CanardRx
 #endif
 
     // Compound
-    offset = uavcan_Timestamp_decode_internal(transfer, 0, (void*)&dest->timestamp, dyn_arr_buf, offset, tao);
+    offset = uavcan_Timestamp_decode_internal(transfer, 0, &dest->timestamp, dyn_arr_buf, offset);
     if (offset < 0)
     {
         ret = offset;
@@ -119,7 +133,7 @@ int32_t uavcan_equipment_range_sensor_Measurement_decode_internal(const CanardRx
     offset += 8;
 
     // Compound
-    offset = uavcan_CoarseOrientation_decode_internal(transfer, 0, (void*)&dest->beam_orientation_in_body_frame, dyn_arr_buf, offset, tao);
+    offset = uavcan_CoarseOrientation_decode_internal(transfer, 0, &dest->beam_orientation_in_body_frame, dyn_arr_buf, offset);
     if (offset < 0)
     {
         ret = offset;
@@ -190,38 +204,21 @@ uavcan_equipment_range_sensor_Measurement_error_exit:
   *                     NULL will ignore dynamic arrays decoding.
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_equipment_range_sensor_Measurement_decode(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_equipment_range_sensor_Measurement* dest, uint8_t** dyn_arr_buf)
+int32_t uavcan_equipment_range_sensor_Measurement_decode(const CanardRxTransfer* transfer,
+  uint16_t payload_len,
+  uavcan_equipment_range_sensor_Measurement* dest,
+  uint8_t** dyn_arr_buf)
 {
     const int32_t offset = 0;
     int32_t ret = 0;
 
-    /* Backward compatibility support for removing TAO
-     *  - first try to decode with TAO DISABLED
-     *  - if it fails fall back to TAO ENABLED
-     */
-    uint8_t tao = CANARD_INTERNAL_DISABLE_TAO;
-
-    while (1)
+    // Clear the destination struct
+    for (uint32_t c = 0; c < sizeof(uavcan_equipment_range_sensor_Measurement); c++)
     {
-        // Clear the destination struct
-        for (uint32_t c = 0; c < sizeof(uavcan_equipment_range_sensor_Measurement); c++)
-        {
-            ((uint8_t*)dest)[c] = 0x00;
-        }
-
-        ret = uavcan_equipment_range_sensor_Measurement_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset, tao);
-
-        if (ret >= 0)
-        {
-            break;
-        }
-
-        if (tao == CANARD_INTERNAL_ENABLE_TAO)
-        {
-            break;
-        }
-        tao = CANARD_INTERNAL_ENABLE_TAO;
+        ((uint8_t*)dest)[c] = 0x00;
     }
+
+    ret = uavcan_equipment_range_sensor_Measurement_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset);
 
     return ret;
 }

@@ -96,15 +96,15 @@ extern
 uint32_t uavcan_protocol_GetDataTypeInfoRequest_encode_internal(uavcan_protocol_GetDataTypeInfoRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_GetDataTypeInfoRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_GetDataTypeInfoRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_GetDataTypeInfoRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_GetDataTypeInfoRequest* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #define UAVCAN_PROTOCOL_GETDATATYPEINFO_RESPONSE_MAX_SIZE  ((743 + 7)/8)
 
 // Constants
-#define UAVCAN_PROTOCOL_GETDATATYPEINFO_FLAG_KNOWN                            1 // 1
-#define UAVCAN_PROTOCOL_GETDATATYPEINFO_FLAG_SUBSCRIBED                       2 // 2
-#define UAVCAN_PROTOCOL_GETDATATYPEINFO_FLAG_PUBLISHING                       4 // 4
-#define UAVCAN_PROTOCOL_GETDATATYPEINFO_FLAG_SERVING                          8 // 8
+#define UAVCAN_PROTOCOL_GETDATATYPEINFO_RESPONSE_FLAG_KNOWN                   1 // 1
+#define UAVCAN_PROTOCOL_GETDATATYPEINFO_RESPONSE_FLAG_SUBSCRIBED              2 // 2
+#define UAVCAN_PROTOCOL_GETDATATYPEINFO_RESPONSE_FLAG_PUBLISHING              4 // 4
+#define UAVCAN_PROTOCOL_GETDATATYPEINFO_RESPONSE_FLAG_SERVING                 8 // 8
 
 #define UAVCAN_PROTOCOL_GETDATATYPEINFO_RESPONSE_NAME_MAX_LENGTH                         80
 
@@ -133,7 +133,7 @@ extern
 uint32_t uavcan_protocol_GetDataTypeInfoResponse_encode_internal(uavcan_protocol_GetDataTypeInfoResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_GetDataTypeInfoResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_GetDataTypeInfoResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_GetDataTypeInfoResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_GetDataTypeInfoResponse* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

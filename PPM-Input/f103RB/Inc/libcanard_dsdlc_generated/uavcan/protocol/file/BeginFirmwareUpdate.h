@@ -88,15 +88,15 @@ extern
 uint32_t uavcan_protocol_file_BeginFirmwareUpdateRequest_encode_internal(uavcan_protocol_file_BeginFirmwareUpdateRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_file_BeginFirmwareUpdateRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_file_BeginFirmwareUpdateRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_file_BeginFirmwareUpdateRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_file_BeginFirmwareUpdateRequest* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #define UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_RESPONSE_MAX_SIZE ((1031 + 7)/8)
 
 // Constants
-#define UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ERROR_OK                     0 // 0
-#define UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ERROR_INVALID_MODE           1 // 1
-#define UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ERROR_IN_PROGRESS            2 // 2
-#define UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ERROR_UNKNOWN              255 // 255
+#define UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_RESPONSE_ERROR_OK            0 // 0
+#define UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_RESPONSE_ERROR_INVALID_MODE          1 // 1
+#define UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_RESPONSE_ERROR_IN_PROGRESS          2 // 2
+#define UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_RESPONSE_ERROR_UNKNOWN        255 // 255
 
 #define UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_RESPONSE_OPTIONAL_ERROR_MESSAGE_MAX_LENGTH 127
 
@@ -122,7 +122,7 @@ extern
 uint32_t uavcan_protocol_file_BeginFirmwareUpdateResponse_encode_internal(uavcan_protocol_file_BeginFirmwareUpdateResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_file_BeginFirmwareUpdateResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_file_BeginFirmwareUpdateResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_file_BeginFirmwareUpdateResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_file_BeginFirmwareUpdateResponse* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

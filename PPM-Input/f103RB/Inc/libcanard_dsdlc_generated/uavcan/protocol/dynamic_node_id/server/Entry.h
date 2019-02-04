@@ -71,7 +71,7 @@ extern
 uint32_t uavcan_protocol_dynamic_node_id_server_Entry_encode_internal(uavcan_protocol_dynamic_node_id_server_Entry* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_protocol_dynamic_node_id_server_Entry_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_dynamic_node_id_server_Entry* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_protocol_dynamic_node_id_server_Entry_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_dynamic_node_id_server_Entry* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

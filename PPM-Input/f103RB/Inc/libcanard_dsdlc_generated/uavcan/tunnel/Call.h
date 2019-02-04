@@ -80,7 +80,7 @@ extern
 uint32_t uavcan_tunnel_CallRequest_encode_internal(uavcan_tunnel_CallRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_tunnel_CallRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_tunnel_CallRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_tunnel_CallRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_tunnel_CallRequest* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #define UAVCAN_TUNNEL_CALL_RESPONSE_MAX_SIZE               ((486 + 7)/8)
 
@@ -109,7 +109,7 @@ extern
 uint32_t uavcan_tunnel_CallResponse_encode_internal(uavcan_tunnel_CallResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item);
 
 extern
-int32_t uavcan_tunnel_CallResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_tunnel_CallResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao);
+int32_t uavcan_tunnel_CallResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_tunnel_CallResponse* dest, uint8_t** dyn_arr_buf, int32_t offset);
 
 #ifdef __cplusplus
 } // extern "C"

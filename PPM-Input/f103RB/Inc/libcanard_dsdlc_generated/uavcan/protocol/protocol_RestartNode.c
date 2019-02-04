@@ -12,8 +12,15 @@
 #define CANARD_INTERNAL_SATURATE(x, max) ( ((x) > max) ? max : ( (-(x) > max) ? (-max) : (x) ) );
 #endif
 
-#define CANARD_INTERNAL_ENABLE_TAO  ((uint8_t) 1)
-#define CANARD_INTERNAL_DISABLE_TAO ((uint8_t) 0)
+#ifndef CANARD_INTERNAL_SATURATE_UNSIGNED
+#define CANARD_INTERNAL_SATURATE_UNSIGNED(x, max) ( ((x) > max) ? max : (x) );
+#endif
+
+#if defined(__GNUC__)
+# define CANARD_MAYBE_UNUSED(x) x __attribute__((unused))
+#else
+# define CANARD_MAYBE_UNUSED(x) x
+#endif
 
 /**
   * @brief uavcan_protocol_RestartNodeRequest_encode_internal
@@ -23,9 +30,12 @@
   * @param root_item: for detecting if TAO should be used
   * @retval returns offset
   */
-uint32_t uavcan_protocol_RestartNodeRequest_encode_internal(uavcan_protocol_RestartNodeRequest* source, void* msg_buf, uint32_t offset, uint8_t root_item)
+uint32_t uavcan_protocol_RestartNodeRequest_encode_internal(uavcan_protocol_RestartNodeRequest* source,
+  void* msg_buf,
+  uint32_t offset,
+  uint8_t CANARD_MAYBE_UNUSED(root_item))
 {
-    source->magic_number = CANARD_INTERNAL_SATURATE(source->magic_number, 1099511627775)
+    source->magic_number = CANARD_INTERNAL_SATURATE_UNSIGNED(source->magic_number, 1099511627775)
     canardEncodeScalar(msg_buf, offset, 40, (void*)&source->magic_number); // 1099511627775
     offset += 40;
 
@@ -56,10 +66,14 @@ uint32_t uavcan_protocol_RestartNodeRequest_encode(uavcan_protocol_RestartNodeRe
   *                     uavcan_protocol_RestartNodeRequest dyn memory will point to dyn_arr_buf memory.
   *                     NULL will ignore dynamic arrays decoding.
   * @param offset: Call with 0, bit offset to msg storage
-  * @param tao: is tail array optimization used
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_RestartNodeRequest_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_RestartNodeRequest* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao)
+int32_t uavcan_protocol_RestartNodeRequest_decode_internal(
+  const CanardRxTransfer* transfer,
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  uavcan_protocol_RestartNodeRequest* dest,
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
+  int32_t offset)
 {
     int32_t ret = 0;
 
@@ -92,38 +106,21 @@ uavcan_protocol_RestartNodeRequest_error_exit:
   *                     NULL will ignore dynamic arrays decoding.
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_RestartNodeRequest_decode(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_RestartNodeRequest* dest, uint8_t** dyn_arr_buf)
+int32_t uavcan_protocol_RestartNodeRequest_decode(const CanardRxTransfer* transfer,
+  uint16_t payload_len,
+  uavcan_protocol_RestartNodeRequest* dest,
+  uint8_t** dyn_arr_buf)
 {
     const int32_t offset = 0;
     int32_t ret = 0;
 
-    /* Backward compatibility support for removing TAO
-     *  - first try to decode with TAO DISABLED
-     *  - if it fails fall back to TAO ENABLED
-     */
-    uint8_t tao = CANARD_INTERNAL_DISABLE_TAO;
-
-    while (1)
+    // Clear the destination struct
+    for (uint32_t c = 0; c < sizeof(uavcan_protocol_RestartNodeRequest); c++)
     {
-        // Clear the destination struct
-        for (uint32_t c = 0; c < sizeof(uavcan_protocol_RestartNodeRequest); c++)
-        {
-            ((uint8_t*)dest)[c] = 0x00;
-        }
-
-        ret = uavcan_protocol_RestartNodeRequest_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset, tao);
-
-        if (ret >= 0)
-        {
-            break;
-        }
-
-        if (tao == CANARD_INTERNAL_ENABLE_TAO)
-        {
-            break;
-        }
-        tao = CANARD_INTERNAL_ENABLE_TAO;
+        ((uint8_t*)dest)[c] = 0x00;
     }
+
+    ret = uavcan_protocol_RestartNodeRequest_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset);
 
     return ret;
 }
@@ -136,9 +133,12 @@ int32_t uavcan_protocol_RestartNodeRequest_decode(const CanardRxTransfer* transf
   * @param root_item: for detecting if TAO should be used
   * @retval returns offset
   */
-uint32_t uavcan_protocol_RestartNodeResponse_encode_internal(uavcan_protocol_RestartNodeResponse* source, void* msg_buf, uint32_t offset, uint8_t root_item)
+uint32_t uavcan_protocol_RestartNodeResponse_encode_internal(uavcan_protocol_RestartNodeResponse* source,
+  void* msg_buf,
+  uint32_t offset,
+  uint8_t CANARD_MAYBE_UNUSED(root_item))
 {
-    source->ok = CANARD_INTERNAL_SATURATE(source->ok, 0)
+    source->ok = CANARD_INTERNAL_SATURATE_UNSIGNED(source->ok, 0)
     canardEncodeScalar(msg_buf, offset, 1, (void*)&source->ok); // 0
     offset += 1;
 
@@ -169,10 +169,14 @@ uint32_t uavcan_protocol_RestartNodeResponse_encode(uavcan_protocol_RestartNodeR
   *                     uavcan_protocol_RestartNodeResponse dyn memory will point to dyn_arr_buf memory.
   *                     NULL will ignore dynamic arrays decoding.
   * @param offset: Call with 0, bit offset to msg storage
-  * @param tao: is tail array optimization used
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_RestartNodeResponse_decode_internal(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_RestartNodeResponse* dest, uint8_t** dyn_arr_buf, int32_t offset, uint8_t tao)
+int32_t uavcan_protocol_RestartNodeResponse_decode_internal(
+  const CanardRxTransfer* transfer,
+  uint16_t CANARD_MAYBE_UNUSED(payload_len),
+  uavcan_protocol_RestartNodeResponse* dest,
+  uint8_t** CANARD_MAYBE_UNUSED(dyn_arr_buf),
+  int32_t offset)
 {
     int32_t ret = 0;
 
@@ -205,38 +209,21 @@ uavcan_protocol_RestartNodeResponse_error_exit:
   *                     NULL will ignore dynamic arrays decoding.
   * @retval offset or ERROR value if < 0
   */
-int32_t uavcan_protocol_RestartNodeResponse_decode(const CanardRxTransfer* transfer, uint16_t payload_len, uavcan_protocol_RestartNodeResponse* dest, uint8_t** dyn_arr_buf)
+int32_t uavcan_protocol_RestartNodeResponse_decode(const CanardRxTransfer* transfer,
+  uint16_t payload_len,
+  uavcan_protocol_RestartNodeResponse* dest,
+  uint8_t** dyn_arr_buf)
 {
     const int32_t offset = 0;
     int32_t ret = 0;
 
-    /* Backward compatibility support for removing TAO
-     *  - first try to decode with TAO DISABLED
-     *  - if it fails fall back to TAO ENABLED
-     */
-    uint8_t tao = CANARD_INTERNAL_DISABLE_TAO;
-
-    while (1)
+    // Clear the destination struct
+    for (uint32_t c = 0; c < sizeof(uavcan_protocol_RestartNodeResponse); c++)
     {
-        // Clear the destination struct
-        for (uint32_t c = 0; c < sizeof(uavcan_protocol_RestartNodeResponse); c++)
-        {
-            ((uint8_t*)dest)[c] = 0x00;
-        }
-
-        ret = uavcan_protocol_RestartNodeResponse_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset, tao);
-
-        if (ret >= 0)
-        {
-            break;
-        }
-
-        if (tao == CANARD_INTERNAL_ENABLE_TAO)
-        {
-            break;
-        }
-        tao = CANARD_INTERNAL_ENABLE_TAO;
+        ((uint8_t*)dest)[c] = 0x00;
     }
+
+    ret = uavcan_protocol_RestartNodeResponse_decode_internal(transfer, payload_len, dest, dyn_arr_buf, offset);
 
     return ret;
 }
