@@ -14,6 +14,7 @@
 #include "uavcan/protocol/param/GetSet.h"
 #include "uavcan/protocol/NodeStatus.h"
 #include "uavcan/protocol/RestartNode.h"
+#include "uavcan/protocol/GetNodeInfo.h"
 
 // Small enough to not be too bad, large enough to be useful
 #define DYNAMIC_ARRAY_BUF_SIZE 1000
@@ -35,6 +36,7 @@ static uint64_t can_timestamp_usec;
 
 static void timestamp_tim_init(void);
 static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);
+static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer);
 
 
 void updateComs(void) {
@@ -106,7 +108,9 @@ bool should_accept(const CanardInstance* ins,
 			*out_data_type_signature = UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE;
 			return true;
 		case (UAVCAN_PROTOCOL_RESTARTNODE_ID):
-				return true;
+			return true;
+		case (UAVCAN_PROTOCOL_GETNODEINFO_ID):
+			return true;
 		default:
 			return false;
 		}
@@ -134,6 +138,9 @@ void on_reception(CanardInstance* ins, CanardRxTransfer* transfer){
 		case (UAVCAN_PROTOCOL_RESTARTNODE_ID):
 			restart_node(ins, transfer);
 			break;
+		case (UAVCAN_PROTOCOL_GETNODEINFO_ID):
+			return_node_info(ins, transfer);
+			break;
 		default:
 			break;
 		}
@@ -151,6 +158,36 @@ static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer) {
 	if (msg.magic_number == UAVCAN_PROTOCOL_RESTARTNODE_REQUEST_MAGIC_NUMBER) {
 		NVIC_SystemReset();
 	}
+}
+
+static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer) {
+	uavcan_protocol_GetNodeInfoResponse out_msg;
+
+	out_msg.name.len = strlen("Arm Controller");
+	out_msg.name.data = (uint8_t*) "Arm Controller";
+	out_msg.hardware_version.major = 0;
+	out_msg.hardware_version.minor = 1;
+	out_msg.software_version.major = 0;
+	out_msg.software_version.minor = 1;
+
+	// TODO hook this into main status
+	out_msg.status.health 	= UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
+	out_msg.status.mode 	= UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
+	out_msg.status.sub_mode = 0;
+	out_msg.status.vendor_specific_status_code = 0;
+	out_msg.status.uptime_sec = HAL_GetTick() / 1000;
+
+	uint8_t len = uavcan_protocol_GetNodeInfoResponse_encode(&out_msg, out_buf);
+
+	canardRequestOrRespond(ins,
+			transfer->source_node_id,
+			UAVCAN_PROTOCOL_GETNODEINFO_SIGNATURE,
+			UAVCAN_PROTOCOL_GETNODEINFO_ID,
+			&inout_transfer_id,
+			30, // again with the priorities
+			CanardResponse,
+			out_buf,
+			len);
 }
 
 int8_t tx_once(void) {
@@ -293,8 +330,8 @@ void publish_nodeStatus(void) {
 		msg.health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
 		msg.mode   = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
 		msg.sub_mode = 0;
-		msg.vendor_specific_status_code = 14;
-		msg.uptime_sec = 300;
+		msg.vendor_specific_status_code = 0;
+		msg.uptime_sec = HAL_GetTick() / 1000;
 
 		uint16_t len = uavcan_protocol_NodeStatus_encode(&msg, out_buf);
 
