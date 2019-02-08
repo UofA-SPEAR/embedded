@@ -259,8 +259,8 @@ static void parameter_return_value(CanardInstance* ins,
 			while(1);
 		}
 
-		response.name.data = (uint8_t *) parameters[index];
-		response.name.len = strlen(parameters[index]);
+		response.name.data = (uint8_t *) parameters[index + (motor_select * 14)];
+		response.name.len = strlen(parameters[index + (motor_select * 14)]);
 		response.default_value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
 		response.min_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
 		response.max_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;

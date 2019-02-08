@@ -165,10 +165,11 @@ static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer) {
 
 	out_msg.name.len = strlen("Arm Controller");
 	out_msg.name.data = (uint8_t*) "Arm Controller";
-	out_msg.hardware_version.major = 0;
-	out_msg.hardware_version.minor = 1;
 	out_msg.software_version.major = 0;
 	out_msg.software_version.minor = 1;
+	out_msg.hardware_version.major = 0;
+	out_msg.hardware_version.minor = 1;
+	out_msg.hardware_version.certificate_of_authenticity.len = 0;
 
 	// TODO hook this into main status
 	out_msg.status.health 	= UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
