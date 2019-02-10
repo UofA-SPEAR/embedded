@@ -33,7 +33,7 @@ uint8_t inout_transfer_id;
 
 TIM_HandleTypeDef htim7;
 
-static uint64_t can_timestamp_usec;
+uint64_t can_timestamp_usec;
 
 static void timestamp_tim_init(void);
 static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);

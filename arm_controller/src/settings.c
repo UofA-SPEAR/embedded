@@ -206,17 +206,17 @@ static void parameter_return_value(CanardInstance* ins,
 		case (4):
 			// Motor Kp
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].pid.Kp;
+			response.value.real_value = saved_settings.motor[motor_select].pid.Kp;
 			break;
 		case (5):
 			// Motor Ki
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].pid.Ki;
+			response.value.real_value = saved_settings.motor[motor_select].pid.Ki;
 			break;
 		case (6):
 			// Motor Kd
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].pid.Kd;
+			response.value.real_value = saved_settings.motor[motor_select].pid.Kd;
 			break;
 		case (7):
 			// Motor encoder type
@@ -236,12 +236,12 @@ static void parameter_return_value(CanardInstance* ins,
 		case (10):
 			// Motor encoder to_radians
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].encoder.to_radians;
+			response.value.real_value = saved_settings.motor[motor_select].encoder.to_radians;
 			break;
 		case (11):
 			// Motor encoder to metres
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].encoder.to_metres;
+			response.value.real_value = saved_settings.motor[motor_select].encoder.to_metres;
 			break;
 		case (12):
 			// Motor encoder min endstop enabled?

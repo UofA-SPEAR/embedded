@@ -127,6 +127,7 @@ int main(void) {
 		if ((HAL_GetTick() - last_runA >= 100) && run_settings.motor[0].enabled) {
 			run_motorA();
 			last_runA = HAL_GetTick();
+			canardCleanupStaleTransfers(&m_canard_instance, can_timestamp_usec);
 		}
 
 		publish_nodeStatus();

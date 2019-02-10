@@ -41,6 +41,8 @@ typedef enum {
 
 extern CanardInstance m_canard_instance;
 
+extern uint64_t can_timestamp_usec;
+
 bool should_accept(const CanardInstance* ins,
 					uint64_t* out_data_type_signature,
 					uint16_t data_type_id,
