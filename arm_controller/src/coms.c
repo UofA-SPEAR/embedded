@@ -9,6 +9,7 @@
 #include "main.h"
 #include "flash_settings.h"
 #include "settings.h"
+#include "can_fifo.h"
 
 #include "uavcan/equipment/actuator/ArrayCommand.h"
 #include "uavcan/protocol/param/GetSet.h"
@@ -46,9 +47,14 @@ void updateComs(void) {
 
 void comInit(void) {
 	timestamp_tim_init();
+	fifo_init();
 	libcanard_init(on_reception, should_accept, NULL, 32000000, 250000);
 	setup_hardware_can_filters();
-
+    // Configure interrupts
+    // We only need to worry about the RX FIFO 0, because that's how the CAN interface is by default
+    NVIC_SetPriority(USB_LP_CAN_RX0_IRQn, 1);
+    NVIC_EnableIRQ(USB_LP_CAN_RX0_IRQn);
+    CAN->IER |= 1 << CAN_IER_FMPIE0_Pos; // Enable CAN interrupt
 }
 
 /** @brief Handles ActuatorCommand messages
@@ -220,14 +226,26 @@ int8_t rx_once() {
 
 	switch (rc) {
 	case 1:
-		// TODO setup timer for timestamp
-		canardHandleRxFrame(&m_canard_instance, &in_frame, can_timestamp_usec + TIM7->CNT);
+		fifo_push(&in_frame);
 		return LIBCANARD_SUCCESS;
 	case 0:
 		return LIBCANARD_NO_QUEUE;
 	default:
 		return LIBCANARD_ERR;
 	}
+}
+
+int8_t handle_frame() {
+	CanardCANFrame frame;
+
+	if (fifo_pop(&frame) == FIFO_OK) {
+		canardHandleRxFrame(&m_canard_instance, &frame, can_timestamp_usec + TIM7->CNT);
+		return LIBCANARD_SUCCESS;
+	} else {
+		// something I guess
+	}
+
+	return LIBCANARD_ERR;
 }
 
 /**
@@ -250,6 +268,13 @@ static void bxcan_init(void) {
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF9_CAN;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+
+}
+
+void USB_LP_CAN_RX0_IRQHandler(void) {
+	// Not sure if this will turn out to be a good idea.
+	rx_once();
 }
 
 static void timestamp_tim_init(void) {

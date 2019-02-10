@@ -51,6 +51,7 @@ void on_reception(CanardInstance* ins, CanardRxTransfer* transfer);
 
 int8_t tx_once(void);
 int8_t rx_once(void);
+int8_t handle_frame(void);
 int16_t libcanard_init(CanardOnTransferReception on_reception,
 		CanardShouldAcceptTransfer should_accept, void* user_reference,
 		const uint32_t clock_rate, const uint32_t bitrate);
