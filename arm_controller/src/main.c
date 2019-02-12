@@ -51,8 +51,14 @@ void run_motorA() {
 		if (run_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
 			uint32_t current_position = potA_read();
 
+			if (run_settings.motor[0].encoder.to_radians == 0) {
+				// Stop a divide by 0 error!
+				return;
+			}
 			// radians / (radians/int_position) - current_position = error
-			float error = ((motorA_desired_position / run_settings.motor[0].encoder.to_radians)
+			// Turn this negative because that's how we do things.
+			// Maybe change this? Idk
+			float error = - ((motorA_desired_position / run_settings.motor[0].encoder.to_radians)
 					- current_position) / 4096.0;
 
 			float out = arm_pid_f32(&pidA, error);
@@ -73,6 +79,7 @@ void motor_init() {
 	motorA.pwm.pin 		= GPIO_PIN_7;
 	motorA.pwm.port 	= GPIOB;
 	motorA.pwm.tim_af	= GPIO_AF2_TIM4;
+	motorA.pwm.tim_ch = TIM_CHANNEL_2;
 
 	vnh5019_init(&motorA);
 }

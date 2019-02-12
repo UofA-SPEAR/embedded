@@ -22,7 +22,7 @@ flash_settings_t current_settings;
 static void firstboot_check(void) {
 	// Kp should be between -1 and 1, if not it was misconfigured.
 	// Start with sane settings.
-	if (saved_settings.boot == 0) {
+	if (saved_settings.boot != 1) {
 		current_settings.boot = 1;
 		for (int i = 0; i < 2; i++) {
 			current_settings.motor[i].enabled = 0;

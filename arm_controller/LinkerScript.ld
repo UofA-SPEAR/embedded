@@ -161,7 +161,7 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT> ROM
 
-  ._user_settings :
+  ._user_settings (NOLOAD) :
   {
   	. = ALIGN(4);
   	*(._user_settings)
