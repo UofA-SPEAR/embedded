@@ -12,10 +12,10 @@
 #include "stm32f3xx.h"
 #include "stm32f3xx_nucleo_32.h"
 
+#include "main.h"
 #include "coms.h"
 #include "sabertooth.h"
 
-sabertooth_t saberA, saberB;
 
 UART_HandleTypeDef huart;
 
@@ -68,14 +68,87 @@ void motors_init() {
 	sabertooth_init(&saberA);
 }
 
+void SystemClock_Config(void) {
+  RCC_OscInitTypeDef RCC_OscInitStruct;
+  RCC_ClkInitTypeDef RCC_ClkInitStruct;
+
+    /**Initializes the CPU, AHB and APB busses clocks
+    */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = 16; // ???
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    //_Error_Handler(__FILE__, __LINE__);
+  }
+
+    /**Initializes the CPU, AHB and APB busses clocks
+    */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    //_Error_Handler(__FILE__, __LINE__);
+  }
+
+    /**Configure the Systick interrupt time
+    */
+  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+
+    /**Configure the Systick
+    */
+  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+
+  /* SysTick_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+}
+
 int main(void)
 {
+	HAL_Init();
+
+	SystemClock_Config();
+
 	uart_init();
 	libcanard_init();
 	motors_init();
+	// Start the timeout thing
+	timeout = HAL_GetTick();
+
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+
+	GPIO_InitTypeDef gpio;
+	gpio.Pin = LED3_PIN;
+	gpio.Mode = GPIO_MODE_OUTPUT_PP;
+	gpio.Speed = GPIO_SPEED_FREQ_LOW;
+	gpio.Pull = GPIO_NOPULL;
+
+	HAL_GPIO_Init(GPIOB, &gpio);
 
 
 	for(;;) {
-		rx_once(); // literally nothing else to do
+		static uint32_t last_thing = 0;
+		handle_frame(); // literally nothing else to do
+
+		if ((HAL_GetTick() - last_thing) > 1000) {
+			HAL_GPIO_TogglePin(GPIOB, LED3_PIN);
+			last_thing = HAL_GetTick();
+		}
+
+		if ((HAL_GetTick() - timeout) > MOTOR_TIMEOUT_MS) {
+			sabertooth_set_motor(&saberA, 0, 0);
+			sabertooth_set_motor(&saberA, 1, 0);
+			sabertooth_set_motor(&saberB, 0, 0);
+			sabertooth_set_motor(&saberB, 1, 0);
+		}
+
 	}
 }

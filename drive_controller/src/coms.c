@@ -11,7 +11,10 @@
 
 #include "canard.h"
 #include "canard_stm32.h"
+#include "main.h"
 #include "coms.h"
+#include "sabertooth.h"
+#include "can_fifo.h"
 
 #include "uavcan/equipment/actuator/ArrayCommand.h"
 
@@ -20,6 +23,9 @@ static uint8_t dynamic_array_buf[LIBCANARD_STM32_DYNAMIC_ARRAY_BUF_SIZE];
 static uint8_t* p_dynamic_array_buf = dynamic_array_buf;
 
 static void com_peripherals_init();
+
+TIM_HandleTypeDef htim7;
+uint64_t can_timestamp_usec = 0;
 
 bool should_accept(const CanardInstance* ins,
 		uint64_t * out_data_type_signature,
@@ -44,20 +50,29 @@ void on_reception(CanardInstance* ins,
 	uavcan_equipment_actuator_ArrayCommand_decode(transfer, transfer->payload_len,
 			&msg, &p_dynamic_array_buf);
 
+	// Reset timeout value so we don't just keep shutting the motors down.
+	timeout = HAL_GetTick();
+
 	for (int i = 0; i < msg.commands.len; i++) {
 		uavcan_equipment_actuator_Command *cmd = &(msg.commands.data[i]);
+		int8_t speed = msg.commands.data[i].command_value;
+
 		switch (cmd->actuator_id) {
 		case (0):
 			// handle motor 0
+			sabertooth_set_motor(&saberA, 0, speed);
 			break;
 		case (1):
 			// handle motor 1
+			sabertooth_set_motor(&saberA, 1, speed);
 			break;
 		case (2):
 			// handle motor 2
+			sabertooth_set_motor(&saberB, 0, speed);
 			break;
 		case (3):
 			// handle motor 3
+			sabertooth_set_motor(&saberB, 1, speed);
 			break;
 		default:
 			// Not any of these motors
@@ -82,6 +97,47 @@ void libcanard_init() {
 
 
 	canardSTM32Init(&canbus_timings, CanardSTM32IfaceModeNormal);
+
+	setup_hardware_can_filters();
+
+	NVIC_SetPriority(USB_LP_CAN_RX0_IRQn, 1);
+	NVIC_EnableIRQ(USB_LP_CAN_RX0_IRQn);
+	CAN->IER |= 1 << CAN_IER_FMPIE0_Pos;
+
+	__HAL_RCC_TIM7_CLK_ENABLE();
+
+	// Initialize to run at 1MHz
+	// Reset every 1ms
+	htim7.Instance = TIM7;
+	htim7.Init.Prescaler = 32;
+	htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim7.Init.Period = 1000;
+	htim7.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	HAL_TIM_Base_Init(&htim7);
+
+	// Make it independent
+	TIM_MasterConfigTypeDef sMasterConfig;
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig);
+
+
+	// Enable interrupts
+	NVIC_SetPriority(TIM7_IRQn, 0);
+	NVIC_EnableIRQ(TIM7_IRQn);
+
+	// Start interrupts
+	HAL_TIM_Base_Start_IT(&htim7);
+}
+
+void USB_LP_CAN_RX0_IRQHandler(void) {
+	rx_once();
+}
+
+void TIM7_IRQHandler() {
+	__HAL_TIM_CLEAR_IT(&htim7, TIM_IT_UPDATE);
+	can_timestamp_usec += TIM2->CNT;
 }
 
 // Timestamp should come from the input of this
@@ -92,7 +148,7 @@ int8_t rx_once() {
 
 	switch (rc) {
 	case 1:
-		canardHandleRxFrame(&m_canard_ins, &in_frame, 0); // There should be timestamp but who cares
+		rc = fifo_push(&in_frame);
 		return LIBCANARD_SUCCESS;
 	case 0:
 		return LIBCANARD_NO_QUEUE;
@@ -101,10 +157,23 @@ int8_t rx_once() {
 	}
 }
 
+int8_t handle_frame() {
+	CanardCANFrame frame;
+
+	if (fifo_pop(&frame) == FIFO_OK) {
+		canardHandleRxFrame(&m_canard_ins, &frame, can_timestamp_usec + TIM7->CNT);
+		return LIBCANARD_SUCCESS;
+	} else {
+		// something I guess
+	}
+
+	return LIBCANARD_ERR;
+}
+
 static void com_peripherals_init() {
 	// Enable clocks
-	__HAL_RCC_CAN1_CLK_ENABLE();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_CAN1_CLK_ENABLE();
 
 	// Initialize GPIO (CAN_RX and CAN_TX)
 	GPIO_InitTypeDef gpio;
@@ -120,4 +189,12 @@ static void com_peripherals_init() {
 // DON'T USE
 void usleep(useconds_t us) {
 	HAL_Delay(1);
+}
+
+int16_t setup_hardware_can_filters(void) {
+	const CanardSTM32AcceptanceFilterConfiguration conf[1] = { { .id = 0,
+			.mask = 0 } };
+
+	return canardSTM32ConfigureAcceptanceFilters(
+			(const CanardSTM32AcceptanceFilterConfiguration* const ) &conf, 1);
 }

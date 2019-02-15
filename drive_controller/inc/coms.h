@@ -31,4 +31,8 @@ void libcanard_init();
 int8_t rx_once();
 
 
+int16_t setup_hardware_can_filters(void);
+
+int8_t handle_frame(void);
+
 #endif /* COMS_H_ */
