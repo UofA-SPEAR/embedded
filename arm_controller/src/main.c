@@ -163,11 +163,12 @@ void check_settings(void) {
 	if (error) {
 		run_settings.motor[0].enabled = 0;
 		run_settings.motor[1].enabled = 0;
-		node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OFFLINE;
+		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_ERROR;
 	} else {
-		node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
+		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
 	}
 
+	node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
 }
 
 // To make a system reset, use NVIC_SystemReset()
