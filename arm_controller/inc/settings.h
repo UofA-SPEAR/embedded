@@ -15,7 +15,7 @@
 
 #include "canard.h"
 
-#define NUM_PARAMETERS 28
+#define NUM_PARAMETERS 34
 
 void handle_getSet(CanardInstance* ins, CanardRxTransfer* transfer);
 

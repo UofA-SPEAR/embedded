@@ -172,9 +172,9 @@ static void parameter_return_value(CanardInstance* ins,
 		uint16_t index;
 		uint8_t motor_select = 0;
 
-		// If motor B, select from second set of 14 parameters
-		if (p_msg->index > 13) {
-			index = p_msg->index - 14;
+		// If motor B, select from second set of parameters
+		if (p_msg->index > ((NUM_PARAMETERS / 2) - 1)) {
+			index = p_msg->index - (NUM_PARAMETERS / 2);
 			motor_select = 1;
 		} else {
 			index = p_msg->index;
@@ -239,20 +239,36 @@ static void parameter_return_value(CanardInstance* ins,
 			response.value.real_value = saved_settings.motor[motor_select].encoder.to_radians;
 			break;
 		case (11):
-			// Motor encoder to metres
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor[motor_select].encoder.to_metres;
-			break;
-		case (12):
 			// Motor encoder min endstop enabled?
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
 			response.value.integer_value = saved_settings.motor[motor_select].encoder.endstop_min;
 			break;
-		case (13):
+		case (12):
 			// Motor encoder max value
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
 			response.value.integer_value = saved_settings.motor[motor_select].encoder.endstop_max;
 			break;
+		case (13):
+			// Linear actuator support joint length
+			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
+			response.value.real_value = saved_settings.motor[motor_select].linear.support_length;
+			break;
+		case (14):
+			// Linear actuator "upper arm" joint length
+			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
+			response.value.real_value = saved_settings.motor[motor_select].linear.arm_length;
+			break;
+		case (15):
+			// Linear actuator support joint length
+			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
+			response.value.real_value = saved_settings.motor[motor_select].linear.length_min;
+			break;
+		case (16):
+			// Linear actuator support joint length
+			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
+			response.value.real_value = saved_settings.motor[motor_select].linear.length_min;
+			break;
+
 
 		default:
 			// Something fucked up
@@ -295,9 +311,9 @@ static void parameter_set_value(CanardInstance* ins,
 		uint16_t index;
 		uint8_t motor_select = 0;
 
-		// If motor B, select from second set of 14 parameters
-		if (p_msg->index > 13) {
-			index = p_msg->index - 14;
+		// If motor B, select from second set of parameters
+		if (p_msg->index > ((NUM_PARAMETERS / 2) - 1)) {
+			index = p_msg->index - (NUM_PARAMETERS / 2);
 			motor_select = 1;
 		} else {
 			index = p_msg->index;
@@ -351,16 +367,28 @@ static void parameter_set_value(CanardInstance* ins,
 			current_settings.motor[motor_select].encoder.to_radians = p_msg->value.real_value;
 			break;
 		case (11):
-			// Motor encoder to metres
-			current_settings.motor[motor_select].encoder.to_metres = p_msg->value.real_value;
-			break;
-		case (12):
 			// Motor encoder min endstop enabled?
 			current_settings.motor[motor_select].encoder.endstop_min = p_msg->value.integer_value;
 			break;
-		case (13):
+		case (12):
 			// Motor encoder max value
 			current_settings.motor[motor_select].encoder.endstop_max = p_msg->value.integer_value;
+			break;
+		case (13):
+			// Linear actuator support joint length
+			current_settings.motor[motor_select].linear.support_length = p_msg->value.real_value;
+			break;
+		case (14):
+			// Linear actuator "upper arm" joint length
+			current_settings.motor[motor_select].linear.arm_length = p_msg->value.real_value;
+			break;
+		case (15):
+			// Linear actuator support joint length
+			current_settings.motor[motor_select].linear.length_min = p_msg->value.real_value;
+			break;
+		case (16):
+			// Linear actuator support joint length
+			current_settings.motor[motor_select].linear.length_max = p_msg->value.real_value;
 			break;
 		default:
 			// Something fucked up

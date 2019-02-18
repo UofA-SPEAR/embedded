@@ -8,6 +8,13 @@
 #define POTB_PORT
 
 
+typedef enum {
+	ENCODER_POTENTIOMETER, // Analog potentiometer (or any analog value)
+	ENCODER_QUADRATURE, // Any quadrature encoder
+	ENCODER_ABSOLUTE_DIGITAL, // specifically the digital encoder we are using
+} encoder_type_t;
+
+
 void potA_init();
 uint32_t potA_read();
 
