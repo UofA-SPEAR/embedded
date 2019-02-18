@@ -259,14 +259,14 @@ static void parameter_return_value(CanardInstance* ins,
 			response.value.real_value = saved_settings.motor[motor_select].linear.arm_length;
 			break;
 		case (15):
-			// Linear actuator support joint length
+			// Linear actuator min length
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
 			response.value.real_value = saved_settings.motor[motor_select].linear.length_min;
 			break;
 		case (16):
-			// Linear actuator support joint length
+			// Linear actuator max length
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor[motor_select].linear.length_min;
+			response.value.real_value = saved_settings.motor[motor_select].linear.length_max;
 			break;
 
 

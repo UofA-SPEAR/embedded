@@ -75,6 +75,7 @@ static uint32_t radial_position_get(uint8_t motor, float in_angle) {
 
 	if (position > run_settings.motor[motor].encoder.max) {
 		// TODO set nodestatus to error here
+		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING;
 
 		// Probably the most sane thing to do in this case
 		position = run_settings.motor[motor].encoder.max;
@@ -96,20 +97,22 @@ static uint32_t linear_position_get(uint8_t motor, float in_angle) {
 	// c^2 = a^2 + b^2 - 2ab*cos(C)
 	desired_length = sqrt(
 				pow(*p_support_length, 2) +
-				pow(*p_support_length, 2) -
+				pow(*p_arm_length, 2) -
 				(2 * (*p_support_length) * (*p_arm_length) * cos(in_angle))
 			);
 
 	// TODO set nodestatus
 	if (desired_length < run_settings.motor[motor].linear.length_min) {
+		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING;
 		desired_length = run_settings.motor[motor].linear.length_min;
 	} else if (desired_length > run_settings.motor[motor].linear.length_max) {
+		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING;
 		desired_length = run_settings.motor[motor].linear.length_max;
 	}
 
 	// These are checked to be positive in check_settings()
 	uint32_t encoder_range = run_settings.motor[motor].encoder.max -
-			run_settings.motor[motor].encoder.max;
+			run_settings.motor[motor].encoder.min;
 	float linear_range = run_settings.motor[motor].linear.length_max -
 			run_settings.motor[motor].linear.length_min;
 
