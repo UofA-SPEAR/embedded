@@ -18,6 +18,8 @@
 #endif
 #include "arm_math.h"
 
+#include "uavcan/protocol/NodeStatus.h"
+
 // these bounds are needed, as not the potentiometers will not experience their full range
 #define LOWER_POT_BOUND 0
 #define UPPER_POT_BOUND 4096
@@ -161,7 +163,9 @@ void check_settings(void) {
 	if (error) {
 		run_settings.motor[0].enabled = 0;
 		run_settings.motor[1].enabled = 0;
-		// set nodestatus to error
+		node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OFFLINE;
+	} else {
+		node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
 	}
 
 }
@@ -169,6 +173,10 @@ void check_settings(void) {
 // To make a system reset, use NVIC_SystemReset()
 int main(void) {
 	uint8_t node_id = 0;
+
+	node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
+	node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_INITIALIZATION;
+
 	setup();
 
 	load_settings();

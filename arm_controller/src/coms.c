@@ -439,8 +439,8 @@ void publish_nodeStatus(void) {
 
 		uavcan_protocol_NodeStatus msg;
 
-		msg.health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
-		msg.mode   = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
+		msg.health = node_health;
+		msg.mode   = node_mode;
 		msg.sub_mode = 0;
 		msg.vendor_specific_status_code = 0;
 		msg.uptime_sec = HAL_GetTick() / 1000;
