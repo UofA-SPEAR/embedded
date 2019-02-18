@@ -55,10 +55,15 @@ void run_motorA() {
 		if (run_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
 			uint32_t current_position = potA_read();
 
-			float error = current_position - motorA_desired_position;
+			float error = (float) motorA_desired_position - current_position;
 
 			float out = arm_pid_f32(&pidA, error);
 			out_int = out * 1000;
+
+			if (run_settings.motor[0].linear.support_length >= 0) {
+				// 25% duty cycle
+				out_int /= 4;
+			}
 
 			vnh5019_set(&motorA, out_int);
 		}
@@ -83,8 +88,8 @@ void motor_init() {
 	/* Insanely large number, so no motor checks should happen
 	 * until a position is received.
 	 */
-	last_runA = INT32_MAX;
-	last_runB = INT32_MAX;
+	last_runA = INT16_MAX;
+	last_runB = INT16_MAX;
 }
 
 uint8_t read_node_id(void) {
@@ -200,7 +205,8 @@ int main(void) {
 
 	for (;;) {
 
-		if ((HAL_GetTick() - last_runA >= 100) && run_settings.motor[0].enabled) {
+		if ((HAL_GetTick() - last_runA >= 100) && run_settings.motor[0].enabled
+				&& (last_runA != INT16_MAX)) {
 			run_motorA();
 			last_runA = HAL_GetTick();
 			canardCleanupStaleTransfers(&m_canard_instance, can_timestamp_usec);

@@ -108,6 +108,8 @@ static uint32_t linear_position_get(uint8_t motor, float in_angle) {
 	} else if (desired_length > run_settings.motor[motor].linear.length_max) {
 		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING;
 		desired_length = run_settings.motor[motor].linear.length_max;
+	} else {
+		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
 	}
 
 	// These are checked to be positive in check_settings()
