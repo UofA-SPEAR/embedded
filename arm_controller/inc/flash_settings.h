@@ -69,6 +69,8 @@ typedef struct {
 
 extern flash_settings_t saved_settings;
 extern flash_settings_t current_settings;
+// Settings to be used for actually running the motor
+extern flash_settings_t run_settings;
 
 /** @brief Loads in user settings from flash.
  *

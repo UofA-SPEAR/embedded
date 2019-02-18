@@ -6,13 +6,16 @@
 #include "stm32f3xx_hal.h"
 #include "core_cm4.h"
 
+#include "main.h"
 #include "vnh5019.h"
 #include "encoders.h"
 #include "clocks.h"
 #include "coms.h"
 #include "flash_settings.h"
 
+#ifndef ARM_MATH_CM4
 #define ARM_MATH_CM4
+#endif
 #include "arm_math.h"
 
 // these bounds are needed, as not the potentiometers will not experience their full range
@@ -24,12 +27,10 @@
 vnh5019_t motorA, motorB;
 arm_pid_instance_f32 pidA, pidB;
 
-float motorA_desired_position;
-float motorB_desired_position;
+uint32_t motorA_desired_position;
+uint32_t motorB_desired_position;
 
 
-// Settings to be used for actually running the motor
-flash_settings_t run_settings;
 
 void setup(){
 	HAL_Init();
@@ -52,30 +53,10 @@ void run_motorA() {
 		if (run_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
 			uint32_t current_position = potA_read();
 
-			if ((run_settings.motor[0].encoder.to_radians != 0) &&
-					(run_settings.motor[0].linear.support_length == 0)) {
-				/* If configured as rotary servo
-				 *
-				 * radians / (radians/int_position) - current_position = error
-				 * Turn this negative because that's how we do things.
-				 * Maybe change this? Idk
-				 */
-				float error = - ((motorA_desired_position / run_settings.motor[0].encoder.to_radians)
-						- current_position) / 4096.0;
+			float error = current_position - motorA_desired_position;
 
-				float out = arm_pid_f32(&pidA, error);
-				out_int = out * 1000;
-			} else if ((run_settings.motor[0].encoder.to_radians == 0) &&
-					(run_settings.motor[0].linear.support_length != 0)) {
-				/* If configured as linear servo
-				 * Need to convert from angle to a linear value
-				 */
-
-			} else {
-				// Configured incorrectly, return
-				// TODO set nodestatus here
-				return;
-			}
+			float out = arm_pid_f32(&pidA, error);
+			out_int = out * 1000;
 
 			vnh5019_set(&motorA, out_int);
 		}
@@ -139,24 +120,32 @@ void check_settings(void) {
 	for (uint8_t i = 0; i < 2; i++) {
 		// Only run checks if the motor is even enabled
 		if (run_settings.motor[i].enabled) {
-			if (run_settings.motor[i].encoder.to_radians != 0) {
-				// Encoder should have more than 0 range of motion
-				if (run_settings.motor[i].encoder.min == run_settings.motor[0].encoder.max) {
-					error = true;
-				}
+			// Encoder should have more than 0 range of motion
+			if (run_settings.motor[i].encoder.min >= run_settings.motor[0].encoder.max) {
+				error = true;
+			}
 
+			// Checking for radial settings
+			if (run_settings.motor[i].encoder.to_radians != 0) {
 				// Linear settings should not be set
 				if (run_settings.motor[i].linear.support_length != 0) {
 					error = true;
 				}
 			}
 
+			// Checking for linear settings
 			if (run_settings.motor[i].linear.support_length != 0) {
 				// All values should be more than 0
 				if ((run_settings.motor[i].linear.support_length <= 0) ||
 						(run_settings.motor[i].linear.arm_length <= 0) ||
 						(run_settings.motor[i].linear.length_min <= 0) ||
 						(run_settings.motor[i].linear.length_max <= 0)) {
+					error = true;
+				}
+
+				// Extends positively
+				if ((run_settings.motor[i].linear.length_min >=
+						run_settings.motor[i].linear.length_max)) {
 					error = true;
 				}
 

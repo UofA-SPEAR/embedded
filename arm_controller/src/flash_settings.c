@@ -14,6 +14,8 @@ __attribute__((section("._user_settings"))) flash_settings_t saved_settings;
 
 // Settings in use.
 flash_settings_t current_settings;
+// Run settings
+flash_settings_t run_settings;
 
 
 // If this is the first boot, settings in the flash will be garbage.

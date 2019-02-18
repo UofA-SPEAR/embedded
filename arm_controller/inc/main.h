@@ -13,8 +13,9 @@
 #define ROUND_UP(dividend, divisor) ((dividend + (divisor - 1)) / divisor)
 
 
-extern float motorA_desired_position;
-extern float motorB_desired_position;
+extern uint32_t motorA_desired_position;
+extern uint32_t motorB_desired_position;
+
 
 int32_t last_runA;
 int32_t last_runB;
