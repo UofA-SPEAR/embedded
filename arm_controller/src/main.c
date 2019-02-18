@@ -116,7 +116,7 @@ uint8_t read_node_id(void) {
  * appropriately
  */
 void check_settings(void) {
-	bool error;
+	bool error = false;
 
 	// Make sure checks run for both motors
 	for (uint8_t i = 0; i < 2; i++) {
@@ -173,7 +173,7 @@ void check_settings(void) {
 
 // To make a system reset, use NVIC_SystemReset()
 int main(void) {
-	uint8_t node_id = 0;
+	uint8_t node_id = false;
 
 	node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
 	node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_INITIALIZATION;
