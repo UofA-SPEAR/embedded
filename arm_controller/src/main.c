@@ -48,25 +48,29 @@ void setup(){
 // Run PID and motor control
 void run_motorA() {
 	int16_t out_int;
+	int32_t current_position;
 
 	// Check if the motor is even enabled
 	if (run_settings.motor[0].enabled) {
 		// Check if encoder is potentiometer type.
 		if (run_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
-			uint32_t current_position = potA_read();
-
-			float error = (float) motorA_desired_position - current_position;
-
-			float out = arm_pid_f32(&pidA, error);
-			out_int = out * 1000;
-
-			if (run_settings.motor[0].linear.support_length >= 0) {
-				// 25% duty cycle
-				out_int /= 4;
-			}
-
-			vnh5019_set(&motorA, out_int);
+			// Read potentiometer position
+			current_position = potA_read();
+		} else if (run_settings.motor[0].encoder.type == ENCODER_QUADRATURE) {
+			// Read current encoder position. We don't care about wraps at the moment
+			current_position = (TIM3->CNT) - ENCODER_START_VAL;
 		}
+
+		float error = (float) motorA_desired_position - current_position;
+		float out = arm_pid_f32(&pidA, error);
+		out_int = out * 1000;
+
+		if (run_settings.motor[0].linear.support_length >= 0) {
+			// 25% duty cycle
+			out_int /= 4;
+		}
+
+		vnh5019_set(&motorA, out_int);
 	}
 }
 
@@ -189,7 +193,19 @@ int main(void) {
 	run_settings = saved_settings;
 	check_settings();
 	motor_init();
-	potA_init();
+
+	// Initialize feedback
+	switch (run_settings.motor[0].encoder.type) {
+	case (ENCODER_POTENTIOMETER):
+			potA_init();
+			break;
+	case (ENCODER_QUADRATURE):
+			encoderA_init();
+			break;
+	default:
+			// do nothing
+			break;
+	}
 
 	comInit();
 	node_id = read_node_id();

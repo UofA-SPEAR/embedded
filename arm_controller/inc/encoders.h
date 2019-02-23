@@ -7,6 +7,8 @@
 #define POTB_PIN
 #define POTB_PORT
 
+#define ENCODER_START_VAL 30000
+
 
 typedef enum {
 	ENCODER_POTENTIOMETER, // Analog potentiometer (or any analog value)
@@ -16,6 +18,7 @@ typedef enum {
 
 
 void potA_init();
+void encoderA_init();
 uint32_t potA_read();
 
 

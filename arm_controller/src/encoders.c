@@ -4,6 +4,8 @@
 #include "encoders.h"
 
 ADC_HandleTypeDef hadc3;
+// I hope TIM3 isn't enabled anywhere else
+TIM_HandleTypeDef tim3;
 
 void potA_init(void) {
 	ADC_ChannelConfTypeDef sConfig;
@@ -61,6 +63,33 @@ uint32_t potA_read(){
     HAL_ADC_Stop(&hadc3);
 
 	return val;
+}
+
+/** @brief Set up TIM3 in encoder mode.
+ */
+void encoderA_init() {
+	// UNTESTED
+	tim3.Instance = TIM3;
+	tim3.Init.Period = UINT16_MAX;
+
+	TIM_Encoder_InitTypeDef encoder;
+	encoder.EncoderMode = TIM_ENCODERMODE_TI12;
+	// Theoretically could get more resolution doing botheddge,
+	// but depends on the encoder
+	encoder.IC1Polarity 	= TIM_ICPOLARITY_RISING;
+	encoder.IC1Selection 	= TIM_ICSELECTION_DIRECTTI;
+	encoder.IC1Filter 		= 0; // Assume it's pretty good
+	encoder.IC1Prescaler	= TIM_ICPSC_DIV1;
+	encoder.IC2Polarity 	= TIM_ICPOLARITY_RISING;
+	encoder.IC2Selection 	= TIM_ICSELECTION_DIRECTTI;
+	encoder.IC2Filter 		= 0; // Assume it's pretty good
+	encoder.IC2Prescaler	= TIM_ICPSC_DIV1;
+
+	// Start counter at the middle so we can go negative
+	TIM3->CNT = ENCODER_START_VAL;
+
+	HAL_TIM_Encoder_Init(&tim3, &encoder);
+	HAL_TIM_Encoder_start(&tim3, TIM_CHANNEL_ALL);
 }
 
 // more setup code, this time for the pin
