@@ -65,9 +65,17 @@ uint32_t potA_read(){
 	return val;
 }
 
+static void encoderA_gpio_init() {
+	// Not sure if I have to do anything here
+	// I think if I set the pins as input this is handled,
+	// and input is the default state
+}
+
 /** @brief Set up TIM3 in encoder mode.
  */
 void encoderA_init() {
+	encoderA_gpio_init();
+
 	// UNTESTED
 	tim3.Instance = TIM3;
 	tim3.Init.Period = UINT16_MAX;
@@ -89,7 +97,7 @@ void encoderA_init() {
 	TIM3->CNT = ENCODER_START_VAL;
 
 	HAL_TIM_Encoder_Init(&tim3, &encoder);
-	HAL_TIM_Encoder_start(&tim3, TIM_CHANNEL_ALL);
+	HAL_TIM_Encoder_Start(&tim3, TIM_CHANNEL_ALL);
 }
 
 // more setup code, this time for the pin
