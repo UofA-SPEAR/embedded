@@ -69,6 +69,16 @@ static void encoderA_gpio_init() {
 	// Not sure if I have to do anything here
 	// I think if I set the pins as input this is handled,
 	// and input is the default state
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_TIM3_CLK_ENABLE();
+	GPIO_InitTypeDef gpio;
+	gpio.Pin = GPIO_PIN_6 | GPIO_PIN_7;
+	gpio.Mode = GPIO_MODE_AF_PP;
+	gpio.Speed = GPIO_SPEED_FREQ_HIGH;
+	gpio.Pull = GPIO_PULLUP;
+	gpio.Alternate = GPIO_AF2_TIM3;
+
+	HAL_GPIO_Init(GPIOA, &gpio);
 }
 
 /** @brief Set up TIM3 in encoder mode.
@@ -78,7 +88,11 @@ void encoderA_init() {
 
 	// UNTESTED
 	tim3.Instance = TIM3;
+	tim3.Init.Prescaler = 0;
 	tim3.Init.Period = UINT16_MAX;
+	tim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+	tim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	tim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 	TIM_Encoder_InitTypeDef encoder;
 	encoder.EncoderMode = TIM_ENCODERMODE_TI12;
@@ -94,10 +108,17 @@ void encoderA_init() {
 	encoder.IC2Prescaler	= TIM_ICPSC_DIV1;
 
 	// Start counter at the middle so we can go negative
-	TIM3->CNT = ENCODER_START_VAL;
 
 	HAL_TIM_Encoder_Init(&tim3, &encoder);
 	HAL_TIM_Encoder_Start(&tim3, TIM_CHANNEL_ALL);
+	TIM3->CNT = ENCODER_START_VAL;
+
+	TIM_MasterConfigTypeDef sMasterConfig;
+
+
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	HAL_TIMEx_MasterConfigSynchronization(&tim3, &sMasterConfig);
 }
 
 // more setup code, this time for the pin

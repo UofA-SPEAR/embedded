@@ -29,8 +29,8 @@
 vnh5019_t motorA, motorB;
 arm_pid_instance_f32 pidA, pidB;
 
-uint32_t motorA_desired_position;
-uint32_t motorB_desired_position;
+int32_t motorA_desired_position;
+int32_t motorB_desired_position;
 
 
 

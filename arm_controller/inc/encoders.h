@@ -15,9 +15,9 @@
 
 
 typedef enum {
-	ENCODER_POTENTIOMETER, // Analog potentiometer (or any analog value)
-	ENCODER_QUADRATURE, // Any quadrature encoder
-	ENCODER_ABSOLUTE_DIGITAL, // specifically the digital encoder we are using
+	ENCODER_POTENTIOMETER 		= 0, // Analog potentiometer (or any analog value)
+	ENCODER_QUADRATURE 			= 1, // Any quadrature encoder
+	ENCODER_ABSOLUTE_DIGITAL 	= 2, // specifically the digital encoder we are using
 } encoder_type_t;
 
 

@@ -63,31 +63,34 @@ void comInit(void) {
 }
 
 // Should this be moved somewhere else?
-static uint32_t radial_position_get(uint8_t motor, float in_angle) {
-	uint32_t position;
+static int32_t radial_position_get(uint8_t motor, float in_angle) {
+	int32_t position;
 
 
-	// radians / (radians/integer) = integers
-	position = in_angle / run_settings.motor[motor].encoder.to_radians;
+	if (run_settings.motor[motor].encoder.type == ENCODER_POTENTIOMETER) {
+		// radians / (radians/integer) = integers
+		position = in_angle / run_settings.motor[motor].encoder.to_radians;
 
-	// Needs to start at encoder_min
-	position += run_settings.motor[motor].encoder.min;
+		// Needs to start at encoder_min
+		position += run_settings.motor[motor].encoder.min;
 
-	if (position > run_settings.motor[motor].encoder.max) {
-		// TODO set nodestatus to error here
-		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING;
+		if (position > run_settings.motor[motor].encoder.max) {
+			node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING;
 
-		// Probably the most sane thing to do in this case
-		position = run_settings.motor[motor].encoder.max;
+			// Probably the most sane thing to do in this case
+			position = run_settings.motor[motor].encoder.max;
+		}
+	} else if (run_settings.motor[motor].encoder.type == ENCODER_QUADRATURE) {
+		position = in_angle / run_settings.motor[motor].encoder.to_radians;
 	}
 
 	return position;
 }
 
 // Should this be moved somewhere else?
-static uint32_t linear_position_get(uint8_t motor, float in_angle) {
+static int32_t linear_position_get(uint8_t motor, float in_angle) {
 	float desired_length;
-	uint32_t position;
+	int32_t position;
 
 	// Hoping these get optimized out
 	float* p_support_length = &(run_settings.motor[motor].linear.support_length);
@@ -147,7 +150,7 @@ static void handle_actuator_command(CanardRxTransfer* transfer) {
 	for (int i = 0; i < msg.commands.len; i++) {
 		uavcan_equipment_actuator_Command* cmd = &msg.commands.data[i];
 
-		uint32_t desired_position;
+		int32_t desired_position;
 
 		for (uint8_t i = 0; i < 2; i++) {
 			if (cmd->actuator_id == run_settings.motor[i].actuator_id) {
