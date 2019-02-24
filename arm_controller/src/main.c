@@ -61,7 +61,14 @@ void run_motorA() {
 			current_position = (TIM3->CNT) - ENCODER_START_VAL;
 		}
 
-		float error = (float) motorA_desired_position - current_position;
+		float error;
+		if (run_settings.motor[0].reversed) {
+			// Reverse the error.
+			// TODO evaluate if I should reverse the error or the motor output
+			error = (float) - (motorA_desired_position - current_position);
+		} else {
+			error = (float) motorA_desired_position - current_position;
+		}
 		float out = arm_pid_f32(&pidA, error);
 		out_int = out * 1000;
 
