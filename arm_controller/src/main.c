@@ -26,6 +26,9 @@
 
 #define BASE_NODE_ID 30
 
+// "dead" zone so we aren't oscillating
+#define LINEAR_ACTUATOR_DEADZONE	50
+
 vnh5019_t motorA, motorB;
 arm_pid_instance_f32 pidA, pidB;
 
@@ -69,12 +72,20 @@ void run_motorA() {
 		} else {
 			error = (float) motorA_desired_position - current_position;
 		}
-		float out = arm_pid_f32(&pidA, error);
-		out_int = out * 1000;
 
-		if (run_settings.motor[0].linear.support_length >= 0) {
-			// 25% duty cycle
-			out_int /= 4;
+		if (run_settings.motor[0].encoder.to_radians >= 0) {
+			float out = arm_pid_f32(&pidA, error);
+			out_int = out * 1000;
+		} else if (run_settings.motor[0].linear.support_length >= 0) {
+			// constant motor power, instead of PID, simpler
+
+			if (error > LINEAR_ACTUATOR_DEADZONE) {
+				out_int = 150;
+			} else if (error < -LINEAR_ACTUATOR_DEADZONE) {
+				out_int = -150;
+			} else {
+				out_int = 0;
+			}
 		}
 
 		vnh5019_set(&motorA, out_int);
