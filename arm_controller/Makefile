@@ -8,6 +8,7 @@
 # - add support for migrating to a different STM32 target
 # - add debugging/flashing (just OpenOCD stuff really)
 # - clean up, maybe optimize builds more
+# - add windows support
 
 
 ######################################
