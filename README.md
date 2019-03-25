@@ -4,6 +4,20 @@ This is all the code for the embedded systems on the rover.
 
 This code will run on STM32 chips, specifically the F103 or F303 series (preferably F303)
 
+## Building a project ##
+
+Copy the example project, embedded/example_project as your own project folder.
+
+Edit the Makefile within your new project to match your project's requirements.
+
+Run:
+
+```
+make -j4
+```
+
+Congrats! You've built a project!
+
 ## Running ##
 
 Install [SW4STM32](http://openstm32.org) and import the project.

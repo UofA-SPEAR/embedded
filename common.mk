@@ -1,6 +1,18 @@
+######
+# Makefile based on STM32Cube auto-generated makefile
+#
+# TODO:
+# - Verify/fix C++ support
+# - Get rid of wchar_t warning
+# - add debugging/flashing (just OpenOCD stuff really)
+# - clean up, maybe optimize builds more
+# - add windows support
+#
+# Mediocre stuff about how I'm doing this:
+# - First build times are loooooong. make -j4 will help, but we're still compiling lots we do't need.
+#     This is mostly because I don't want people to have to specifiy which source files they need.
 
-
-
+####################
 # Common directories
 #
 # These variables need to be defined in your makefile:
@@ -8,6 +20,9 @@
 # 	PROJ_DIR - Location of the current project
 # 	MCU_SERIES - f0, f3, etc... the series for STM32 you are using
 # 	MCU_PARTNO - Full partno you are using, in the HAL style, e.g. STM32F303xC
+#
+# 	SOURCE_DIRS - project specific sources, can be empty
+#
 #
 # 	CPU, see example makefile
 # 	FPU, see example makefile
@@ -29,7 +44,7 @@ CMSIS_CORE_DIR := $(CMSIS_DIR)/core
 CMSIS_DEVICE_DIR := $(CMSIS_DIR)/device
 
 
-SOURCE_DIRS := \
+SOURCE_DIRS += \
 		$(LIBCANARD_DIR) \
 		$(LIBCANARD_STM32_DIR) \
 		$(HAL_DRIVER_SRC_DIR) \
@@ -122,7 +137,7 @@ CXXFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 ##################
 
 # link script
-LDSCRIPT = LinkerScript.ld
+LDSCRIPT = $(PROJ_DIR)/LinkerScript.ld
 
 # libraries
 LIBS = -lc -lm -lnosys -larm_math
