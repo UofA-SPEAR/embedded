@@ -13,6 +13,9 @@ TARGET = arm_controller
 DEBUG = 1
 # optimization
 OPT = -Og
+# Include arm_math stuff?
+# Comment out if you don't need this, it causes a warning
+ARM_MATH = 1
 
 # These all have to be defined for your specific processor
 CPU = -mcpu=cortex-m4

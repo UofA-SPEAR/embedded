@@ -3,8 +3,6 @@
 #
 # TODO:
 # - Verify/fix C++ support
-# - Get rid of wchar_t warning
-# - add debugging/flashing (just OpenOCD stuff really)
 # - clean up, maybe optimize builds more
 # - add windows support
 #
@@ -140,9 +138,14 @@ CXXFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 LDSCRIPT = $(PROJ_DIR)/LinkerScript.ld
 
 # libraries
-LIBS = -lc -lm -lnosys -larm_math
-LIBDIR = -L$(CMSIS_DIR)/lib
+LIBS = -lc -lm -lnosys
+LIBDIR =
 LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
+
+ifdef ARM_MATH
+	LIBS += -larm_math
+	LIBDIR += -L$(CMSIS_DIR)/lib
+endif
 
 
 
@@ -178,7 +181,7 @@ $(BUILD_DIR)/%.o: %.s Makefile | $(BUILD_DIR)
 	$(AS) -c $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) Makefile
-	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
+	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@
 	$(SZ) $@
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
@@ -196,6 +199,18 @@ $(BUILD_DIR):
 #######################################
 clean:
 	-rm -fR $(BUILD_DIR)
+
+
+####################
+# Flashing/Debugging
+####################
+
+flash: $(BUILD_DIR)/$(TARGET).elf
+	openocd -f $(COMMON_DIR)/$(MCU_SERIES)_openocd.cfg \
+		-c "program $(BUILD_DIR)/$(TARGET).elf verify reset exit" \
+
+debug: $(BUILD_DIR)/$(TARGET).elf
+	openocd -f $(COMMON_DIR)/$(MCU_SERIES)_openocd.cfg
   
 #######################################
 # dependencies
