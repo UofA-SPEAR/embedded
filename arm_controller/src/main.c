@@ -27,7 +27,8 @@
 #define BASE_NODE_ID 30
 
 // "dead" zone so we aren't oscillating
-#define LINEAR_ACTUATOR_DEADZONE	50
+#define LINEAR_ACTUATOR_DEADZONE	350
+#define LINEAR_ACTUATOR_POWER		500
 
 vnh5019_t motorA, motorB;
 arm_pid_instance_f32 pidA, pidB;
@@ -73,16 +74,20 @@ void run_motorA() {
 			error = (float) motorA_desired_position - current_position;
 		}
 
-		if (run_settings.motor[0].encoder.to_radians >= 0) {
+		if (run_settings.motor[0].encoder.to_radians != (float)  0.0) {
 			float out = arm_pid_f32(&pidA, error);
 			out_int = out * 1000;
 		} else if (run_settings.motor[0].linear.support_length >= 0) {
 			// constant motor power, instead of PID, simpler
 
 			if (error > LINEAR_ACTUATOR_DEADZONE) {
-				out_int = 150;
+				out_int = LINEAR_ACTUATOR_POWER;
+			} else if (error > (LINEAR_ACTUATOR_DEADZONE / 2)) {
+				out_int = LINEAR_ACTUATOR_POWER / 2;
 			} else if (error < -LINEAR_ACTUATOR_DEADZONE) {
-				out_int = -150;
+				out_int = -LINEAR_ACTUATOR_POWER;
+			} else if (error < -(LINEAR_ACTUATOR_DEADZONE / 2)) {
+				out_int = -LINEAR_ACTUATOR_POWER / 2;
 			} else {
 				out_int = 0;
 			}
