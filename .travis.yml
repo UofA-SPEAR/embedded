@@ -1,0 +1,13 @@
+git:
+    submodules: true
+
+matrix:
+    include:
+        - name "Build"
+    language: c++
+    before_script:
+        - sudo apt-get install gcc-arm-none-eabi
+    script:
+        # TODO: find a way to iterate over all projects
+        - cd arm_controller/
+        - make
