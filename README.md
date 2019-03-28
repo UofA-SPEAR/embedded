@@ -1,3 +1,5 @@
+![Travis-CI](https://travis-ci.com/UofA-SPEAR/embedded.svg?branch=master)
+
 # embedded #
 
 This is all the code for the embedded systems on the rover.
