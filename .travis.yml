@@ -8,6 +8,4 @@ matrix:
     before_script:
         - sudo apt-get install gcc-arm-none-eabi
     script:
-        # TODO: find a way to iterate over all projects
-        - cd arm_controller/
-        - make
+        - "cd arm_controller/ && make"
