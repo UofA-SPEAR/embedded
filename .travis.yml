@@ -4,6 +4,7 @@ git:
 matrix:
     include:
         - name: "Build"
+          language: cpp
           os: linux
           addons:
               apt:
