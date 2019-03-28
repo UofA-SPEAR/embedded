@@ -3,4 +3,4 @@
 	url = https://github.com/UAVCAN/libcanard.git
 [submodule "common/uavcan_dsdl"]
 	path = common/uavcan_dsdl
-	url = git@github.com:UofA-SPEAR/uavcan_dsdl.git
+	url = https://github.com/UofA-SPEAR/uavcan_dsdl.git
