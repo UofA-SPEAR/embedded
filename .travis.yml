@@ -4,6 +4,10 @@ git:
 matrix:
     include:
         - name: "Build"
+          os: linux
+          addons:
+              apt:
+                  packages: gcc-arm-none-eabi
           language: c++
           before_script:
             - sudo apt-get install gcc-arm-none-eabi
