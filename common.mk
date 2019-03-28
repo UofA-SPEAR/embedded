@@ -2,9 +2,9 @@
 # Makefile based on STM32Cube auto-generated makefile
 #
 # TODO:
-# - Verify/fix C++ support
 # - clean up, maybe optimize builds more
 # - add windows support
+# - add *proper* retargeting (this is mostly restructuring some files and adding make variables)
 #
 # Mediocre stuff about how I'm doing this:
 # - First build times are loooooong. make -j4 will help, but we're still compiling lots we do't need.
