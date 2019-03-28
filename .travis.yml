@@ -9,3 +9,7 @@ matrix:
             - sudo apt-get install gcc-arm-none-eabi
           script:
             - "cd arm_controller/ && make"
+
+
+notifications:
+    email: false
