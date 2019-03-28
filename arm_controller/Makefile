@@ -30,4 +30,9 @@ MCU_PARTNO := STM32F303xC
 # Project specific source directories, can be empty
 SOURCE_DIRS :=
 
+
+# link script
+LDSCRIPT = $(PROJ_DIR)/LinkerScript.ld
+
+
 include ../common.mk

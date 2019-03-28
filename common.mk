@@ -20,6 +20,7 @@
 # 	MCU_PARTNO - Full partno you are using, in the HAL style, e.g. STM32F303xC
 #
 # 	SOURCE_DIRS - project specific sources, can be empty
+# 	LDSCRIPT - The locaton of your linker script.
 #
 #
 # 	CPU, see example makefile
@@ -133,9 +134,6 @@ CXXFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 ##################
 # Linker stuff!
 ##################
-
-# link script
-LDSCRIPT = $(PROJ_DIR)/LinkerScript.ld
 
 # libraries
 LIBS = -lc -lm -lnosys
