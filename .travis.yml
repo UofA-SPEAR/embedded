@@ -9,7 +9,7 @@ matrix:
           os: linux
           language: c++
           before_script:
-              - sudo apt-apt-repository ppa:team-gcc-arm-embedded/ppa
+              - sudo add-apt-repository ppa:team-gcc-arm-embedded/ppa
               - sudo apt-get update
               - sudo apt-get install gcc-arm-embedded
           script:
