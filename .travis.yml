@@ -5,10 +5,8 @@ matrix:
     include:
         - name: "Build"
           language: cpp
+          compiler: gcc
           os: linux
-          addons:
-              apt:
-                  packages: gcc-arm-none-eabi
           language: c++
           before_script:
             - sudo apt-get install gcc-arm-none-eabi
