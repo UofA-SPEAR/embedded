@@ -4,6 +4,14 @@ This is all the code for the embedded systems on the rover.
 
 This code will run on STM32 chips, specifically the F103 or F303 series (preferably F303)
 
+## Dependencies ##
+
+You need to have the following tools installed:
+
+- gcc-arm-none-eabi (GCC arm toolchain)
+- make tools
+- OpenOCD
+
 ## Getting started ##
 
 First we need to clone this repository, and then we can update the submodules within it,
