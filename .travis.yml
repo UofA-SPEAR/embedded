@@ -9,7 +9,7 @@ matrix:
           os: linux
           language: c++
           before_script:
-            - sudo apt-get install gcc-arm-none-eabi
+            - sudo apt-get install gcc-arm-embedded
           script:
             - "cd arm_controller/ && make"
 
