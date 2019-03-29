@@ -14,6 +14,7 @@
 # Common directories
 #
 # These variables need to be defined in your makefile:
+#   TARGET - the name of your project
 # 	COMMON_DIR - the common/ folder, where everything not for a specific project is held
 # 	PROJ_DIR - Location of the current project
 # 	MCU_SERIES - f0, f3, etc... the series for STM32 you are using
@@ -192,6 +193,8 @@ $(BUILD_DIR):
 	mkdir $@		
 
 
+.PHONY: clean flash debug help
+
 #######################################
 # clean up
 #######################################
@@ -209,7 +212,19 @@ flash: $(BUILD_DIR)/$(TARGET).elf
 
 debug: $(BUILD_DIR)/$(TARGET).elf
 	openocd -f $(COMMON_DIR)/$(MCU_SERIES)_openocd.cfg
-  
+
+################
+# Printing Stuff
+################
+help:
+	@echo "Targets:"
+	@echo "      - ${TARGET}: build project"
+	@echo "      - clean: clean up build folder"
+	@echo "      - flash: flash project to microcontroller with OpenOCD"
+	@echo "      - debug: launch an OpenOCD debug session"
+	@echo "      - help: print this message"
+
+
 #######################################
 # dependencies
 #######################################
