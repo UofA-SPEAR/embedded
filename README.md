@@ -14,6 +14,14 @@ You need to have the following tools installed:
 - make tools
 - OpenOCD
 
+### Windows
+
+Install Git Bash
+
+Install the ARM GNU toolchain from the ARM website: https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+
+It works to build the makefile using git Bash, or anything like linux for windows, but I haven't done full integration into windows yet. (mostly because windows development sucks)
+
 ## Getting started ##
 
 First we need to clone this repository, and then we can update the submodules within it,
