@@ -9,7 +9,7 @@
 #include "settings.h"
 
 // Strings for all the parameters
-char* parameters[NUM_PARAMETERS] = {
+const char* parameters[NUM_PARAMETERS] = {
 		"spear.arm.motorA.enabled",
 		"spear.arm.motorA.actuator_id",
 		"spear.arm.motorA.reversed",
