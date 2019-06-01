@@ -50,7 +50,7 @@ void coms_update(void) {
 void coms_init(void) {
 	timestamp_tim_init();
 	fifo_init();
-	libcanard_init(on_reception, should_accept, NULL, 32000000, 250000);
+	libcanard_init(on_reception, should_accept, NULL, 64000000, 250000);
 	setup_hardware_can_filters();
     // Configure interrupts
     // We only need to worry about the RX FIFO 0, because that's how the CAN interface is by default
@@ -196,26 +196,13 @@ int8_t rx_once() {
 
 	switch (rc) {
 	case 1:
-		fifo_push(&in_frame);
+		canardHandleRxFrame(&m_canard_instance, &in_frame, can_timestamp_usec + TIM7->CNT);
 		return LIBCANARD_SUCCESS;
 	case 0:
 		return LIBCANARD_NO_QUEUE;
 	default:
 		return LIBCANARD_ERR;
 	}
-}
-
-int8_t handle_frame() {
-	CanardCANFrame frame;
-
-	if (fifo_pop(&frame) == FIFO_OK) {
-		canardHandleRxFrame(&m_canard_instance, &frame, can_timestamp_usec + TIM7->CNT);
-		return LIBCANARD_SUCCESS;
-	} else {
-		// something I guess
-	}
-
-	return LIBCANARD_ERR;
 }
 
 void USB_LP_CAN_RX0_IRQHandler(void) {
