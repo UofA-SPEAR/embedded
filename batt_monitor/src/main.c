@@ -21,7 +21,6 @@ void gpio_init() {
 	HAL_GPIO_Init(USR_BTN_PORT, &gpio);
 
 	// Analog Inputs
-
 	gpio.Pin = CURRENT_MSR_PIN | VOLTAGE_MSR_PIN;
 	gpio.Pull = GPIO_NOPULL;
 	gpio.Mode = GPIO_MODE_ANALOG;
