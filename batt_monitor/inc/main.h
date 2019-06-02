@@ -3,5 +3,7 @@
 
 #include "stm32f3xx.h"
 #include "pins.h"
+#include "clocks.h"
+#include "coms.h"
 
 #endif

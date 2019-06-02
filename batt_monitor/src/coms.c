@@ -37,6 +37,9 @@ TIM_HandleTypeDef htim7;
 
 uint64_t can_timestamp_usec;
 
+uint32_t node_health;
+uint32_t node_mode;
+
 static void timestamp_tim_init(void);
 static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);
 static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer);
@@ -49,7 +52,6 @@ void coms_update(void) {
 
 void coms_init(void) {
 	timestamp_tim_init();
-	fifo_init();
 	libcanard_init(on_reception, should_accept, NULL, 64000000, 250000);
 	setup_hardware_can_filters();
     // Configure interrupts
@@ -98,9 +100,6 @@ bool should_accept(const CanardInstance* ins,
 void on_reception(CanardInstance* ins, CanardRxTransfer* transfer){
 	if (transfer->transfer_type == CanardTransferTypeBroadcast) {
 		switch (transfer->data_type_id) {
-		case (UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID):
-			handle_actuator_command(transfer);
-			break;
 		default:
 			break;
 		}
@@ -109,7 +108,8 @@ void on_reception(CanardInstance* ins, CanardRxTransfer* transfer){
 	if (transfer->transfer_type == CanardTransferTypeRequest) {
 		switch (transfer->data_type_id) {
 		case(UAVCAN_PROTOCOL_PARAM_GETSET_ID):
-			handle_getSet(ins, transfer);
+			// TODO: Implement this
+			// handle_getSet(ins, transfer);
 			break;
 		case (UAVCAN_PROTOCOL_RESTARTNODE_ID):
 			restart_node(ins, transfer);
@@ -139,17 +139,17 @@ static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer) {
 static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer) {
 	uavcan_protocol_GetNodeInfoResponse out_msg;
 
-	out_msg.name.len = strlen("Arm Controller");
-	out_msg.name.data = (uint8_t*) "Arm Controller";
+	out_msg.name.len = strlen("Battery Monitor");
+	out_msg.name.data = (uint8_t*) "Battery Monitor";
 	out_msg.software_version.major = 0;
 	out_msg.software_version.minor = 1;
 	out_msg.hardware_version.major = 0;
 	out_msg.hardware_version.minor = 1;
 	out_msg.hardware_version.certificate_of_authenticity.len = 0;
 
-	// TODO hook this into main status
-	out_msg.status.health 	= UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
-	out_msg.status.mode 	= UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
+	// TODO: hook this into main status
+	out_msg.status.health 	= node_health;
+	out_msg.status.mode 	= node_mode;
 	out_msg.status.sub_mode = 0;
 	out_msg.status.vendor_specific_status_code = 0;
 	out_msg.status.uptime_sec = HAL_GetTick() / 1000;
@@ -216,7 +216,7 @@ static void timestamp_tim_init(void) {
 	// Initialize to run at 1MHz
 	// Reset every 1ms
 	htim7.Instance = TIM7;
-	htim7.Init.Prescaler = 32;
+	htim7.Init.Prescaler = 64;
 	htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
 	htim7.Init.Period = 1000;
 	htim7.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -301,4 +301,9 @@ void publish_nodeStatus(void) {
 				len);
 	}
 
+}
+
+int usleep(useconds_t usec) {
+	useconds_t start = can_timestamp_usec + TIM7->CNT;
+	while ((can_timestamp_usec + TIM7->CNT) < (start + usec));
 }

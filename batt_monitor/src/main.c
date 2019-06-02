@@ -48,6 +48,9 @@ void gpio_init() {
  * Untested though.
  */
 int main(void) {
+	clocks_init();
+	gpio_init();
+	coms_init();
 	for (;;) {
 	}
 }
