@@ -1,5 +1,14 @@
 #include "main.h"
 
+/**
+ * TODO:
+ * - Overcurrent/undervoltage shutoff
+ * - CAN bus stuff
+ */
+
+// Control flags
+bool flag_take_measurement = 0;
+
 /*** @brief General GPIO Initialization
  * 
  */
@@ -47,11 +56,17 @@ void gpio_init() {
  * Untested though.
  */
 int main(void) {
+	adc_measurement_t measurement;
+
 	clocks_init();
 	gpio_init();
+	adc_init();
 	coms_init();
+
+
 	for (;;) {
+		if (flag_take_measurement) {
+			measurement = adc_measure();
+		}
 	}
 }
-
-

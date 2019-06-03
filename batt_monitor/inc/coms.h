@@ -1,11 +1,23 @@
 #ifndef COMS_H_
 #define COMS_H_
 
+#include "stm32f3xx.h"
 #include "canard.h"
+#include "canard_stm32.h"
+#include "adc.h"
+#include "main.h"
 
+#ifndef ARM_MATH_CM4
+#define ARM_MATH_CM4
+#endif
+#include "arm_math.h"
 
-void coms_init();
-void coms_update(void);
+#include "uavcan/protocol/param/GetSet.h"
+#include "uavcan/protocol/NodeStatus.h"
+#include "uavcan/protocol/RestartNode.h"
+#include "uavcan/protocol/GetNodeInfo.h"
+#include "uavcan/equipment/power/BatteryInfo.h"
+
 
 /* ------------ Error Definitions --------------- */
 
@@ -48,6 +60,10 @@ extern uint64_t can_timestamp_usec;
 extern uint32_t node_health;
 extern uint32_t node_mode;
 
+void coms_init();
+void coms_update(void);
+
+
 bool should_accept(const CanardInstance* ins,
 					uint64_t* out_data_type_signature,
 					uint16_t data_type_id,
@@ -65,6 +81,7 @@ int16_t libcanard_init(CanardOnTransferReception on_reception,
 int16_t setup_hardware_can_filters(void);
 
 void publish_nodeStatus(void);
+void publish_batteryInfo(adc_measurement_t measurement, uint16_t status);
 
 
 #endif

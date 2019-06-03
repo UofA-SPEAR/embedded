@@ -1,23 +1,4 @@
-#include <stdbool.h>
-
-#include "stm32f3xx.h"
-#include "stm32f3xx_hal.h"
-
-#include "canard.h"
-#include "canard_stm32.h"
 #include "coms.h"
-#include "main.h"
-
-#ifndef ARM_MATH_CM4
-#define ARM_MATH_CM4
-#endif
-#include "arm_math.h"
-
-#include "uavcan/equipment/actuator/ArrayCommand.h"
-#include "uavcan/protocol/param/GetSet.h"
-#include "uavcan/protocol/NodeStatus.h"
-#include "uavcan/protocol/RestartNode.h"
-#include "uavcan/protocol/GetNodeInfo.h"
 
 // Small enough to not be too bad, large enough to be useful
 #define DYNAMIC_ARRAY_BUF_SIZE 1000
@@ -37,8 +18,8 @@ TIM_HandleTypeDef htim7;
 
 uint64_t can_timestamp_usec;
 
-uint32_t node_health;
-uint32_t node_mode;
+uint32_t node_health	= UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
+uint32_t node_mode		= UAVCAN_PROTOCOL_NODESTATUS_MODE_OFFLINE;
 
 static void timestamp_tim_init(void);
 static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);
@@ -70,9 +51,6 @@ bool should_accept(const CanardInstance* ins,
 	if (transfer_type == CanardTransferTypeBroadcast) {
 		switch (data_type_id) {
 
-		case (UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID):
-			*out_data_type_signature = UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_SIGNATURE;
-			return true;
 		case (UAVCAN_PROTOCOL_NODESTATUS_ID):
 			return false;
 		default:
@@ -301,6 +279,26 @@ void publish_nodeStatus(void) {
 				len);
 	}
 
+}
+
+// TODO: fill in the rest of the info.
+void publish_batteryInfo(adc_measurement_t measurement, uint16_t status) {
+	uavcan_equipment_power_BatteryInfo info;
+
+	info.voltage 		= measurement.bat_voltage;
+	info.current		= measurement.current;
+	info.status_flags	= status;
+	info.model_name.len = 0;
+
+	uint16_t len = uavcan_equipment_power_BatteryInfo_encode(&info, out_buf);
+
+	canardBroadcast(&m_canard_instance,
+					UAVCAN_EQUIPMENT_POWER_BATTERYINFO_SIGNATURE,
+					UAVCAN_EQUIPMENT_POWER_BATTERYINFO_ID,
+					&inout_transfer_id,
+					0,
+					out_buf,
+					len);
 }
 
 int usleep(useconds_t usec) {
