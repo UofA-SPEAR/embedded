@@ -11,6 +11,8 @@ TARGET = batt_monitor
 ######################################
 # debug build?
 DEBUG = 1
+# Errors on Warnings?
+WARNERROR = 1
 # optimization
 OPT = -Og
 # Include arm_math stuff?

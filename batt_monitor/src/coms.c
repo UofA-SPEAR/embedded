@@ -304,4 +304,6 @@ void publish_batteryInfo(adc_measurement_t measurement, uint16_t status) {
 int usleep(useconds_t usec) {
 	useconds_t start = can_timestamp_usec + TIM7->CNT;
 	while ((can_timestamp_usec + TIM7->CNT) < (start + usec));
+
+	return 1;
 }

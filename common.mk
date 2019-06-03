@@ -124,6 +124,11 @@ CFLAGS += -g -gdwarf-2
 CXXFLAGS += -g -gdwarf-2
 endif
 
+ifeq ($(WARNERROR), 1)
+CFLAGS += -Werror
+CXXFLAGS += -Werror
+endif
+
 
 # Generate dependency information
 # As far as I understand, this makes it so you can recompile correctly when header files change
