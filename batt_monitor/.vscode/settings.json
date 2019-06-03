@@ -3,6 +3,7 @@
         "stm32f3xx.h": "c",
         "stm32f3xx_hal.h": "c",
         "coms.h": "c",
-        "batteryinfo.h": "c"
+        "batteryinfo.h": "c",
+        "restartnode.h": "c"
     }
 }

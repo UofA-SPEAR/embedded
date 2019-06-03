@@ -109,8 +109,26 @@ static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer) {
 	uavcan_protocol_RestartNodeRequest_decode(transfer, transfer->payload_len,
 			&msg, &p_dynamic_array_buf);
 
-
 	if (msg.magic_number == UAVCAN_PROTOCOL_RESTARTNODE_REQUEST_MAGIC_NUMBER) {
+		// We're restarting, we don't need any more interrupts.
+		__disable_irq();
+
+		// Encode and broadcast message
+		uavcan_protocol_RestartNodeResponse resp;
+		resp.ok = true;
+		uint8_t len = uavcan_protocol_RestartNodeResponse_encode(&resp, out_buf);
+		canardBroadcast(&m_canard_instance,
+						UAVCAN_PROTOCOL_RESTARTNODE_SIGNATURE,
+						UAVCAN_PROTOCOL_RESTARTNODE_ID,
+						&inout_transfer_id,
+						10,
+						out_buf,
+						len);
+
+		// Flush out message buffer
+		while (tx_once() != LIBCANARD_NO_QUEUE);
+
+		// Reset
 		NVIC_SystemReset();
 	}
 }
@@ -162,8 +180,10 @@ int8_t tx_once(void) {
 		} else {
 			// TODO handle these errors properly
 		}
-
+	} else {
+		return LIBCANARD_NO_QUEUE;
 	}
+
 	return retval;
 }
 
