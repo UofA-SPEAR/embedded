@@ -2,8 +2,10 @@
 
 /**
  * TODO:
- * - Overcurrent/undervoltage shutoff
- * - CAN bus stuff
+ * - CAN parameters
+ * - Improve battery info reporting
+ * - Add user button interface
+ * - Add better external battery management
  */
 
 #define MAX_CURRENT		50
