@@ -9,6 +9,8 @@
 #define MAX_CURRENT		50
 #define MIN_VOLTAGE		3.4
 
+#define NODE_ID_OFFSET	40
+
 // Control flags
 bool flag_take_measurement 	= false;
 bool flag_publish_battery	= false;
@@ -67,7 +69,14 @@ int main(void) {
 	gpio_init();
 	adc_init();
 	timers_init();
-	coms_init();
+
+	// Get node ID from node selection pins
+	uint8_t node_id = HAL_GPIO_ReadPin(NODE_SELECT_PORT, NODE_SELECT_PIN0);
+	node_id |= HAL_GPIO_ReadPin(NODE_SELECT_PORT, NODE_SELECT_PIN1) << 1;
+	node_id |= HAL_GPIO_ReadPin(NODE_SELECT_PORT, NODE_SELECT_PIN2) << 2;
+	node_id |= HAL_GPIO_ReadPin(NODE_SELECT_PORT, NODE_SELECT_PIN3) << 3;
+	node_id += NODE_ID_OFFSET;
+	coms_init(node_id);
 
 	HAL_GPIO_WritePin(OUT_EN_PORT, OUT_EN_PIN, 1);
 

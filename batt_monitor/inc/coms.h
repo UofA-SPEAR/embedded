@@ -60,7 +60,7 @@ extern uint64_t can_timestamp_usec;
 extern uint32_t node_health;
 extern uint32_t node_mode;
 
-void coms_init();
+void coms_init(uint8_t node_id);
 void coms_update(void);
 
 

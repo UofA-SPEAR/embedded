@@ -31,9 +31,10 @@ void coms_update(void) {
 	rx_once();
 }
 
-void coms_init(void) {
+void coms_init(uint8_t node_id) {
 	timestamp_tim_init();
 	libcanard_init(on_reception, should_accept, NULL, 64000000, 250000);
+	canardSetLocalNodeID(&m_canard_instance, node_id);
 	setup_hardware_can_filters();
     // Configure interrupts
     // We only need to worry about the RX FIFO 0, because that's how the CAN interface is by default
