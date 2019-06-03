@@ -67,6 +67,12 @@ int main(void) {
 	adc_measurement_t measurement;
 	uint16_t battery_status = 0;
 
+	// Not sure if this is strictly necessary after a reset
+	// It's probably not necessary but it's a single instruction
+	// so whatever
+	__enable_irq();
+
+	// Initialise peripherals
 	clocks_init();
 	gpio_init();
 	adc_init();
@@ -80,6 +86,7 @@ int main(void) {
 	node_id += NODE_ID_OFFSET;
 	coms_init(node_id);
 
+	// Turn on battery
 	HAL_GPIO_WritePin(OUT_EN_PORT, OUT_EN_PIN, 1);
 
 	// Detect battery number of cells.
@@ -115,6 +122,7 @@ int main(void) {
 			flag_publish_battery = false;
 		}
 
+		// Handle CAN messages in downtime
 		tx_once();
 		rx_once();
 	}
