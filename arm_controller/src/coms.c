@@ -11,6 +11,11 @@
 #include "settings.h"
 #include "can_fifo.h"
 
+#ifndef ARM_MATH_CM4
+#define ARM_MATH_CM4
+#endif
+#include "arm_math.h"
+
 #include "uavcan/equipment/actuator/ArrayCommand.h"
 #include "uavcan/protocol/param/GetSet.h"
 #include "uavcan/protocol/NodeStatus.h"
@@ -57,6 +62,80 @@ void comInit(void) {
     CAN->IER |= 1 << CAN_IER_FMPIE0_Pos; // Enable CAN interrupt
 }
 
+// Should this be moved somewhere else?
+static int32_t radial_position_get(uint8_t motor, float in_angle) {
+	int32_t position;
+
+
+	if (run_settings.motor[motor].encoder.type == ENCODER_POTENTIOMETER) {
+		// radians / (radians/integer) = integers
+		position = in_angle / run_settings.motor[motor].encoder.to_radians;
+
+		// Needs to start at encoder_min
+		position += run_settings.motor[motor].encoder.min;
+
+		if (position > run_settings.motor[motor].encoder.max) {
+			node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING;
+
+			// Probably the most sane thing to do in this case
+			position = run_settings.motor[motor].encoder.max;
+		}
+	} else if (run_settings.motor[motor].encoder.type == ENCODER_QUADRATURE) {
+		position = in_angle / run_settings.motor[motor].encoder.to_radians;
+	}
+
+	return position;
+}
+
+// Should this be moved somewhere else?
+static int32_t linear_position_get(uint8_t motor, float in_angle) {
+	float desired_length;
+	int32_t position;
+
+	// Hoping these get optimized out
+	float* p_support_length = &(run_settings.motor[motor].linear.support_length);
+	float* p_arm_length = &(run_settings.motor[motor].linear.arm_length);
+
+	// Comes from cosine law
+	// c^2 = a^2 + b^2 - 2ab*cos(C)
+	desired_length = sqrt(
+				pow(*p_support_length, 2) +
+				pow(*p_arm_length, 2) -
+				(2 * (*p_support_length) * (*p_arm_length) * cos(in_angle))
+			);
+
+	// TODO set nodestatus
+	if (desired_length < run_settings.motor[motor].linear.length_min) {
+		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING;
+		desired_length = run_settings.motor[motor].linear.length_min;
+	} else if (desired_length > run_settings.motor[motor].linear.length_max) {
+		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING;
+		desired_length = run_settings.motor[motor].linear.length_max;
+	} else {
+		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
+	}
+
+	// These are checked to be positive in check_settings()
+	uint32_t encoder_range = run_settings.motor[motor].encoder.max -
+			run_settings.motor[motor].encoder.min;
+	float linear_range = run_settings.motor[motor].linear.length_max -
+			run_settings.motor[motor].linear.length_min;
+
+
+
+	// set position properly
+	position =
+			// fit length into encoder range
+			(desired_length - run_settings.motor[motor].linear.length_min) *
+			// Convert from length range into the encoder range
+			(encoder_range / linear_range) +
+			// Add the minimum encoder value
+			run_settings.motor[motor].encoder.min;
+
+
+	return position;
+}
+
 /** @brief Handles ActuatorCommand messages
  *
  * Updates position values according to stuff
@@ -70,15 +149,30 @@ static void handle_actuator_command(CanardRxTransfer* transfer) {
 
 	for (int i = 0; i < msg.commands.len; i++) {
 		uavcan_equipment_actuator_Command* cmd = &msg.commands.data[i];
-		if (cmd->actuator_id == saved_settings.motor[0].actuator_id) {
-			motorA_desired_position = cmd->command_value;
+
+		int32_t desired_position;
+
+		for (uint8_t i = 0; i < 2; i++) {
+			if (cmd->actuator_id == run_settings.motor[i].actuator_id) {
+				if (run_settings.motor[i].encoder.to_radians != 0) {
+					desired_position = radial_position_get(i, cmd->command_value);
+				} else if (run_settings.motor[i].linear.support_length != 0) {
+					desired_position = linear_position_get(i, cmd->command_value);
+				} else {
+					// do nothing I guess, the motors aren't enabled
+				}
+				break; // We can exit the loop
+			}
+		}
+
+		if (cmd->actuator_id == run_settings.motor[0].actuator_id) {
+			motorA_desired_position = desired_position;
 			// "Start" motor A if unstarted
 			if (last_runA == INT16_MAX) {
 				last_runA = HAL_GetTick();
 			}
-		} else if (cmd->actuator_id == saved_settings.motor[1].actuator_id) {
-			// Set position
-			motorB_desired_position = cmd->command_value;
+		} else if (cmd->actuator_id == run_settings.motor[0].actuator_id) {
+			motorB_desired_position = desired_position;
 			// "Start" motor B if unstarted
 			if (last_runB == INT16_MAX) {
 				last_runB = HAL_GetTick();
@@ -353,8 +447,8 @@ void publish_nodeStatus(void) {
 
 		uavcan_protocol_NodeStatus msg;
 
-		msg.health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
-		msg.mode   = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
+		msg.health = node_health;
+		msg.mode   = node_mode;
 		msg.sub_mode = 0;
 		msg.vendor_specific_status_code = 0;
 		msg.uptime_sec = HAL_GetTick() / 1000;

@@ -43,6 +43,10 @@ extern CanardInstance m_canard_instance;
 
 extern uint64_t can_timestamp_usec;
 
+// Public variables to set nodestatus
+uint32_t node_health;
+uint32_t node_mode;
+
 bool should_accept(const CanardInstance* ins,
 					uint64_t* out_data_type_signature,
 					uint16_t data_type_id,

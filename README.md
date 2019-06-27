@@ -4,73 +4,85 @@ This is all the code for the embedded systems on the rover.
 
 This code will run on STM32 chips, specifically the F103 or F303 series (preferably F303)
 
-## Running ##
+## Dependencies ##
 
-Install [SW4STM32](http://openstm32.org) and import the project.
-Theoretically everything should be installed and ready to go.
+You need to have the following tools installed:
 
-## Creating a New Project ##
+- gcc-arm-none-eabi (GCC arm toolchain)
+- make tools
+- OpenOCD
 
-Before starting any of this, read through it and make sure you understand at least approximately what you're doing.
-If you don't, just talk to the electrical lead (David at the moment) and we'll walk through it together.
+## Getting started ##
 
-Before you start, make sure you have:
-- SW4STM32
-- STM32CubeMX (possibly included with SW4STM32)
-- Git
+First we need to clone this repository, and then we can update the submodules within it,
+so that we can write the code we need.
 
-Then, in the folder you want this repo stored in:
 ```
-git clone https://github.com/UofA-SPEAR/embedded.git
+git clone https://github.com/UofA-SPEAR/embedded
 cd embedded
-git submodule update --init --recursive
+git submodule update --init
 ```
 
-### STM32CubeMX ###
+## Creating a project ##
 
-First, use STM32CubeMX to generate the settings you want for your project (select the chip, enable the required peripherals, etc.)
+Copy the example project, embedded/example_project as your own project folder.
 
-Open up STM32CubeMX and start a new project. Narrow down which chip you will be using (generally stm32f103).
-The quickest way to do this is to select your series, then your line, then your package if you know what you want.
+Edit the Makefile within your new project to match your project's requirements.
 
-Then open your project settings and change your base directory to this repository, and name your project something descriptive, using underscores.
-Avoid words like "design" or "board", we know what these are supposed to run on.
+Run:
 
-After that, you can start configuring your peripherals. Keep it as simple as possible and don't enable a peripheral unless you know you'll need it.
-Peripherals can always be added in later it's just a bit more work to do manually (manually does mean you are forced to understand it more though).
-
-If you want FreeRTOS, check the box in the "Middlewares" category.
-
-If you're unsure about different peripherals, consult the datasheet or reference manual from ST.
-
-At this point you can click "Generate Code".
-PLEASE LISTEN TO ANY WARNINGS OR ERRORS IT GIVES YOU.
-If you don't understand, do more research.
-
-### SW4STM32 Project ###
-
-Click File->Open Projects from File System..., from there navigate to your generated project folder and select that.
-
-### Libcanard ###
-
-Add symlinks to libcanard and dsdlc_generated from your Inc folder.
 ```
-cd project_folder
-ln -s ../common/libcanard Inc/libcanard
-ln -s ../common/uavcan_dsdl/libcanard_dsdlc_generated Inc/dsdlc_generated
+make -j4
 ```
 
-Then go to Project->Properties->C/C++ Build->Settings->Includes and add in your libcanard, libcanard_stm32, and dsdlc_generated includes.
-Relevant folders to include:
-- Inc/libcanard/
-- Inc/libcanard/drivers/stm32
-- Inc/dsdlc_generated
+Congrats! You've built a project!
 
-Then, head to Project->Properties->Resources->Resource Filters and add four filters.
-These are required so we don't compile unnecessary things at build time that we don't have libraries for.
-These filters should be exclude all folders and their children, with the filters:
-- nuttx
-- avr
-- tests
-- socketcan
+`make help` will give you more information on all the available targets.
 
+## Debugging/Flashing ##
+
+To flash the firmware, simply run
+
+```
+make flash
+```
+
+with your programmer and device plugged in.
+
+To debug, simply run:
+
+```
+make debug
+```
+
+This will launch an OpenOCD instance, with a GDB server running on port 3333.
+To actually debug, you will have to attach a GDB instance to it.
+
+### GDB ###
+
+Once we have the OpenOCD server running, we can run GDB with these commands.
+
+```
+arm-none-eabi-gdb build/<project_name>.elf
+(gdb) target remote localhost:3333
+(gdb) monitor reset halt
+(gdb) load
+```
+
+Now we can debug as we normally would with GDB.
+
+### Eclipse ###
+
+Install Eclipse CDT, and the GNU MCU Eclipse plugin on the Eclipse marketplace. The bare minimum is fine.
+
+Then, create a new debug configuration, with the GDB Hardware Debugging template. Select `build/<project_name>.elf`
+as your source, and change the remote target to use localhost port 3333 instead of 10000.
+
+### VSCode ###
+
+You need to install the following VSCode plugins:
+- Cortex-Debug
+- C/C++
+
+There will be a good config in the .vscode folder within the example project.
+Use that for reference.

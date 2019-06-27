@@ -14,6 +14,8 @@ __attribute__((section("._user_settings"))) flash_settings_t saved_settings;
 
 // Settings in use.
 flash_settings_t current_settings;
+// Run settings
+flash_settings_t run_settings;
 
 
 // If this is the first boot, settings in the flash will be garbage.
@@ -38,9 +40,13 @@ static void firstboot_check(void) {
 			current_settings.motor[i].encoder.min = 0;
 			current_settings.motor[i].encoder.max = 0;
 			current_settings.motor[i].encoder.to_radians = 0;
-			current_settings.motor[i].encoder.to_metres = 0;
 			current_settings.motor[i].encoder.endstop_min = ENDSTOP_DISABLED;
 			current_settings.motor[i].encoder.endstop_max = ENDSTOP_DISABLED;
+
+			current_settings.motor[i].linear.support_length = 0;
+			current_settings.motor[i].linear.arm_length = 0;
+			current_settings.motor[i].linear.length_min = 0;
+			current_settings.motor[i].linear.length_max = 0;
 		}
 		program_settings(); // Write settings to flash
 	}

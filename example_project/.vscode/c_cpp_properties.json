@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/inc/",
+                "${workspaceFolder}/../common/HAL_Drivers/f3/**",
+                "${workspaceFolder}/../common/CMSIS/core/",
+                "${workspaceFolder}/../common/CMSIS/device",
+                "${workspaceFolder}/../common/libcanard/",
+                "${workspaceFolder}/../common/libcanard/drivers/stm32/",
+                "${workspaceFolder}/../common/uavcan_dsdl/libcanard_dsdlc_generated/**"
+            ],
+            "defines": [
+                "STM32F303xC"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}

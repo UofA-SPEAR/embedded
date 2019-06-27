@@ -9,6 +9,7 @@
 #define FLASH_SETTINGS_H_
 
 #include "main.h"
+#include "encoders.h"
 
 typedef enum {
 	ENDSTOP_DISABLED,
@@ -46,10 +47,19 @@ typedef struct {
 		 * }
 		 */
 		float to_radians;		//< Constant to convert encoder values to radians
-		float to_metres;		//< Constant to convert encoder values to metres
 		endstop_t endstop_min;
 		endstop_t endstop_max;
 	} encoder;
+
+	/* Settings for using a linear actuator
+	 * Assumes you are running the specific setup we have
+	 */
+	struct {
+		float support_length; // Length of the support beam holding the linear actuator
+		float arm_length; // Length of the "upper arm", from the base pivot to the linear actuator pin
+		float length_min; // Fully retracted length of actuator
+		float length_max; // Fully extended length of actuator
+	} linear;
 } motor_settings_t;
 
 typedef struct {
@@ -59,6 +69,8 @@ typedef struct {
 
 extern flash_settings_t saved_settings;
 extern flash_settings_t current_settings;
+// Settings to be used for actually running the motor
+extern flash_settings_t run_settings;
 
 /** @brief Loads in user settings from flash.
  *

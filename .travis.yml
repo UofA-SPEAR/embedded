@@ -1,0 +1,20 @@
+git:
+    submodules: true
+
+matrix:
+    include:
+        - name: "Build"
+          language: cpp
+          compiler: gcc
+          os: linux
+          language: c++
+          before_script:
+              - sudo add-apt-repository -y ppa:team-gcc-arm-embedded/ppa
+              - sudo apt-get update
+              - sudo apt-get install -y gcc-arm-embedded
+          script:
+            - "cd arm_controller/ && make"
+
+
+notifications:
+    email: false
