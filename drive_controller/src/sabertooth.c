@@ -1,5 +1,4 @@
 #include "stm32f3xx.h"
-#include "stm32f3xx_nucleo_32.h"
 
 #include "sabertooth.h"
 
@@ -34,7 +33,8 @@ void sabertooth_set_motor(sabertooth_t* saber, uint8_t motor, int8_t speed) {
      * 5: Drive backwards motor 2
      */
 
-    uint8_t cmd, value;
+    uint8_t cmd = 0;
+    uint8_t value = 0;
 
     /* Set the command offset (which motor is which)
      * As of now the only valid inputs are 1 and 2.

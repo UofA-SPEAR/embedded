@@ -10,7 +10,6 @@
 
 
 #include "stm32f3xx.h"
-#include "stm32f3xx_nucleo_32.h"
 
 #include "main.h"
 #include "coms.h"
@@ -123,23 +122,12 @@ int main(void)
 	// Start the timeout thing
 	timeout = HAL_GetTick();
 
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-
-	GPIO_InitTypeDef gpio;
-	gpio.Pin = LED3_PIN;
-	gpio.Mode = GPIO_MODE_OUTPUT_PP;
-	gpio.Speed = GPIO_SPEED_FREQ_LOW;
-	gpio.Pull = GPIO_NOPULL;
-
-	HAL_GPIO_Init(GPIOB, &gpio);
-
 
 	for(;;) {
 		static uint32_t last_thing = 0;
 		handle_frame(); // literally nothing else to do
 
 		if ((HAL_GetTick() - last_thing) > 1000) {
-			HAL_GPIO_TogglePin(GPIOB, LED3_PIN);
 			last_thing = HAL_GetTick();
 		}
 
