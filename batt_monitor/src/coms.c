@@ -239,7 +239,7 @@ static void timestamp_tim_init(void) {
 
 void TIM7_IRQHandler() {
 	__HAL_TIM_CLEAR_IT(&htim7, TIM_IT_UPDATE);
-	can_timestamp_usec += TIM2->CNT;
+	can_timestamp_usec += TIM7->CNT;
 	// Updates once a millisecond
 }
 

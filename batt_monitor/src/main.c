@@ -48,7 +48,7 @@ void gpio_init() {
 	gpio.Pin = OUT_EN_PIN;
 	gpio.Mode = GPIO_MODE_OUTPUT_PP;
 	gpio.Pull = GPIO_NOPULL;
-	gpio.Speed = GPIO_SPEED_FREQ_HIGH;
+	gpio.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(OUT_EN_PORT, &gpio);
 
 	// CAN Bus
@@ -93,13 +93,14 @@ int main(void) {
 	// Can fail if battery is severely under- or over-voltage
 	// Works in the range of 3.5V-4.2V
 	measurement = adc_measure();
-	uint8_t num_cells = floor(measurement.bat_voltage / 3.5);
+	//uint8_t num_cells = floor(measurement.bat_voltage / 3.5);
 
 
 	for (;;) {
 		if (flag_take_measurement) {
 			measurement = adc_measure();
 
+            /*
 			if (measurement.current > MAX_CURRENT) {
 				// Current overload, shut off battery.
 				battery_status = UAVCAN_EQUIPMENT_POWER_BATTERYINFO_STATUS_FLAG_OVERLOAD;
@@ -111,6 +112,7 @@ int main(void) {
 				battery_status = UAVCAN_EQUIPMENT_POWER_BATTERYINFO_STATUS_FLAG_OVERLOAD;
 				HAL_GPIO_WritePin(OUT_EN_PORT, OUT_EN_PIN, 0);
 			}
+            */
 
 			// Handle overcurrent/undervoltage here
 			flag_take_measurement = false;

@@ -5,5 +5,7 @@
         "coms.h": "c",
         "batteryinfo.h": "c",
         "restartnode.h": "c"
-    }
+    },
+
+    "cortex-debug.openocdPath": "/usr/local/bin/openocd"
 }
