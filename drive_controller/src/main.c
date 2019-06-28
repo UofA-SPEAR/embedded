@@ -24,7 +24,7 @@ void serial_write8(uint8_t data) {
 }
 
 void uart_init() {
-	huart.Instance 			= USART1;
+	huart.Instance 			= USART3;
 	huart.Init.BaudRate		= 9600; // Should this be a different value?
 	huart.Init.WordLength 	= UART_WORDLENGTH_8B;
 	huart.Init.StopBits 	= UART_STOPBITS_1;
@@ -34,18 +34,18 @@ void uart_init() {
 	HAL_UART_Init(&huart);
 }
 
-// On the nucleo, UART1 TX is PA9 and RX is PA10
+// Using USART3, on PB10
 void HAL_UART_MspInit(UART_HandleTypeDef* instance) {
-	__HAL_RCC_USART1_CLK_ENABLE();
-	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_USART3_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
 
 	GPIO_InitTypeDef gpio;
-	gpio.Pin = GPIO_PIN_9;
+	gpio.Pin = GPIO_PIN_10;
 	gpio.Mode = GPIO_MODE_AF_PP;
 	gpio.Pull = GPIO_NOPULL;
 	gpio.Speed = GPIO_SPEED_FREQ_MEDIUM;
-	gpio.Alternate = GPIO_AF7_USART1;
-	HAL_GPIO_Init(GPIOA, &gpio);
+	gpio.Alternate = GPIO_AF7_USART3;
+	HAL_GPIO_Init(GPIOB, &gpio);
 }
 
 void motors_init() {
@@ -116,6 +116,7 @@ int main(void)
 
 	SystemClock_Config();
 
+	clocks_init();
 	uart_init();
 	libcanard_init();
 	motors_init();
@@ -126,16 +127,19 @@ int main(void)
 	for(;;) {
 		static uint32_t last_thing = 0;
 		handle_frame(); // literally nothing else to do
+		tx_once();
 
 		if ((HAL_GetTick() - last_thing) > 1000) {
 			last_thing = HAL_GetTick();
+
+			coms_send_NodeStatus(UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK,
+				UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL, 0);
+
 		}
 
 		if ((HAL_GetTick() - timeout) > MOTOR_TIMEOUT_MS) {
 			sabertooth_set_motor(&saberA, 0, 0);
 			sabertooth_set_motor(&saberA, 1, 0);
-			sabertooth_set_motor(&saberB, 0, 0);
-			sabertooth_set_motor(&saberB, 1, 0);
 		}
 
 	}

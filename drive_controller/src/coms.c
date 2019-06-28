@@ -21,11 +21,16 @@
 static uint8_t libcanard_memory_pool[LIBCANARD_MEM_POOL_SIZE];
 static uint8_t dynamic_array_buf[LIBCANARD_STM32_DYNAMIC_ARRAY_BUF_SIZE];
 static uint8_t* p_dynamic_array_buf = dynamic_array_buf;
+static uint8_t out_msg_buf[100];
 
 static void com_peripherals_init();
 
 TIM_HandleTypeDef htim7;
 uint64_t can_timestamp_usec = 0;
+
+CanardInstance m_canard_ins;
+
+static uint8_t inout_transfer_id = 0;
 
 bool should_accept(const CanardInstance* ins,
 		uint64_t * out_data_type_signature,
@@ -93,7 +98,10 @@ void libcanard_init() {
 			NULL);
 
 	CanardSTM32CANTimings canbus_timings;
-	canardSTM32ComputeCANTimings(8000000, 250000, &canbus_timings);
+	canardSTM32ComputeCANTimings(64000000, 250000, &canbus_timings);
+
+	// TODO: Get this doing the right thing.
+	canardSetLocalNodeID(&m_canard_ins, 20);
 
 
 	canardSTM32Init(&canbus_timings, CanardSTM32IfaceModeNormal);
@@ -135,9 +143,9 @@ void USB_LP_CAN_RX0_IRQHandler(void) {
 	rx_once();
 }
 
-void TIM7_IRQHandler() {
+void TIM7_IRQHandler(void) {
 	__HAL_TIM_CLEAR_IT(&htim7, TIM_IT_UPDATE);
-	can_timestamp_usec += TIM2->CNT;
+	can_timestamp_usec += TIM7->CNT;
 }
 
 // Timestamp should come from the input of this
@@ -157,6 +165,28 @@ int8_t rx_once() {
 	}
 }
 
+int8_t tx_once() {
+	const CanardCANFrame* out_frame;
+
+	out_frame = canardPeekTxQueue(&m_canard_ins);
+
+	if (out_frame != NULL) {
+		switch (canardSTM32Transmit(out_frame)) {
+			case (1):
+				canardPopTxQueue(&m_canard_ins);
+				break;
+			case (0):
+				// buffer full
+				break;
+			default:
+				// Other error
+				break;
+		}
+	}
+
+	return 0;
+}
+
 int8_t handle_frame() {
 	CanardCANFrame frame;
 
@@ -168,6 +198,27 @@ int8_t handle_frame() {
 	}
 
 	return LIBCANARD_ERR;
+}
+
+
+void coms_send_NodeStatus(uint8_t health, uint8_t mode, uint16_t vs_status) {
+	uavcan_protocol_NodeStatus msg;
+
+	msg.uptime_sec = can_timestamp_usec + TIM7->CNT / 1000000;
+	msg.health = health;
+	msg.mode = mode;
+	msg.sub_mode = 0;
+	msg.vendor_specific_status_code = vs_status;
+
+	uint8_t len = uavcan_protocol_NodeStatus_encode(&msg, out_msg_buf);
+
+	canardBroadcast(&m_canard_ins,
+		UAVCAN_PROTOCOL_NODESTATUS_SIGNATURE,
+		UAVCAN_PROTOCOL_NODESTATUS_ID,
+		&inout_transfer_id,
+		0,
+		&msg,
+		len);
 }
 
 static void com_peripherals_init() {

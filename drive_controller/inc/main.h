@@ -9,6 +9,7 @@
 #define MAIN_H_
 
 #include "sabertooth.h"
+#include "clocks.h"
 
 // Time (in ms) from last received message to stop motors
 #define MOTOR_TIMEOUT_MS 1000

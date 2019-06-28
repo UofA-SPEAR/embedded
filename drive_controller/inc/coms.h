@@ -10,6 +10,8 @@
 
 #include "canard.h"
 
+#include "uavcan/protocol/NodeStatus.h"
+
 /* ------------ Error Definitions --------------- */
 
 #define LIBCANARD_SUCCESS					1
@@ -23,13 +25,16 @@
 #define LIBCANARD_MEM_POOL_SIZE 1024
 #define LIBCANARD_STM32_DYNAMIC_ARRAY_BUF_SIZE 256
 
-CanardInstance m_canard_ins;
+extern CanardInstance m_canard_ins;
 
 
 void libcanard_init();
 
 int8_t rx_once();
 
+int8_t tx_once();
+
+void coms_send_NodeStatus(uint8_t health, uint8_t mode, uint16_t vs_status);
 
 int16_t setup_hardware_can_filters(void);
 

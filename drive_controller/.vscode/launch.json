@@ -6,7 +6,7 @@
             "request": "launch",
             "servertype": "openocd",
             "cwd": "${workspaceRoot}",
-            "executable": "./build/arm_controller.elf",
+            "executable": "./build/drive_controller.elf",
             "name": "Debug (OpenOCD)",
             "device": "STM32F303CB",
             "configFiles": [
