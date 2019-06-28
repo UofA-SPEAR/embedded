@@ -98,7 +98,7 @@ void libcanard_init() {
 			NULL);
 
 	CanardSTM32CANTimings canbus_timings;
-	canardSTM32ComputeCANTimings(64000000, 250000, &canbus_timings);
+	canardSTM32ComputeCANTimings(32000000, 250000, &canbus_timings);
 
 	// TODO: Get this doing the right thing.
 	canardSetLocalNodeID(&m_canard_ins, 20);
@@ -117,7 +117,7 @@ void libcanard_init() {
 	// Initialize to run at 1MHz
 	// Reset every 1ms
 	htim7.Instance = TIM7;
-	htim7.Init.Prescaler = 32;
+	htim7.Init.Prescaler = 63;
 	htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
 	htim7.Init.Period = 1000;
 	htim7.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -204,7 +204,7 @@ int8_t handle_frame() {
 void coms_send_NodeStatus(uint8_t health, uint8_t mode, uint16_t vs_status) {
 	uavcan_protocol_NodeStatus msg;
 
-	msg.uptime_sec = can_timestamp_usec + TIM7->CNT / 1000000;
+	msg.uptime_sec = HAL_GetTick() / 1000;
 	msg.health = health;
 	msg.mode = mode;
 	msg.sub_mode = 0;
