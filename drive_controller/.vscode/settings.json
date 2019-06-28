@@ -4,6 +4,8 @@
         "coms.h": "c",
         "nodestatus.h": "c",
         "stm32f3xx.h": "c",
-        "stm32f303xc.h": "c"
+        "stm32f303xc.h": "c",
+        "encoders.h": "c",
+        "stm32f3xx_hal.h": "c"
     }
 }

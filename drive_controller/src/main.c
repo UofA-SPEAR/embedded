@@ -9,12 +9,7 @@
 */
 
 
-#include "stm32f3xx.h"
-
 #include "main.h"
-#include "coms.h"
-#include "sabertooth.h"
-
 
 UART_HandleTypeDef huart;
 

@@ -4,6 +4,8 @@ void clocks_init(void) {
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_CAN1_CLK_ENABLE();
+    __HAL_RCC_TIM2_CLK_ENABLE();
+    __HAL_RCC_TIM3_CLK_ENABLE();
 
     RCC_OscInitTypeDef osc;
     RCC_ClkInitTypeDef clk;

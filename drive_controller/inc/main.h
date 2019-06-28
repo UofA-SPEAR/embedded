@@ -8,8 +8,13 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
+
+#include "stm32f3xx.h"
+
 #include "sabertooth.h"
 #include "clocks.h"
+#include "coms.h"
+#include "encoders.h"
 
 // Time (in ms) from last received message to stop motors
 #define MOTOR_TIMEOUT_MS 1000
