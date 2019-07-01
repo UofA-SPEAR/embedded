@@ -8,8 +8,27 @@
   ******************************************************************************
 */
 
+#define MOTORA_KP 0.3
+#define MOTORB_KP 0.3
+
+#define ENCODERA_REVERSED 0
+#define ENCODERB_REVERSED 0
+
+// Motor encoder counts per revolution
+#define MOTOR_CPR				100
+// Circumference of motor, in metres
+#define MOTOR_CIRCUMFERENCE		(PI * 0.3)
+
+
+#define GET_LINEAR_DISTANCE(new, old)	(new - old) / MOTOR_CPR * MOTOR_CIRCUMFERENCE
 
 #include "main.h"
+
+// Speed targets for motors
+float motorA_speed = 0;
+float motorB_speed = 0;
+
+uint32_t motor_timeout;
 
 UART_HandleTypeDef huart;
 
@@ -62,65 +81,48 @@ void motors_init() {
 	sabertooth_init(&saberA);
 }
 
-void SystemClock_Config(void) {
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
-
-    /**Initializes the CPU, AHB and APB busses clocks
-    */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = 16; // ???
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    //_Error_Handler(__FILE__, __LINE__);
-  }
-
-    /**Initializes the CPU, AHB and APB busses clocks
-    */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
-    //_Error_Handler(__FILE__, __LINE__);
-  }
-
-    /**Configure the Systick interrupt time
-    */
-  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
-
-    /**Configure the Systick
-    */
-  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-
-  /* SysTick_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
-}
-
 int main(void)
 {
-	HAL_Init();
+	uint16_t motorA_last_pos;
+	uint16_t motorB_last_pos;
 
-	SystemClock_Config();
+	HAL_Init();
 
 	clocks_init();
 	uart_init();
 	libcanard_init();
 	motors_init();
+	encoders_init();
+
+	motorA_last_pos = TIM2->CNT;
+	motorB_last_pos = TIM1->CNT;
+
 	// Start the timeout thing
-	timeout = HAL_GetTick();
+	motor_timeout = HAL_GetTick();
+
+	// Setup PID
+	arm_pid_instance_f32 pidA, pidB;
+
+	memset(&pidA, 0, sizeof(arm_pid_instance_f32));
+	memset(&pidB, 0, sizeof(arm_pid_instance_f32));
+
+	pidA.Kp = MOTORA_KP;
+	pidA.Ki = 0;
+	pidA.Kd = 0;
+	pidB.Kp = MOTORB_KP;
+	pidB.Ki = 0;
+	pidB.Kd = 0;
+
+	arm_pid_init_f32(&pidA, 1);
+	arm_pid_init_f32(&pidB, 1);
 
 
 	for(;;) {
 		static uint32_t last_thing = 0;
+		static uint32_t pid_timer = 0;
+		int8_t motorA_out_int = 0;
+		int8_t motorB_out_int = 0;
+
 		handle_frame(); // literally nothing else to do
 		tx_once();
 
@@ -132,10 +134,63 @@ int main(void)
 
 		}
 
-		if ((HAL_GetTick() - timeout) > MOTOR_TIMEOUT_MS) {
+		// 10 Hz for now
+		// Check PID stuff
+		if ((HAL_GetTick() - pid_timer > 100)) {
+			int32_t motorA_cur_pos, motorB_cur_pos;
+
+			pid_timer = HAL_GetTick();
+
+			motorA_cur_pos = TIM2->CNT;
+			motorB_cur_pos = TIM1->CNT;
+
+			#if ENCODERA_REVERSED
+			// Convert encoder count to linear distance
+			float motorA_distance = GET_LINEAR_DISTANCE(motorA_last_pos, motorA_cur_pos);
+			float motorB_distance = GET_LINEAR_DISTANCE(motorB_last_pos, motorB_cur_pos);
+			#else
+			float motorA_distance = GET_LINEAR_DISTANCE(motorA_cur_pos, motorA_last_pos);
+			float motorB_distance = GET_LINEAR_DISTANCE(motorB_cur_pos, motorB_last_pos);
+			#endif
+
+			// Get the error for PID to do it's magic
+			float motorA_error = motorA_speed - motorA_distance;
+			float motorB_error = motorB_speed - motorB_distance;
+
+			// Run PID
+			float motorA_out = arm_pid_f32(&pidA, motorA_error);
+			float motorB_out = arm_pid_f32(&pidB, motorB_error);
+
+			// Get the new output value
+			motorA_out = motorA_out * 127 + motorA_out_int;
+			motorB_out = motorB_out * 127 + motorB_out_int;;
+
+			motorA_out_int = motorA_out;
+			motorB_out_int = motorB_out;
+
+			// Cap the output so we don't overflow
+			if (motorA_out > 127) { motorA_out_int = 127; }
+			if (motorA_out < -127) { motorA_out_int = -127; }
+			if (motorB_out > 127) { motorB_out_int = 127; }
+			if (motorB_out < -127) { motorB_out_int = -127; }
+
+			// Send outputs to motors
+			sabertooth_set_motor(&saberA, 0, motorA_out_int);
+			sabertooth_set_motor(&saberA, 1, motorB_out_int);
+
+			// Motor A is right back, Motor B is left back
+			coms_odom_broadcast(0, motorB_distance);
+			coms_odom_broadcast(1, motorB_distance);
+			coms_odom_broadcast(2, motorA_distance);
+			coms_odom_broadcast(3, motorA_distance);
+		}
+
+		/* 
+		if ((HAL_GetTick() - motor_timeout) > MOTOR_TIMEOUT_MS) {
 			sabertooth_set_motor(&saberA, 0, 0);
 			sabertooth_set_motor(&saberA, 1, 0);
 		}
+		*/
 
 	}
 }

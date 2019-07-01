@@ -30,7 +30,7 @@ uint64_t can_timestamp_usec = 0;
 
 CanardInstance m_canard_ins;
 
-static uint8_t inout_transfer_id = 0;
+uint8_t inout_transfer_id = 0;
 
 bool should_accept(const CanardInstance* ins,
 		uint64_t * out_data_type_signature,
@@ -56,7 +56,7 @@ void on_reception(CanardInstance* ins,
 			&msg, &p_dynamic_array_buf);
 
 	// Reset timeout value so we don't just keep shutting the motors down.
-	timeout = HAL_GetTick();
+	motor_timeout = HAL_GetTick();
 
 	for (int i = 0; i < msg.commands.len; i++) {
 		uavcan_equipment_actuator_Command *cmd = &(msg.commands.data[i]);
@@ -65,19 +65,19 @@ void on_reception(CanardInstance* ins,
 		switch (cmd->actuator_id) {
 		case (0):
 			// handle motor 0
-			sabertooth_set_motor(&saberA, 0, speed);
+			motorB_speed = speed;
 			break;
 		case (1):
 			// handle motor 1
-			sabertooth_set_motor(&saberA, 1, speed);
+			motorB_speed = speed;
 			break;
 		case (2):
 			// handle motor 2
-			sabertooth_set_motor(&saberB, 0, speed);
+			motorA_speed = speed;
 			break;
 		case (3):
 			// handle motor 3
-			sabertooth_set_motor(&saberB, 1, speed);
+			motorA_speed = speed;
 			break;
 		default:
 			// Not any of these motors

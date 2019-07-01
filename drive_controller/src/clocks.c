@@ -32,5 +32,16 @@ void clocks_init(void) {
     periph.PeriphClockSelection = RCC_PERIPHCLK_ADC12;
     periph.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV8;
     HAL_RCCEx_PeriphCLKConfig(&periph);
+
+    /**Configure the Systick interrupt time
+    */
+    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+
+    /**Configure the Systick
+    */
+    HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+
+    /* SysTick_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 

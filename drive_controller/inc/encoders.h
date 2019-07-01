@@ -3,4 +3,6 @@
 
 #include "main.h"
 
+void encoders_init();
+
 #endif
