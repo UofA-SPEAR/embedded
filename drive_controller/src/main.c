@@ -185,12 +185,11 @@ int main(void)
 			coms_odom_broadcast(3, motorA_distance);
 		}
 
-		/* 
 		if ((HAL_GetTick() - motor_timeout) > MOTOR_TIMEOUT_MS) {
 			sabertooth_set_motor(&saberA, 0, 0);
 			sabertooth_set_motor(&saberA, 1, 0);
+			motor_timeout = HAL_GetTick();
 		}
-		*/
 
 	}
 }

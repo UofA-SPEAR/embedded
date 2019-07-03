@@ -60,7 +60,7 @@ void on_reception(CanardInstance* ins,
 
 	for (int i = 0; i < msg.commands.len; i++) {
 		uavcan_equipment_actuator_Command *cmd = &(msg.commands.data[i]);
-		int8_t speed = msg.commands.data[i].command_value;
+		float speed = msg.commands.data[i].command_value;
 
 		switch (cmd->actuator_id) {
 		case (0):
