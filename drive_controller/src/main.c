@@ -179,6 +179,8 @@ int main(void)
 			sabertooth_set_motor(&saberA, 1, motorB_out_int);
 
 			// Motor A is right back, Motor B is left back
+			motorB_distance = motorB_speed / 10;
+			motorA_distance = motorA_speed /10;
 			coms_odom_broadcast(0, motorB_distance);
 			coms_odom_broadcast(1, motorB_distance);
 			coms_odom_broadcast(2, motorA_distance);
