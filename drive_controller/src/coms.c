@@ -4,19 +4,8 @@
  *  Created on: Feb 11, 2019
  *      Author: isthatme
  */
-
-#include <stdbool.h>
-
-#include "stm32f3xx.h"
-
-#include "canard.h"
-#include "canard_stm32.h"
-#include "main.h"
 #include "coms.h"
-#include "sabertooth.h"
-#include "can_fifo.h"
 
-#include "uavcan/equipment/actuator/ArrayCommand.h"
 
 static uint8_t libcanard_memory_pool[LIBCANARD_MEM_POOL_SIZE];
 static uint8_t dynamic_array_buf[LIBCANARD_STM32_DYNAMIC_ARRAY_BUF_SIZE];
@@ -50,41 +39,13 @@ bool should_accept(const CanardInstance* ins,
 void on_reception(CanardInstance* ins,
 		CanardRxTransfer* transfer) {
 
-	// We can assume we are only handling arraycommands
-	uavcan_equipment_actuator_ArrayCommand msg;
-	uavcan_equipment_actuator_ArrayCommand_decode(transfer, transfer->payload_len,
-			&msg, &p_dynamic_array_buf);
+	if (transfer->data_type_id == UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID) {
+		uavcan_equipment_actuator_ArrayCommand msg;
+		uavcan_equipment_actuator_ArrayCommand_decode(transfer, transfer->payload_len,
+				&msg, &p_dynamic_array_buf);
 
-	// Reset timeout value so we don't just keep shutting the motors down.
-	motor_timeout = HAL_GetTick();
-
-	for (int i = 0; i < msg.commands.len; i++) {
-		uavcan_equipment_actuator_Command *cmd = &(msg.commands.data[i]);
-		float speed = msg.commands.data[i].command_value;
-
-		switch (cmd->actuator_id) {
-		case (0):
-			// handle motor 0
-			motorB_speed = speed;
-			break;
-		case (1):
-			// handle motor 1
-			motorB_speed = speed;
-			break;
-		case (2):
-			// handle motor 2
-			motorA_speed = speed;
-			break;
-		case (3):
-			// handle motor 3
-			motorA_speed = speed;
-			break;
-		default:
-			// Not any of these motors
-			break;
-		}
+		coms_handle_actuator_cmd(&msg);
 	}
-
 }
 
 void libcanard_init() {
@@ -248,4 +209,36 @@ int16_t setup_hardware_can_filters(void) {
 
 	return canardSTM32ConfigureAcceptanceFilters(
 			(const CanardSTM32AcceptanceFilterConfiguration* const ) &conf, 1);
+}
+
+void coms_handle_actuator_cmd(uavcan_equipment_actuator_ArrayCommand* msg) {
+	// Reset timeout value so we don't just keep shutting the motors down.
+	motor_timeout = HAL_GetTick();
+
+	for (int i = 0; i < msg->commands.len; i++) {
+		uavcan_equipment_actuator_Command *cmd = &(msg->commands.data[i]);
+		float speed = msg->commands.data[i].command_value;
+
+		switch (cmd->actuator_id) {
+		case (0):
+			// handle motor 0
+			motorB_speed = speed;
+			break;
+		case (1):
+			// handle motor 1
+			motorB_speed = speed;
+			break;
+		case (2):
+			// handle motor 2
+			motorA_speed = speed;
+			break;
+		case (3):
+			// handle motor 3
+			motorA_speed = speed;
+			break;
+		default:
+			// Not any of these motors
+			break;
+		}
+	}
 }

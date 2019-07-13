@@ -11,6 +11,9 @@
 #define MOTORA_KP 0.3
 #define MOTORB_KP 0.3
 
+#define MOTORA_REVERSED 0
+#define MOTORB_REVERSED 0
+
 #define ENCODERA_REVERSED 0
 #define ENCODERB_REVERSED 0
 
@@ -147,9 +150,13 @@ int main(void)
 			#if ENCODERA_REVERSED
 			// Convert encoder count to linear distance
 			float motorA_distance = GET_LINEAR_DISTANCE(motorA_last_pos, motorA_cur_pos);
+			#else 
+			float motorA_distance = GET_LINEAR_DISTANCE(motorA_cur_pos, motorA_last_pos);
+			#endif 
+
+			#if ENCODERB_REVERSED
 			float motorB_distance = GET_LINEAR_DISTANCE(motorB_last_pos, motorB_cur_pos);
 			#else
-			float motorA_distance = GET_LINEAR_DISTANCE(motorA_cur_pos, motorA_last_pos);
 			float motorB_distance = GET_LINEAR_DISTANCE(motorB_cur_pos, motorB_last_pos);
 			#endif
 
@@ -175,8 +182,17 @@ int main(void)
 			if (motorB_out < -127) { motorB_out_int = -127; }
 
 			// Send outputs to motors
+			#if MOTORA_REVERSED
+			sabertooth_set_motor(&saberA, 0, -motorA_out_int);
+			#else
 			sabertooth_set_motor(&saberA, 0, motorA_out_int);
+			#endif
+
+			#if MOTORB_REVERSED
+			sabertooth_set_motor(&saberA, 1, -motorB_out_int);
+			#else
 			sabertooth_set_motor(&saberA, 1, motorB_out_int);
+			#endif
 
 			// Motor A is right back, Motor B is left back
 			motorB_distance = motorB_speed / 10;

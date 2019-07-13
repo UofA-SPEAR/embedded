@@ -8,9 +8,20 @@
 #ifndef COMS_H_
 #define COMS_H_
 
+#include <stdbool.h>
+
+#include "stm32f3xx.h"
+
 #include "canard.h"
+#include "canard_stm32.h"
+#include "main.h"
+#include "coms.h"
+#include "sabertooth.h"
+#include "can_fifo.h"
 
 #include "uavcan/protocol/NodeStatus.h"
+#include "uavcan/equipment/actuator/ArrayCommand.h"
+#include "uavcan/protocol/param/GetSet.h"
 
 /* ------------ Error Definitions --------------- */
 
@@ -29,6 +40,7 @@ extern CanardInstance m_canard_ins;
 extern uint8_t inout_transfer_id;
 
 
+/* ------ coms.c -------- */
 void libcanard_init();
 
 int8_t rx_once();
@@ -40,8 +52,10 @@ void coms_send_NodeStatus(uint8_t health, uint8_t mode, uint16_t vs_status);
 int16_t setup_hardware_can_filters(void);
 
 int8_t handle_frame(void);
-
-
 void coms_odom_broadcast(uint8_t wheel, float delta);
+
+void coms_handle_actuator_cmd(uavcan_equipment_actuator_ArrayCommand* msg);
+    
+}
 
 #endif /* COMS_H_ */

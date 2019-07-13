@@ -7,6 +7,7 @@
         "stm32f303xc.h": "c",
         "encoders.h": "c",
         "stm32f3xx_hal.h": "c",
-        "sabertooth.h": "c"
+        "sabertooth.h": "c",
+        "canard.h": "c"
     }
 }
