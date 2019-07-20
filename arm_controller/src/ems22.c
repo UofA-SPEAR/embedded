@@ -6,18 +6,58 @@
  */
 
 #include <stm32f3xx.h>
+#include <string.h>
 
 static SPI_HandleTypeDef spi;
 
 void ems22_init() {
 	spi.Instance = SPI1;
 	spi.Init.Mode = SPI_MODE_MASTER;
-	spi.Init.Direction = SPI_DIRECTION_2LINES;
+	spi.Init.Direction = SPI_DIRECTION_2LINES_RXONLY;
 	spi.Init.DataSize = SPI_DATASIZE_16BIT;
 	spi.Init.CLKPolarity = SPI_POLARITY_HIGH;
 	spi.Init.CLKPhase = SPI_PHASE_1EDGE;
 	spi.Init.NSS = SPI_NSS_SOFT;
+	spi.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+	spi.Init.FirstBit = SPI_FIRSTBIT_MSB;
+	spi.Init.TIMode = SPI_TIMODE_DISABLE; // Suspect
+	spi.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
 
 	HAL_SPI_Init(&spi);
 }
 
+
+int16_t ems22_read_position() {
+	struct {
+		uint16_t abs_position : 10;
+		uint8_t offset_compensation : 1;
+		uint8_t cordic_overflow : 1;
+		uint8_t linearity_alarm : 1;
+		uint8_t magnitude_increase : 1;
+		uint8_t magnitude_decrease : 1;
+		uint8_t even_parity : 1;
+	} in_data;
+	
+	HAL_SPI_Receive(&spi, (uint8_t*) &in_data, 2, 100);
+
+	{
+		uint16_t parity_check;
+		uint8_t bit_count = 0;
+
+		memcpy((void*) &parity_check, (void*) &in_data, 2);
+
+		// Count bits
+		while (parity_check) {
+			bit_count += parity_check & 1;
+			parity_check = parity_check >> 1;
+		}
+
+		// Parity error
+		if ((parity_check % 2) == in_data.even_parity) {
+			return -1;
+		}
+	}
+
+	// If no errors, return data
+	return in_data.abs_position;
+}

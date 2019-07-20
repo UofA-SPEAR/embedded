@@ -13,11 +13,6 @@
 #include "coms.h"
 #include "flash_settings.h"
 
-#ifndef ARM_MATH_CM4
-#define ARM_MATH_CM4
-#endif
-#include "arm_math.h"
-
 #include "uavcan/protocol/NodeStatus.h"
 
 // these bounds are needed, as not the potentiometers will not experience their full range
@@ -30,11 +25,9 @@
 #define LINEAR_ACTUATOR_DEADZONE	350
 #define LINEAR_ACTUATOR_POWER		500
 
-vnh5019_t motorA, motorB;
-arm_pid_instance_f32 pidA, pidB;
-
-int32_t motorA_desired_position;
-int32_t motorB_desired_position;
+vnh5019_t motors[2];
+arm_pid_instance_f32 pid[2];
+int32_t desired_positions[2];
 
 
 
@@ -50,34 +43,34 @@ void setup(){
 }
 
 // Run PID and motor control
-void run_motorA() {
+void run_motor(uint8_t motor) {
 	int16_t out_int;
 	int32_t current_position;
 
 	// Check if the motor is even enabled
-	if (run_settings.motor[0].enabled) {
+	if (run_settings.motor[motor].enabled) {
 		// Check if encoder is potentiometer type.
-		if (run_settings.motor[0].encoder.type == ENCODER_POTENTIOMETER) {
+		if (run_settings.motor[motor].encoder.type == ENCODER_POTENTIOMETER) {
 			// Read potentiometer position
 			current_position = potA_read();
-		} else if (run_settings.motor[0].encoder.type == ENCODER_QUADRATURE) {
+		} else if (run_settings.motor[motor].encoder.type == ENCODER_QUADRATURE) {
 			// Read current encoder position. We don't care about wraps at the moment
 			current_position = (TIM3->CNT) - ENCODER_START_VAL;
 		}
 
 		float error;
-		if (run_settings.motor[0].reversed) {
+		if (run_settings.motor[motor].reversed) {
 			// Reverse the error.
 			// TODO evaluate if I should reverse the error or the motor output
-			error = (float) - (motorA_desired_position - current_position);
+			error = (float) - (desired_positions[motor] - current_position);
 		} else {
-			error = (float) motorA_desired_position - current_position;
+			error = (float) desired_positions[motor] - current_position;
 		}
 
-		if (run_settings.motor[0].encoder.to_radians != (float)  0.0) {
-			float out = arm_pid_f32(&pidA, error);
+		if (run_settings.motor[motor].encoder.to_radians != (float)  0.0) {
+			float out = arm_pid_f32(&pid[motor], error);
 			out_int = out * 1000;
-		} else if (run_settings.motor[0].linear.support_length >= 0) {
+		} else if (run_settings.motor[motor].linear.support_length >= 0) {
 			// constant motor power, instead of PID, simpler
 
 			if (error > LINEAR_ACTUATOR_DEADZONE) {
@@ -93,30 +86,30 @@ void run_motorA() {
 			}
 		}
 
-		vnh5019_set(&motorA, out_int);
+		vnh5019_set(&motors[motor], out_int);
 	}
 }
 
 void motor_init() {
-	motorA.digital.in_a = GPIO_PIN_4;
-	motorA.digital.in_b = GPIO_PIN_3;
-	motorA.digital.en_a = GPIO_PIN_6;
-	motorA.digital.en_b = GPIO_PIN_5;
-	motorA.digital.port = GPIOB;
+	motors[0].digital.in_a = GPIO_PIN_4;
+	motors[0].digital.in_b = GPIO_PIN_3;
+	motors[0].digital.en_a = GPIO_PIN_6;
+	motors[0].digital.en_b = GPIO_PIN_5;
+	motors[0].digital.port = GPIOB;
 
-	motorA.pwm.pin 		= GPIO_PIN_7;
-	motorA.pwm.port 	= GPIOB;
-	motorA.pwm.tim_af	= GPIO_AF2_TIM4;
-	motorA.pwm.tim_ch = TIM_CHANNEL_2;
+	motors[0].pwm.pin 		= GPIO_PIN_7;
+	motors[0].pwm.port 	= GPIOB;
+	motors[0].pwm.tim_af	= GPIO_AF2_TIM4;
+	motors[0].pwm.tim_ch = TIM_CHANNEL_2;
 
-	vnh5019_init(&motorA);
+	vnh5019_init(&motors[0]);
 
 
 	/* Insanely large number, so no motor checks should happen
 	 * until a position is received.
 	 */
-	last_runA = INT16_MAX;
-	last_runB = INT16_MAX;
+	last_run_times[0] = INT16_MAX;
+	last_run_times[1] = INT16_MAX;
 }
 
 uint8_t read_node_id(void) {
@@ -235,19 +228,31 @@ int main(void) {
 	canardSetLocalNodeID(&m_canard_instance, node_id);
 
 	// setup PID
-	memset(&pidA, 0, sizeof(arm_pid_instance_f32));
-	pidA.Kp = run_settings.motor[0].pid.Kp;
-	pidA.Ki = run_settings.motor[0].pid.Ki;
-	pidA.Kd = run_settings.motor[0].pid.Kd;
-	arm_pid_init_f32(&pidA, 1);
+	memset(&pid[0], 0, sizeof(arm_pid_instance_f32));
+	pid[0].Kp = run_settings.motor[0].pid.Kp;
+	pid[0].Ki = run_settings.motor[0].pid.Ki;
+	pid[0].Kd = run_settings.motor[0].pid.Kd;
+	arm_pid_init_f32(&pid[0], 1);
+
+	memset(&pid[1], 0, sizeof(arm_pid_instance_f32));
+	pid[1].Kp = run_settings.motor[1].pid.Kp;
+	pid[1].Ki = run_settings.motor[1].pid.Ki;
+	pid[1].Kd = run_settings.motor[1].pid.Kd;
+	arm_pid_init_f32(&pid[1], 1);
 
 
 	for (;;) {
 
-		if ((HAL_GetTick() - last_runA >= 100) && run_settings.motor[0].enabled
-				&& (last_runA != INT16_MAX)) {
-			run_motorA();
-			last_runA = HAL_GetTick();
+		if ((HAL_GetTick() - last_run_times[0] >= 100) && run_settings.motor[0].enabled
+				&& (last_run_times[0] != INT16_MAX)) {
+			run_motor(0);
+			last_run_times[0] = HAL_GetTick();
+			canardCleanupStaleTransfers(&m_canard_instance, can_timestamp_usec);
+		}
+		if ((HAL_GetTick() - last_run_times[1] >= 100) && run_settings.motor[1].enabled
+				&& (last_run_times[1] != INT16_MAX)) {
+			run_motor(1);
+			last_run_times[1] = HAL_GetTick();
 			canardCleanupStaleTransfers(&m_canard_instance, can_timestamp_usec);
 		}
 

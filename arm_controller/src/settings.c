@@ -341,14 +341,20 @@ static void parameter_set_value(CanardInstance* ins,
 		case (4):
 			// Motor Kp
 			current_settings.motor[motor_select].pid.Kp = p_msg->value.real_value;
+			pid[motor_select].Kp = p_msg->value.real_value;
+			arm_pid_init_f32(&pid[motor_select], 0);
 			break;
 		case (5):
 			// Motor Ki
 			current_settings.motor[motor_select].pid.Ki = p_msg->value.real_value;
+			pid[motor_select].Ki = p_msg->value.real_value;
+			arm_pid_init_f32(&pid[motor_select], 0);
 			break;
 		case (6):
 			// Motor Kd
 			current_settings.motor[motor_select].pid.Kd = p_msg->value.real_value;
+			pid[motor_select].Kd = p_msg->value.real_value;
+			arm_pid_init_f32(&pid[motor_select], 0);
 			break;
 		case (7):
 			// Motor encoder type

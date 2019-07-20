@@ -9,16 +9,19 @@
 #define MAIN_H_
 
 #include "stm32f3xx.h"
+#ifndef ARM_MATH_CM4
+#define ARM_MATH_CM4
+#endif
+#include "arm_math.h"
 
 #define ROUND_UP(dividend, divisor) ((dividend + (divisor - 1)) / divisor)
 
 
-extern int32_t motorA_desired_position;
-extern int32_t motorB_desired_position;
+extern int32_t desired_positions[2];
+extern arm_pid_f32 pid[2];
 
 
-int32_t last_runA;
-int32_t last_runB;
+int32_t last_run_times[2];
 
 
 #endif /* MAIN_H_ */

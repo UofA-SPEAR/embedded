@@ -166,16 +166,16 @@ static void handle_actuator_command(CanardRxTransfer* transfer) {
 		}
 
 		if (cmd->actuator_id == run_settings.motor[0].actuator_id) {
-			motorA_desired_position = desired_position;
+			desired_positions[0] = desired_position;
 			// "Start" motor A if unstarted
-			if (last_runA == INT16_MAX) {
-				last_runA = HAL_GetTick();
+			if (last_run_times[0] == INT16_MAX) {
+				last_run_times[0] = HAL_GetTick();
 			}
-		} else if (cmd->actuator_id == run_settings.motor[0].actuator_id) {
-			motorB_desired_position = desired_position;
+		} else if (cmd->actuator_id == run_settings.motor[1].actuator_id) {
+			desired_positions[1] = desired_position;
 			// "Start" motor B if unstarted
-			if (last_runB == INT16_MAX) {
-				last_runB = HAL_GetTick();
+			if (last_run_times[1] == INT16_MAX) {
+				last_run_times[1] = HAL_GetTick();
 			}
 		}
 	}
@@ -267,8 +267,8 @@ static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer) {
 	out_msg.name.data = (uint8_t*) "Arm Controller";
 	out_msg.software_version.major = 0;
 	out_msg.software_version.minor = 1;
-	out_msg.hardware_version.major = 0;
-	out_msg.hardware_version.minor = 1;
+	out_msg.hardware_version.major = 1;
+	out_msg.hardware_version.minor = 0;
 	out_msg.hardware_version.certificate_of_authenticity.len = 0;
 
 	// TODO hook this into main status
