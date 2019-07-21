@@ -66,9 +66,6 @@ uint32_t potA_read(){
 }
 
 static void encoderA_gpio_init() {
-	// Not sure if I have to do anything here
-	// I think if I set the pins as input this is handled,
-	// and input is the default state
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_TIM3_CLK_ENABLE();
 	GPIO_InitTypeDef gpio;

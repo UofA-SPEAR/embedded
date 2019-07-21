@@ -7,11 +7,6 @@
 #include "core_cm4.h"
 
 #include "main.h"
-#include "vnh5019.h"
-#include "encoders.h"
-#include "clocks.h"
-#include "coms.h"
-#include "flash_settings.h"
 
 #include "uavcan/protocol/NodeStatus.h"
 
@@ -56,6 +51,11 @@ void run_motor(uint8_t motor) {
 		} else if (run_settings.motor[motor].encoder.type == ENCODER_QUADRATURE) {
 			// Read current encoder position. We don't care about wraps at the moment
 			current_position = (TIM3->CNT) - ENCODER_START_VAL;
+		} else if (run_settings.motor[motor].encoder.type == ENCODER_ABSOLUTE_DIGITAL) {
+			int32_t tmp_position;
+			if ((tmp_position = ems22_read_position(motor)) != -1) {
+				current_position = tmp_position;
+			}
 		}
 
 		float error;
@@ -217,6 +217,9 @@ int main(void) {
 			break;
 	case (ENCODER_QUADRATURE):
 			encoderA_init();
+			break;
+	case (ENCODER_ABSOLUTE_DIGITAL):
+			ems22_init();
 			break;
 	default:
 			// do nothing

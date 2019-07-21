@@ -80,8 +80,13 @@ static int32_t radial_position_get(uint8_t motor, float in_angle) {
 			// Probably the most sane thing to do in this case
 			position = run_settings.motor[motor].encoder.max;
 		}
-	} else if (run_settings.motor[motor].encoder.type == ENCODER_QUADRATURE) {
+	} else if (run_settings.motor[motor].encoder.type == ENCODER_QUADRATURE ||
+			run_settings.motor[motor].encoder.type == ENCODER_ABSOLUTE_DIGITAL) {
 		position = in_angle / run_settings.motor[motor].encoder.to_radians;
+	} else {
+		// mostly just to remove an error here.
+		// bad error handling but whatever
+		return 0;
 	}
 
 	return position;
@@ -150,7 +155,7 @@ static void handle_actuator_command(CanardRxTransfer* transfer) {
 	for (int i = 0; i < msg.commands.len; i++) {
 		uavcan_equipment_actuator_Command* cmd = &msg.commands.data[i];
 
-		int32_t desired_position;
+		int32_t desired_position = 0;
 
 		for (uint8_t i = 0; i < 2; i++) {
 			if (cmd->actuator_id == run_settings.motor[i].actuator_id) {
@@ -160,6 +165,7 @@ static void handle_actuator_command(CanardRxTransfer* transfer) {
 					desired_position = linear_position_get(i, cmd->command_value);
 				} else {
 					// do nothing I guess, the motors aren't enabled
+					return;
 				}
 				break; // We can exit the loop
 			}
