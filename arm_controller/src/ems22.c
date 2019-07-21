@@ -11,6 +11,28 @@
 static SPI_HandleTypeDef spi;
 
 void ems22_init() {
+	__HAL_RCC_SPI1_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+
+	// Initialise pins for SPI comms
+	GPIO_InitTypeDef gpio;
+	gpio.Pin 		= GPIO_PIN_3 | GPIO_PIN_4;
+	gpio.Mode 		= GPIO_MODE_AF_PP;
+	gpio.Alternate 	= GPIO_AF5_SPI1;
+	gpio.Pull 		= GPIO_NOPULL;
+	gpio.Speed		= GPIO_SPEED_FREQ_MEDIUM;
+	HAL_GPIO_Init(GPIOB, &gpio);
+
+	// Initialise chip select pins
+	gpio.Pin		= GPIO_PIN_2 | GPIO_PIN_3;
+	gpio.Mode 		= GPIO_MODE_OUTPUT_PP;
+	HAL_GPIO_Init(GPIOC, &gpio);
+
+	// Disable CS by default, active low
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, 1);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, 1);
+
 	spi.Instance = SPI1;
 	spi.Init.Mode = SPI_MODE_MASTER;
 	spi.Init.Direction = SPI_DIRECTION_2LINES_RXONLY;
@@ -27,7 +49,7 @@ void ems22_init() {
 }
 
 
-int16_t ems22_read_position() {
+int16_t ems22_read_position(uint8_t motor) {
 	struct {
 		uint16_t abs_position : 10;
 		uint8_t offset_compensation : 1;
@@ -37,8 +59,13 @@ int16_t ems22_read_position() {
 		uint8_t magnitude_decrease : 1;
 		uint8_t even_parity : 1;
 	} in_data;
+
+	// Pull CS pin low
+	HAL_GPIO_WritePin(GPIOC, (GPIO_PIN_2 << motor), 0);
 	
 	HAL_SPI_Receive(&spi, (uint8_t*) &in_data, 2, 100);
+
+	HAL_GPIO_WritePin(GPIOC, (GPIO_PIN_2 << motor), 1);
 
 	{
 		uint16_t parity_check;
