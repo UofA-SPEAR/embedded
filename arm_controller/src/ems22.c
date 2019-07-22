@@ -25,13 +25,13 @@ void ems22_init() {
 	HAL_GPIO_Init(GPIOB, &gpio);
 
 	// Initialise chip select pins
-	gpio.Pin		= GPIO_PIN_2 | GPIO_PIN_3;
+	gpio.Pin		= GPIO_PIN_11 | GPIO_PIN_12;
 	gpio.Mode 		= GPIO_MODE_OUTPUT_PP;
 	HAL_GPIO_Init(GPIOC, &gpio);
 
 	// Disable CS by default, active low
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, 1);
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, 1);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, 1);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, 1);
 
 	spi.Instance = SPI1;
 	spi.Init.Mode = SPI_MODE_MASTER;
@@ -61,11 +61,11 @@ int16_t ems22_read_position(uint8_t motor) {
 	} in_data;
 
 	// Pull CS pin low
-	HAL_GPIO_WritePin(GPIOC, (GPIO_PIN_2 << motor), 0);
+	HAL_GPIO_WritePin(GPIOC, (GPIO_PIN_11 << motor), 0);
 	
 	HAL_SPI_Receive(&spi, (uint8_t*) &in_data, 2, 100);
 
-	HAL_GPIO_WritePin(GPIOC, (GPIO_PIN_2 << motor), 1);
+	HAL_GPIO_WritePin(GPIOC, (GPIO_PIN_11 << motor), 1);
 
 	{
 		uint16_t parity_check;
