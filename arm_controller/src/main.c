@@ -40,31 +40,34 @@ void setup(){
 // Run PID and motor control
 void run_motor(uint8_t motor) {
 	int16_t out_int;
-	int32_t current_position;
+	static int32_t current_position[2] = {0, 0};
 
 	// Check if the motor is even enabled
 	if (run_settings.motor[motor].enabled) {
 		// Check if encoder is potentiometer type.
 		if (run_settings.motor[motor].encoder.type == ENCODER_POTENTIOMETER) {
 			// Read potentiometer position
-			current_position = potA_read();
+			current_position[motor] = pot_read(motor);
 		} else if (run_settings.motor[motor].encoder.type == ENCODER_QUADRATURE) {
 			// Read current encoder position. We don't care about wraps at the moment
-			current_position = (TIM3->CNT) - ENCODER_START_VAL;
+			current_position[motor] = (TIM3->CNT) - ENCODER_START_VAL;
 		} else if (run_settings.motor[motor].encoder.type == ENCODER_ABSOLUTE_DIGITAL) {
 			int32_t tmp_position;
 			if ((tmp_position = ems22_read_position(motor)) != -1) {
-				current_position = tmp_position;
+				current_position[motor] = tmp_position;
 			}
+		} else {
+			// should never get here
+			return;
 		}
 
 		float error;
 		if (run_settings.motor[motor].reversed) {
 			// Reverse the error.
 			// TODO evaluate if I should reverse the error or the motor output
-			error = (float) - (desired_positions[motor] - current_position);
+			error = (float) - (desired_positions[motor] - current_position[motor]);
 		} else {
-			error = (float) desired_positions[motor] - current_position;
+			error = (float) desired_positions[motor] - current_position[motor];
 		}
 
 		if (run_settings.motor[motor].encoder.to_radians != (float)  0.0) {
@@ -84,6 +87,9 @@ void run_motor(uint8_t motor) {
 			} else {
 				out_int = 0;
 			}
+		} else {
+			// Should never get here
+			return;
 		}
 
 		vnh5019_set(&motors[motor], out_int);
@@ -211,19 +217,21 @@ int main(void) {
 	motor_init();
 
 	// Initialize feedback
-	switch (run_settings.motor[0].encoder.type) {
-	case (ENCODER_POTENTIOMETER):
-			potA_init();
-			break;
-	case (ENCODER_QUADRATURE):
-			encoderA_init();
-			break;
-	case (ENCODER_ABSOLUTE_DIGITAL):
-			ems22_init();
-			break;
-	default:
-			// do nothing
-			break;
+	for (uint8_t i = 0; i < 2; i++) {
+		switch (run_settings.motor[i].encoder.type) {
+		case (ENCODER_POTENTIOMETER):
+				pot_init(0);
+				break;
+		case (ENCODER_QUADRATURE):
+				encoderA_init();
+				break;
+		case (ENCODER_ABSOLUTE_DIGITAL):
+				ems22_init();
+				break;
+		default:
+				// do nothing
+				break;
+		}
 	}
 
 	comInit();

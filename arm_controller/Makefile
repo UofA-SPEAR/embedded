@@ -27,6 +27,9 @@ PROJ_DIR := ./
 MCU_SERIES := f3
 MCU_PARTNO := STM32F303xC
 
+# Extra user compile flags
+USER_FLAGS := -Werror
+
 # Project specific source directories, can be empty
 SOURCE_DIRS :=
 

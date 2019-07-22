@@ -21,9 +21,9 @@ typedef enum {
 } encoder_type_t;
 
 
-void potA_init();
+void pot_init(uint8_t motor);
 void encoderA_init();
-uint32_t potA_read();
+uint32_t pot_read(uint8_t motor);
 
 
 #endif

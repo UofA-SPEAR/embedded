@@ -3,64 +3,74 @@
 
 #include "encoders.h"
 
-ADC_HandleTypeDef hadc3;
+ADC_HandleTypeDef hadc2;
 // I hope TIM3 isn't enabled anywhere else
 TIM_HandleTypeDef tim3;
 
-void potA_init(void) {
-	ADC_ChannelConfTypeDef sConfig;
-	hadc3.Instance = ADC3;
-	hadc3.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
-	hadc3.Init.Resolution = ADC_RESOLUTION_12B;
-	hadc3.Init.ScanConvMode = ADC_SCAN_DISABLE;
-	hadc3.Init.ContinuousConvMode = DISABLE;
-	hadc3.Init.DiscontinuousConvMode = DISABLE;
-	hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-	hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-	hadc3.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-	hadc3.Init.NbrOfConversion = 1;
-	hadc3.Init.DMAContinuousRequests = DISABLE;
-	hadc3.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-	hadc3.Init.LowPowerAutoWait = DISABLE;
-	hadc3.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
+void pot_init(uint8_t motor) {
+	hadc2.Instance = ADC2;
+	hadc2.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+	hadc2.Init.Resolution = ADC_RESOLUTION_12B;
+	hadc2.Init.ScanConvMode = ADC_SCAN_DISABLE;
+	hadc2.Init.ContinuousConvMode = DISABLE;
+	hadc2.Init.DiscontinuousConvMode = DISABLE;
+	hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+	hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+	hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+	hadc2.Init.NbrOfConversion = 1;
+	hadc2.Init.DMAContinuousRequests = DISABLE;
+	hadc2.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+	hadc2.Init.LowPowerAutoWait = DISABLE;
+	hadc2.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
 
-	if (HAL_ADC_Init(&hadc3) != HAL_OK) {
+
+	if (HAL_ADC_Init(&hadc2) != HAL_OK) {
 		while(1);
 	}
 
 	// Configure ADC multi-mode
 	ADC_MultiModeTypeDef multimode;
 	multimode.Mode = ADC_MODE_INDEPENDENT;
-	if (HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK) {
+	if (HAL_ADCEx_MultiModeConfigChannel(&hadc2, &multimode) != HAL_OK) {
 		while(1);
 	}
 
-
-	sConfig.Channel = ADC_CHANNEL_12;
-	sConfig.Rank = ADC_REGULAR_RANK_1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
-	sConfig.SingleDiff = ADC_SINGLE_ENDED;
-	sConfig.OffsetNumber = ADC_OFFSET_NONE;
-	sConfig.Offset = 0;
-
-	if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK) {
-		while(1);
+	/* Motor 0 is PA6, motor 1 is PA7
+	 * channels 3 and 4, respectively
+	 */
+	if (motor == 0) {
+		// Configure channel sample time to be 1.5 cycles
+		ADC2->SMPR1 |= (0b000) << ADC_SMPR1_SMP3_Pos;
+		// Channel is single ended by default
+	} else if (motor == 1) {
+		// Configure channel sample time to be 1.5 cycles
+		ADC2->SMPR1 |= (0b000) << ADC_SMPR1_SMP4_Pos;
+		// Channel is single ended by default
 	}
+
+	// Configure GPIO
+	GPIO_InitTypeDef gpio;
+	gpio.Pin = GPIO_PIN_6 << motor;
+	gpio.Mode = GPIO_MODE_ANALOG;
+	HAL_GPIO_Init(GPIOA, &gpio);
 }
 
 /**
  * returns a number between [0, x) representing the turn
  * returns -1 in an error
  */
-uint32_t potA_read(){
+uint32_t pot_read(uint8_t motor) {
 	static int val;
 	val = -1;
 
-	HAL_ADC_Start(&hadc3);
-	if (HAL_ADC_PollForConversion(&hadc3, 1000) == HAL_OK){
-		val = HAL_ADC_GetValue(&hadc3);
+	// Configure channel sequence for motor
+	ADC2->SQR1 = (3 + motor) << ADC_SQR1_SQ1_Pos;
+
+	HAL_ADC_Start(&hadc2);
+	if (HAL_ADC_PollForConversion(&hadc2, 1000) == HAL_OK){
+		val = HAL_ADC_GetValue(&hadc2);
 	}
-    HAL_ADC_Stop(&hadc3);
+    HAL_ADC_Stop(&hadc2);
 
 	return val;
 }
@@ -116,18 +126,4 @@ void encoderA_init() {
 	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
 	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
 	HAL_TIMEx_MasterConfigSynchronization(&tim3, &sMasterConfig);
-}
-
-// more setup code, this time for the pin
-void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc){
-	if (hadc->Instance == ADC3) {
-		__HAL_RCC_ADC34_CLK_ENABLE();
-		__HAL_RCC_GPIOB_CLK_ENABLE();
-
-		GPIO_InitTypeDef GPIO_InitStruct;
-		GPIO_InitStruct.Pin = POTA_PIN;
-		GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-		GPIO_InitStruct.Pull = GPIO_NOPULL;
-		HAL_GPIO_Init(POTA_PORT, &GPIO_InitStruct);
-	}
 }
