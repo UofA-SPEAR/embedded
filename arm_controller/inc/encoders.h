@@ -22,7 +22,7 @@ typedef enum {
 
 
 void pot_init(uint8_t motor);
-void encoderA_init();
+void encoder_init();
 uint32_t pot_read(uint8_t motor);
 
 

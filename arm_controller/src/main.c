@@ -50,7 +50,7 @@ void run_motor(uint8_t motor) {
 			current_position[motor] = pot_read(motor);
 		} else if (run_settings.motor[motor].encoder.type == ENCODER_QUADRATURE) {
 			// Read current encoder position. We don't care about wraps at the moment
-			current_position[motor] = (TIM3->CNT) - ENCODER_START_VAL;
+			current_position[motor] = (TIM8->CNT) - ENCODER_START_VAL;
 		} else if (run_settings.motor[motor].encoder.type == ENCODER_ABSOLUTE_DIGITAL) {
 			int32_t tmp_position;
 			if ((tmp_position = ems22_read_position(motor)) != -1) {
@@ -104,9 +104,9 @@ void motor_init() {
 	motors[0].digital.port = GPIOB;
 
 	motors[0].pwm.pin 		= GPIO_PIN_7;
-	motors[0].pwm.port 	= GPIOB;
+	motors[0].pwm.port 		= GPIOB;
 	motors[0].pwm.tim_af	= GPIO_AF2_TIM4;
-	motors[0].pwm.tim_ch = TIM_CHANNEL_2;
+	motors[0].pwm.tim_ch 	= TIM_CHANNEL_2;
 
 	vnh5019_init(&motors[0]);
 
@@ -223,7 +223,7 @@ int main(void) {
 				pot_init(0);
 				break;
 		case (ENCODER_QUADRATURE):
-				encoderA_init();
+				encoder_init();
 				break;
 		case (ENCODER_ABSOLUTE_DIGITAL):
 				ems22_init();

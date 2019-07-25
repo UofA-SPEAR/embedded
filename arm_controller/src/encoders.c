@@ -75,26 +75,27 @@ uint32_t pot_read(uint8_t motor) {
 	return val;
 }
 
-static void encoderA_gpio_init() {
+static void encoder_gpio_init() {
 	__HAL_RCC_GPIOA_CLK_ENABLE();
-	__HAL_RCC_TIM3_CLK_ENABLE();
+	__HAL_RCC_TIM8_CLK_ENABLE();
 	GPIO_InitTypeDef gpio;
-	gpio.Pin = GPIO_PIN_6 | GPIO_PIN_7;
+	gpio.Pin = GPIO_PIN_6 | GPIO_PIN_8;
 	gpio.Mode = GPIO_MODE_AF_PP;
 	gpio.Speed = GPIO_SPEED_FREQ_HIGH;
 	gpio.Pull = GPIO_PULLUP;
-	gpio.Alternate = GPIO_AF2_TIM3;
+	gpio.Alternate = GPIO_AF10_TIM8;
 
-	HAL_GPIO_Init(GPIOA, &gpio);
+	HAL_GPIO_Init(GPIOB, &gpio);
 }
 
 /** @brief Set up TIM3 in encoder mode.
+ * 
+ * Note here that the pins are not correct for encoder A to work
  */
-void encoderA_init() {
-	encoderA_gpio_init();
+void encoder_init() {
+	encoder_gpio_init();
 
-	// UNTESTED
-	tim3.Instance = TIM3;
+	tim3.Instance = TIM8;
 	tim3.Init.Prescaler = 0;
 	tim3.Init.Period = UINT16_MAX;
 	tim3.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -118,7 +119,7 @@ void encoderA_init() {
 
 	HAL_TIM_Encoder_Init(&tim3, &encoder);
 	HAL_TIM_Encoder_Start(&tim3, TIM_CHANNEL_ALL);
-	TIM3->CNT = ENCODER_START_VAL;
+	TIM8->CNT = ENCODER_START_VAL;
 
 	TIM_MasterConfigTypeDef sMasterConfig;
 
