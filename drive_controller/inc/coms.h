@@ -56,6 +56,4 @@ void coms_odom_broadcast(uint8_t wheel, float delta);
 
 void coms_handle_actuator_cmd(uavcan_equipment_actuator_ArrayCommand* msg);
     
-}
-
 #endif /* COMS_H_ */
