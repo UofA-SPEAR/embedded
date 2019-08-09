@@ -9,7 +9,7 @@ TIM_HandleTypeDef tim3;
 
 void pot_init(uint8_t motor) {
 	hadc2.Instance = ADC2;
-	hadc2.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+	hadc2.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
 	hadc2.Init.Resolution = ADC_RESOLUTION_12B;
 	hadc2.Init.ScanConvMode = ADC_SCAN_DISABLE;
 	hadc2.Init.ContinuousConvMode = DISABLE;

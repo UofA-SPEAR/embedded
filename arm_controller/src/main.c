@@ -29,11 +29,6 @@ int32_t desired_positions[2];
 void setup(){
 	HAL_Init();
 
-	// init clock
-	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
-	HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-
-	SystemCoreClockUpdate();
 	SystemClock_Config();
 }
 
@@ -123,8 +118,8 @@ uint8_t read_node_id(void) {
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 
 	GPIO_InitTypeDef GPIO_InitStruct;
-	GPIO_InitStruct.Pin = GPIO_PIN_15 | GPIO_PIN_14 |
-			GPIO_PIN_13 | GPIO_PIN_12;
+	GPIO_InitStruct.Pin = GPIO_PIN_1 | GPIO_PIN_2 |
+			GPIO_PIN_10 | GPIO_PIN_11;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -132,10 +127,10 @@ uint8_t read_node_id(void) {
 	uint8_t node_id = BASE_NODE_ID;
 	uint8_t tmp = 0;
 
-	tmp =  HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_15) << 3;
-	tmp |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14) << 2;
-	tmp |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13) << 1;
-	tmp |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12);
+	tmp =  HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) << 3;
+	tmp |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2) << 2;
+	tmp |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_10) << 1;
+	tmp |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11);
 
 	node_id += tmp;
 	return node_id;

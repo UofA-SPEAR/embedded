@@ -23,6 +23,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL8;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
+    while(1);
     //_Error_Handler(__FILE__, __LINE__);
   }
 
@@ -40,12 +41,14 @@ void SystemClock_Config(void)
     //_Error_Handler(__FILE__, __LINE__);
   }
 
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC34;
-  PeriphClkInit.Adc34ClockSelection = RCC_ADC34PLLCLK_DIV8;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC12;
+  PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV32;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     //_Error_Handler(__FILE__, __LINE__);
   }
+
+	SystemCoreClockUpdate();
 
     /**Configure the Systick interrupt time
     */
@@ -58,7 +61,7 @@ void SystemClock_Config(void)
   /* SysTick_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 
-
+  __HAL_RCC_ADC12_CLK_ENABLE();
 }
 
 void usleep(useconds_t time){
