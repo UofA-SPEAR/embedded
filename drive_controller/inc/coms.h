@@ -22,6 +22,8 @@
 #include "uavcan/protocol/NodeStatus.h"
 #include "uavcan/equipment/actuator/ArrayCommand.h"
 #include "uavcan/protocol/param/GetSet.h"
+#include "uavcan/protocol/RestartNode.h"
+
 
 /* ------------ Error Definitions --------------- */
 

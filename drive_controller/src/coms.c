@@ -21,6 +21,37 @@ CanardInstance m_canard_ins;
 
 uint8_t inout_transfer_id = 0;
 
+static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer) {
+	uavcan_protocol_RestartNodeRequest msg;
+	uint8_t out_buf[10];
+
+	uavcan_protocol_RestartNodeRequest_decode(transfer, transfer->payload_len,
+			&msg, &p_dynamic_array_buf);
+
+	if (msg.magic_number == UAVCAN_PROTOCOL_RESTARTNODE_REQUEST_MAGIC_NUMBER) {
+		// We're restarting, we don't need any more interrupts.
+		__disable_irq();
+
+		// Encode and broadcast message
+		uavcan_protocol_RestartNodeResponse resp;
+		resp.ok = true;
+		uint8_t len = uavcan_protocol_RestartNodeResponse_encode(&resp, out_buf);
+		canardBroadcast(ins,
+						UAVCAN_PROTOCOL_RESTARTNODE_SIGNATURE,
+						UAVCAN_PROTOCOL_RESTARTNODE_ID,
+						&inout_transfer_id,
+						10,
+						out_buf,
+						len);
+
+		// Flush out message buffer
+		while (tx_once() != LIBCANARD_NO_QUEUE);
+
+		// Reset
+		NVIC_SystemReset();
+	}
+}
+
 bool should_accept(const CanardInstance* ins,
 		uint64_t * out_data_type_signature,
 		uint16_t data_type_id,
@@ -30,6 +61,9 @@ bool should_accept(const CanardInstance* ins,
 	// This is all we want to handle
 	if (data_type_id == UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID) {
 		*out_data_type_signature = UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_SIGNATURE;
+		return true;
+	} else if (data_type_id == UAVCAN_PROTOCOL_RESTARTNODE_ID) {
+		*out_data_type_signature = UAVCAN_PROTOCOL_RESTARTNODE_SIGNATURE;
 		return true;
 	}
 
@@ -45,6 +79,8 @@ void on_reception(CanardInstance* ins,
 				&msg, &p_dynamic_array_buf);
 
 		coms_handle_actuator_cmd(&msg);
+	} else if (transfer->data_type_id == UAVCAN_PROTOCOL_RESTARTNODE_ID) {
+		restart_node(ins, transfer);
 	}
 }
 
@@ -214,6 +250,7 @@ int16_t setup_hardware_can_filters(void) {
 void coms_handle_actuator_cmd(uavcan_equipment_actuator_ArrayCommand* msg) {
 	// Reset timeout value so we don't just keep shutting the motors down.
 	motor_timeout = HAL_GetTick();
+	motor_handle_flag = true;
 
 	for (int i = 0; i < msg->commands.len; i++) {
 		uavcan_equipment_actuator_Command *cmd = &(msg->commands.data[i]);

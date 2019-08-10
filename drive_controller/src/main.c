@@ -35,6 +35,8 @@ uint32_t motor_timeout;
 
 UART_HandleTypeDef huart;
 
+bool motor_handle_flag = false;
+
 void serial_write8(uint8_t data) {
 	// Write a byte out onto UART
 	HAL_UART_Transmit(&huart, &data, 1, 1000);
@@ -69,6 +71,7 @@ void motors_init() {
 	saberA.write8 = serial_write8;
 	saberA.address = 128;
 	saberA.deadband = 0;
+	saberA.timeout = 5;
 	saberA.min_voltage = 16;
 	saberA.max_voltage = 30;
 	saberA.ramp_setting = 30;
@@ -76,6 +79,7 @@ void motors_init() {
 	saberB.write8 = serial_write8;
 	saberB.address = 129;
 	saberB.deadband = 0;
+	saberB.timeout = 5;
 	saberB.min_voltage = 16;
 	saberB.max_voltage = 30;
 	saberB.ramp_setting = 30;
@@ -201,6 +205,8 @@ int main(void)
 			coms_odom_broadcast(1, motorB_distance);
 			coms_odom_broadcast(2, motorA_distance);
 			coms_odom_broadcast(3, motorA_distance);
+
+			motor_handle_flag = false;
 		}
 
 		if ((HAL_GetTick() - motor_timeout) > MOTOR_TIMEOUT_MS) {

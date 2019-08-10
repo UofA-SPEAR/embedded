@@ -25,6 +25,7 @@ typedef struct {
     uint8_t address;
     uint8_t ramp_setting;
     uint8_t deadband;
+    uint8_t timeout;
 
     float min_voltage;
     float max_voltage;
@@ -71,5 +72,6 @@ sabertooth_err_t sabertooth_set_min_voltage(sabertooth_t* saber, float voltage);
  */
 sabertooth_err_t sabertooth_set_max_voltage(sabertooth_t* saber, float voltage);
 
+sabertooth_err_t sabertooth_set_timeout(sabertooth_t* saber, uint8_t timeout);
 
 #endif // SABERTOOTH_H_

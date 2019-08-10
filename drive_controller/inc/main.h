@@ -30,4 +30,6 @@ extern float motorA_speed, motorB_speed;
 
 extern uint32_t motor_timeout;
 
+extern bool motor_handle_flag;
+
 #endif /* MAIN_H_ */

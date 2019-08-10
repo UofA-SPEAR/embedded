@@ -23,6 +23,7 @@ void sabertooth_init(sabertooth_t* saber) {
     sabertooth_set_min_voltage(saber, saber->min_voltage);
     sabertooth_set_max_voltage(saber, saber->max_voltage);
     sabertooth_set_deadband(saber, saber->deadband);
+    sabertooth_set_timeout(saber, saber->timeout);
 }
 
 void sabertooth_set_motor(sabertooth_t* saber, uint8_t motor, int8_t speed) {
@@ -99,3 +100,9 @@ sabertooth_err_t sabertooth_set_max_voltage(sabertooth_t* saber, float voltage) 
     return SABER_SUCCESS;
 }
 
+// IMPORTANT
+sabertooth_err_t sabertooth_set_timeout(sabertooth_t* saber, uint8_t timeout) {
+    sabertooth_send_command(saber, 14, timeout);
+
+    return SABER_SUCCESS;
+}
