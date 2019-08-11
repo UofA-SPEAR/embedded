@@ -126,7 +126,7 @@ int main(void)
 
 	for(;;) {
 		static uint32_t last_thing = 0;
-		static uint32_t pid_timer = 0;
+		//static uint32_t pid_timer = 0;
 		int8_t motorA_out_int = 0;
 		int8_t motorB_out_int = 0;
 
@@ -143,10 +143,10 @@ int main(void)
 
 		// 10 Hz for now
 		// Check PID stuff
-		if ((HAL_GetTick() - pid_timer > 100)) {
+		if (motor_handle_flag) {
 			int32_t motorA_cur_pos, motorB_cur_pos;
 
-			pid_timer = HAL_GetTick();
+			//pid_timer = HAL_GetTick();
 
 			motorA_cur_pos = TIM2->CNT;
 			motorB_cur_pos = TIM1->CNT;
