@@ -4,3 +4,6 @@
 [submodule "common/uavcan_dsdl"]
 	path = common/uavcan_dsdl
 	url = https://github.com/UofA-SPEAR/uavcan_dsdl.git
+[submodule "ChibiOS"]
+	path = ChibiOS
+	url = git@github.com:UofA-SPEAR/ChibiOS
