@@ -48,10 +48,24 @@ int main(void) {
   halInit();
   chSysInit();
 
+
+  UARTConfig uart_config = {
+    .txend1_cb  = NULL,
+    .txend2_cb  = NULL,
+    .rxend_cb   = NULL,
+    .rxchar_cb  = NULL,
+    .rxerr_cb   = NULL,
+    .timeout_cb = NULL,
+    .timeout    = 1000,
+    .speed      = 9600,
+    .cr1        = 0, // There is more config here, but default should work.
+    .cr2        = 0
+  };
+
   /*
-   * Activates the serial driver 2 using the driver default configuration.
+   * Activates the UART Driver 2 using our configuration
    */
-  sdStart(&SD2, NULL);
+   uartStart(&UARTD2, &uart_config);
 
   /*
    * Creates the blinker thread.
@@ -63,8 +77,6 @@ int main(void) {
    * sleeping in a loop and check the button state.
    */
   while (true) {
-    if (!palReadPad(GPIOC, GPIOC_BUTTON)) {
-    }
     chThdSleepMilliseconds(500);
   }
 }
