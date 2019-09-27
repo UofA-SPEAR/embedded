@@ -17,6 +17,8 @@
 #include "ch.h"
 #include "hal.h"
 
+#include <string.h>
+
 /*
  * Green LED blinker thread, times are in milliseconds.
  */
@@ -48,23 +50,28 @@ int main(void) {
   halInit();
   chSysInit();
 
-  /*
-   * Activates the serial driver 2 using the driver default configuration.
-   */
-  sdStart(&SD2, NULL);
+  // Activate USART w/ custom config
+  UARTConfig usart_config = {
+    .txend1_cb   = NULL,
+    .txend2_cb   = NULL,
+    .rxend_cb    = NULL,
+    .rxchar_cb   = NULL,
+    .rxerr_cb    = NULL,
+    .timeout_cb  = NULL,
+    .timeout     = 0,
+    .speed       = 9600
+  };
+  uartStart(&UARTD2, &usart_config);
 
   /*
    * Creates the blinker thread.
    */
   chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
 
-  /*
-   * Normal main() thread activity, in this demo it does nothing except
-   * sleeping in a loop and check the button state.
-   */
+  // main() thread activity, just outputs Hello World!
   while (true) {
-    if (!palReadPad(GPIOC, GPIOC_BUTTON)) {
-    }
+    size_t bytes = strlen("Hello World!");
+    uartSendTimeout(&UARTD2, (size_t*) &bytes, "Hello World!", 1000);
     chThdSleepMilliseconds(500);
   }
 }
