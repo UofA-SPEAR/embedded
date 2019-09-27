@@ -14,6 +14,12 @@ You need to have the following tools installed:
 - make tools
 - OpenOCD
 
+## Documentation
+
+- [ChibiOS Documentation](http://www.chibios.org/dokuwiki/doku.php?id=chibios:documentation:start)
+- [STM32 Datasheet](https://www.st.com/resource/en/datasheet/stm32f303vc.pdf)
+- [STM32 Reference Manual](https://www.st.com/content/ccc/resource/technical/document/reference_manual/4a/19/6e/18/9d/92/43/32/DM00043574.pdf/files/DM00043574.pdf/jcr:content/translations/en.DM00043574.pdf)
+
 ### Windows
 
 Install Git Bash
