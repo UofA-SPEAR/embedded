@@ -6,6 +6,12 @@ This is all the code for the embedded systems on the rover.
 
 This code will run on STM32 chips, specifically the F103 or F303 series (preferably F303)
 
+## Onboarding
+
+1. First, create a GitHub account and send the username to the Controls team lead.
+2. Install the [required toolchain](https://github.com/UofA-SPEAR/embedded/wiki/Setting-up-the-Development-Environment)
+3. Follow the [Onboarding Task](https://github.com/UofA-SPEAR/embedded/wiki/Onboarding-Task).
+
 ## Dependencies ##
 
 You need to have the following tools installed:
