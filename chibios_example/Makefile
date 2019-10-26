@@ -189,6 +189,13 @@ include $(RULESPATH)/rules.mk
 # Custom rules
 #
 
+PAREN_COMMA := \",
+
+VSCODE_INCDIR = $(addprefix \"$$\{workspaceFolder\}/, $(addsuffix $(PAREN_COMMA), $(INCDIR)))
+
+vscode_scan: $(INCDIR)
+	@echo $(VSCODE_INCDIR)
+
 #
 # Custom rules
 ##############################################################################
