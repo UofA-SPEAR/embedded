@@ -9,6 +9,7 @@
 #include "main.h"
 
 #include "uavcan/protocol/NodeStatus.h"
+#include "uavcan/equipment/actuator/Status.h"
 
 // these bounds are needed, as not the potentiometers will not experience their full range
 #define LOWER_POT_BOUND 0
@@ -37,6 +38,8 @@ void run_motor(uint8_t motor) {
 	int16_t out_int;
 	static int32_t current_position[2] = {0, 0};
 
+	uavcan_equipment_actuator_Status status;
+
 	// Check if the motor is even enabled
 	if (run_settings.motor[motor].enabled) {
 		// Check if encoder is potentiometer type.
@@ -53,7 +56,15 @@ void run_motor(uint8_t motor) {
 			}
 		} else {
 			// should never get here
+			status.position = 0;
 			return;
+		}
+
+		// will be wrong in the linear case
+		if (run_settings.motor[motor].linear.support_length != 0.0) {
+			status.position = current_position[motor];
+		} else {
+			status.position = (float) current_position[motor] * run_settings.motor[motor].encoder.to_radians;
 		}
 
 		float error;
@@ -88,22 +99,56 @@ void run_motor(uint8_t motor) {
 		}
 
 		vnh5019_set(&motors[motor], out_int);
+
+
+		// Send status info
+		uint8_t status_buf[20];
+		int len = uavcan_equipment_actuator_Status_encode(&status, &status_buf);
+
+		canardBroadcast(&m_canard_instance,
+			UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
+			UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID,
+			&inout_transfer_id,
+			5,
+			&status_buf,
+			len);
 	}
 }
 
 void motor_init() {
-	motors[0].digital.in_a = GPIO_PIN_4;
-	motors[0].digital.in_b = GPIO_PIN_3;
-	motors[0].digital.en_a = GPIO_PIN_6;
-	motors[0].digital.en_b = GPIO_PIN_5;
-	motors[0].digital.port = GPIOB;
+	motors[0].digital.in_a.pin = MOTORA_INA_PIN;
+	motors[0].digital.in_a.port = MOTORA_INA_PORT;
+	motors[0].digital.in_b.pin = MOTORA_INB_PIN;
+	motors[0].digital.in_b.port = MOTORA_INB_PORT;
+	motors[0].digital.en_a.pin = MOTORA_ENA_PIN;
+	motors[0].digital.en_a.port = MOTORA_ENA_PORT;
+	motors[0].digital.en_b.pin = MOTORA_ENB_PIN;
+	motors[0].digital.en_b.port = MOTORA_ENB_PORT;
 
-	motors[0].pwm.pin 		= GPIO_PIN_7;
-	motors[0].pwm.port 		= GPIOB;
-	motors[0].pwm.tim_af	= GPIO_AF2_TIM4;
-	motors[0].pwm.tim_ch 	= TIM_CHANNEL_2;
+	motors[0].pwm.pin 		= MOTORA_PWM_PIN;
+	motors[0].pwm.port 		= MOTORA_PWM_PORT;
+	motors[0].pwm.tim_instance = MOTORA_PWM_TIM_INSTANCE;
+	motors[0].pwm.tim_af	= MOTORA_PWM_TIM_AF;
+	motors[0].pwm.tim_ch 	= MOTORA_PWM_TIM_CHANNEL;
 
 	vnh5019_init(&motors[0]);
+
+	motors[1].digital.in_a.pin = MOTORB_INA_PIN;
+	motors[1].digital.in_a.port = MOTORB_INA_PORT;
+	motors[1].digital.in_b.pin = MOTORB_INB_PIN;
+	motors[1].digital.in_b.port = MOTORB_INB_PORT;
+	motors[1].digital.en_a.pin = MOTORB_ENA_PIN;
+	motors[1].digital.en_a.port = MOTORB_ENA_PORT;
+	motors[1].digital.en_b.pin = MOTORB_ENB_PIN;
+	motors[1].digital.en_b.port = MOTORB_ENB_PORT;
+
+	motors[1].pwm.pin 		= MOTORB_PWM_PIN;
+	motors[1].pwm.port 		= MOTORB_PWM_PORT;
+	motors[1].pwm.tim_instance = MOTORB_PWM_TIM_INSTANCE;
+	motors[1].pwm.tim_af	= MOTORB_PWM_TIM_AF;
+	motors[1].pwm.tim_ch 	= MOTORB_PWM_TIM_CHANNEL;
+
+	vnh5019_init(&motors[1]);
 
 
 	/* Insanely large number, so no motor checks should happen
@@ -149,7 +194,7 @@ void check_settings(void) {
 		// Only run checks if the motor is even enabled
 		if (run_settings.motor[i].enabled) {
 			// Encoder should have more than 0 range of motion
-			if (run_settings.motor[i].encoder.min >= run_settings.motor[0].encoder.max) {
+			if (run_settings.motor[i].encoder.min >= run_settings.motor[i].encoder.max) {
 				error = true;
 			}
 

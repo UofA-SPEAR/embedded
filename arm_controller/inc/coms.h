@@ -43,6 +43,8 @@ extern CanardInstance m_canard_instance;
 
 extern uint64_t can_timestamp_usec;
 
+extern uint8_t inout_transfer_id;
+
 // Public variables to set nodestatus
 uint32_t node_health;
 uint32_t node_mode;

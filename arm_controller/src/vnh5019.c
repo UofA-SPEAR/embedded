@@ -7,18 +7,20 @@
 
 static void vnh5019_pwm_init(vnh5019_t* settings);
 
-uint8_t timer_initialized = 0;
-
 void vnh5019_set(vnh5019_t* motor, int16_t speed) {
-	//TODO add more cases
-
 	uint16_t unsigned_speed = abs(speed);
 	switch (motor->pwm.tim_ch) {
 	case (TIM_CHANNEL_1):
-		VNH5019_TIM_INSTANCE->CCR1 = unsigned_speed;
+		motor->pwm.tim_instance->CCR1 = unsigned_speed;
 		break;
 	case (TIM_CHANNEL_2):
-		VNH5019_TIM_INSTANCE->CCR2 = unsigned_speed;
+		motor->pwm.tim_instance->CCR2 = unsigned_speed;
+		break;
+	case (TIM_CHANNEL_3):
+		motor->pwm.tim_instance->CCR3 = unsigned_speed;
+		break;
+	case (TIM_CHANNEL_4):
+		motor->pwm.tim_instance->CCR4 = unsigned_speed;
 		break;
 	}
 
@@ -34,11 +36,11 @@ void vnh5019_set(vnh5019_t* motor, int16_t speed) {
 	 * Braking is the same but we selectively turn off the power so the chip absorbs some power.
 	 */
 	if (speed >= 0) { // Forwards
-			HAL_GPIO_WritePin(motor->digital.port, motor->digital.in_a, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(motor->digital.port, motor->digital.in_b, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(motor->digital.in_a.port, motor->digital.in_a.pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(motor->digital.in_b.port, motor->digital.in_b.pin, GPIO_PIN_RESET);
 	} else { // Backwards
-			HAL_GPIO_WritePin(motor->digital.port, motor->digital.in_a, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(motor->digital.port, motor->digital.in_b, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(motor->digital.in_a.port, motor->digital.in_a.pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(motor->digital.in_b.port, motor->digital.in_b.pin, GPIO_PIN_SET);
 	}
 }
 
@@ -51,19 +53,23 @@ void vnh5019_set(vnh5019_t* motor, int16_t speed) {
  */
 static void vnh5019_enable(vnh5019_t* motor, uint8_t enable) {
 	if (enable) {
-		HAL_GPIO_WritePin(motor->digital.port, motor->digital.en_a, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(motor->digital.port, motor->digital.en_b, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(motor->digital.en_a.port, motor->digital.en_a.pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(motor->digital.en_b.port, motor->digital.en_b.pin, GPIO_PIN_SET);
 	} else {
-		HAL_GPIO_WritePin(motor->digital.port, motor->digital.en_a, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(motor->digital.port, motor->digital.en_b, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(motor->digital.en_a.port, motor->digital.en_a.pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(motor->digital.en_b.port, motor->digital.en_b.pin, GPIO_PIN_RESET);
 	}
 }
 
 
 // setup code
 void vnh5019_init(vnh5019_t* settings) {
-	// Enable timer clock
-	VNH5019_TIM_CLK_ENABLE();
+	// Enable timer clocks
+	// I *tried* to make this a nice macro that wouldn't need changing.
+	// But the preprocessor is a fickle mistress
+	__HAL_RCC_TIM8_CLK_ENABLE();
+	__HAL_RCC_TIM15_CLK_ENABLE();
+
 	// Enable GPIO clocks (A, B, and C just to be sure)
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
@@ -82,19 +88,27 @@ void vnh5019_init(vnh5019_t* settings) {
 	vnh5019_pwm_init(settings);
 
 	// Start with all pins low
-	HAL_GPIO_WritePin(settings->digital.port, settings->digital.in_a, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(settings->digital.port, settings->digital.in_b, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(settings->digital.port, settings->digital.en_a, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(settings->digital.port, settings->digital.en_b, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(settings->digital.in_a.port, settings->digital.in_a.pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(settings->digital.in_b.port, settings->digital.in_b.pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(settings->digital.en_a.port, settings->digital.en_a.pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(settings->digital.en_b.port, settings->digital.en_b.pin, GPIO_PIN_RESET);
 
 	// Initialize pins
 
-	GPIO_InitStruct.Pin = MOTOR_INA_PIN | MOTOR_INB_PIN |
-			MOTOR_ENA_PIN | MOTOR_ENB_PIN;
+	GPIO_InitStruct.Pin = settings->digital.in_a.pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
-	HAL_GPIO_Init(settings->digital.port, &GPIO_InitStruct);
+	HAL_GPIO_Init(settings->digital.in_a.port, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = settings->digital.in_b.pin;
+	HAL_GPIO_Init(settings->digital.in_b.port, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = settings->digital.en_a.pin;
+	HAL_GPIO_Init(settings->digital.en_a.port, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = settings->digital.en_b.pin;
+	HAL_GPIO_Init(settings->digital.en_b.port, &GPIO_InitStruct);
 
 	vnh5019_enable(settings, 1);
 }
@@ -102,24 +116,20 @@ void vnh5019_init(vnh5019_t* settings) {
 
 // Pins and clocks HAVE to be configured before this is called.
 static void vnh5019_pwm_init(vnh5019_t* settings) {
-	if (!timer_initialized) {
-		// Initialize timer for PWM
-		h_timer.Instance = VNH5019_TIM_INSTANCE;
-		h_timer.Init.Prescaler = 4;
-		h_timer.Init.CounterMode = TIM_COUNTERMODE_UP;
-		h_timer.Init.Period = 1000;
-		h_timer.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-		h_timer.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-		HAL_TIM_PWM_Init(&h_timer);
+	// Initialize timer for PWM
+	h_timer.Instance = settings->pwm.tim_instance;
+	h_timer.Init.Prescaler = 4;
+	h_timer.Init.CounterMode = TIM_COUNTERMODE_UP;
+	h_timer.Init.Period = 1000;
+	h_timer.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	h_timer.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	HAL_TIM_PWM_Init(&h_timer);
 
-		// Make timer run independently
-		TIM_MasterConfigTypeDef sMasterConfig;
-		sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-		sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-		HAL_TIMEx_MasterConfigSynchronization(&h_timer, &sMasterConfig);
-
-		timer_initialized = 1;
-	}
+	// Make timer run independently
+	TIM_MasterConfigTypeDef sMasterConfig;
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	HAL_TIMEx_MasterConfigSynchronization(&h_timer, &sMasterConfig);
 
 	// Configure output compare channel to actually use PWM
 	TIM_OC_InitTypeDef itd;
