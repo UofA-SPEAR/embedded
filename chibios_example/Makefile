@@ -30,7 +30,7 @@ endif
 
 # Enable this if you want link time optimizations (LTO).
 ifeq ($(USE_LTO),)
-  USE_LTO = yes
+  #USE_LTO = no
 endif
 
 # Enable this if you want to see the full log while compiling.
@@ -89,10 +89,11 @@ PROJECT = ch
 MCU  = cortex-m4
 
 # Imported source files and paths.
-CHIBIOS  := ../ChibiOS
-CONFDIR  := ./cfg
-BUILDDIR := ./build
-DEPDIR   := ./.dep
+CHIBIOS   := ../ChibiOS
+CONFDIR   := ./cfg
+BUILDDIR  := ./build
+DEPDIR    := ./.dep
+COMMON    := ../common
 
 # Licensing files.
 include $(CHIBIOS)/os/license/license.mk
@@ -112,6 +113,10 @@ include $(CHIBIOS)/tools/mk/autobuild.mk
 include $(CHIBIOS)/test/lib/test.mk
 # include $(CHIBIOS)/test/rt/rt_test.mk
 include $(CHIBIOS)/test/oslib/oslib_test.mk
+
+# UAVCAN Stuff
+include $(COMMON)/libcanard.mk
+include $(COMMON)/uavcan_msgs.mk
 
 # Define linker script file here
 LDSCRIPT= $(STARTUPLD)/STM32F303xB.ld

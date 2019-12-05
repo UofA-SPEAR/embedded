@@ -88,6 +88,38 @@
 /*===========================================================================*/
 
 /**
+ * @brief   Time Measurement APIs.
+ * @details If enabled then the time measurement APIs are included in
+ *          the kernel.
+ *
+ * @note    The default is @p FALSE.
+ */
+#if !defined(CH_CFG_USE_TM)
+#define CH_CFG_USE_TM                       TRUE
+#endif
+
+/**
+ * @brief   Threads registry APIs.
+ * @details If enabled then the registry APIs are included in the kernel.
+ *
+ * @note    The default is @p FALSE.
+ */
+#if !defined(CH_CFG_USE_REGISTRY)
+#define CH_CFG_USE_REGISTRY                 FALSE
+#endif
+
+/**
+ * @brief   Threads synchronization APIs.
+ * @details If enabled then the @p chThdWait() function is included in
+ *          the kernel.
+ *
+ * @note    The default is @p FALSE.
+ */
+#if !defined(CH_CFG_USE_WAITEXIT)
+#define CH_CFG_USE_WAITEXIT                 TRUE
+#endif
+
+/**
  * @brief   Semaphores APIs.
  * @details If enabled then the Semaphores APIs are included in the kernel.
  *
