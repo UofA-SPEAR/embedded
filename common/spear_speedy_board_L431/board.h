@@ -27,14 +27,14 @@
 /*===========================================================================*/
 
 /*
- * Setup for STMicroelectronics STM32 Nucleo32-L432KC board.
+ * Setup for STMicroelectronics STM32 Nucleo32-L431CB board.
  */
 
 /*
  * Board identifier.
  */
-#define BOARD_ST_NUCLEO32_L432KC
-#define BOARD_NAME                  "STMicroelectronics STM32 Nucleo32-L432KC"
+#define BOARD_ST_NUCLEO32_L431CB
+#define BOARD_NAME                  "STMicroelectronics STM32 Nucleo32-L431CB"
 
 /*
  * Board oscillators-related settings.
@@ -59,7 +59,7 @@
 /*
  * MCU type as defined in the ST header.
  */
-#define STM32L432xx
+#define STM32L431xx
 
 /*
  * IO pins assignments.

@@ -8,10 +8,10 @@
     <output_path>..</output_path>
     <hal_version>5.0.x</hal_version>
   </configuration_settings>
-  <board_name>STMicroelectronics STM32 Nucleo32-L432KC</board_name>
-  <board_id>ST_NUCLEO32_L432KC</board_id>
+  <board_name>STMicroelectronics STM32 Nucleo32-L431CB</board_name>
+  <board_id>ST_NUCLEO32_L431CB</board_id>
   <board_functions></board_functions>
-  <subtype>STM32L432xx</subtype>
+  <subtype>STM32L431xx</subtype>
   <clocks
     HSEFrequency="0"
     HSEBypass="false"
