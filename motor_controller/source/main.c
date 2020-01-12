@@ -21,9 +21,9 @@
 #define LINEAR_ACTUATOR_DEADZONE	350
 #define LINEAR_ACTUATOR_POWER		500
 
-vnh5019_t motors[2];
+vnh5019_t motor;
 arm_pid_instance_f32 pid[2];
-int32_t desired_positions[2];
+int32_t desired_position;
 
 bool flag_motor_running = false;
 
@@ -36,25 +36,25 @@ void setup(){
 }
 
 // Run PID and motor control
-void run_motor(uint8_t motor) {
+void run_motor(void) {
 	int16_t out_int;
-	static int32_t current_position[2] = {0, 0};
+	static int32_t current_position = 0;
 
 	uavcan_equipment_actuator_Status status;
 
 	// Check if the motor is even enabled
-	if (run_settings.motor[motor].enabled) {
+	if (run_settings.motor.enabled) {
 		// Check if encoder is potentiometer type.
-		if (run_settings.motor[motor].encoder.type == ENCODER_POTENTIOMETER) {
+		if (run_settings.motor.encoder.type == ENCODER_POTENTIOMETER) {
 			// Read potentiometer position
-			current_position[motor] = pot_read(motor);
-		} else if (run_settings.motor[motor].encoder.type == ENCODER_QUADRATURE) {
+			current_position = pot_read(0);
+		} else if (run_settings.motor.encoder.type == ENCODER_QUADRATURE) {
 			// Read current encoder position. We don't care about wraps at the moment
-			current_position[motor] = (TIM8->CNT) - ENCODER_START_VAL;
-		} else if (run_settings.motor[motor].encoder.type == ENCODER_ABSOLUTE_DIGITAL) {
+			current_position = (TIM8->CNT) - ENCODER_START_VAL;
+		} else if (run_settings.motor.encoder.type == ENCODER_ABSOLUTE_DIGITAL) {
 			int32_t tmp_position;
-			if ((tmp_position = ems22_read_position(motor)) != -1) {
-				current_position[motor] = tmp_position;
+			if ((tmp_position = ems22_read_position(0)) != -1) {
+				current_position = tmp_position;
 			}
 		} else {
 			// should never get here
@@ -63,25 +63,25 @@ void run_motor(uint8_t motor) {
 		}
 
 		// will be wrong in the linear case
-		if (run_settings.motor[motor].linear.support_length != 0.0) {
-			status.position = current_position[motor];
+		if (run_settings.motor.linear.support_length != 0.0) {
+			status.position = current_position;
 		} else {
-			status.position = (float) current_position[motor] * run_settings.motor[motor].encoder.to_radians;
+			status.position = (float) current_position * run_settings.motor.encoder.to_radians;
 		}
 
 		float error;
-		if (run_settings.motor[motor].reversed) {
+		if (run_settings.motor.reversed) {
 			// Reverse the error.
 			// TODO evaluate if I should reverse the error or the motor output
-			error = (float) - (desired_positions[motor] - current_position[motor]);
+			error = (float) - (desired_position - current_position);
 		} else {
-			error = (float) desired_positions[motor] - current_position[motor];
+			error = (float) desired_position - current_position;
 		}
 
-		if (run_settings.motor[motor].encoder.to_radians != (float)  0.0) {
-			float out = arm_pid_f32(&pid[motor], error);
+		if (run_settings.motor.encoder.to_radians != (float)  0.0) {
+			float out = arm_pid_f32(&pid, error);
 			out_int = out * 1000;
-		} else if (run_settings.motor[motor].linear.support_length >= 0) {
+		} else if (run_settings.motor.linear.support_length >= 0) {
 			// constant motor power, instead of PID, simpler
 
 			if (error > LINEAR_ACTUATOR_DEADZONE) {
@@ -100,7 +100,7 @@ void run_motor(uint8_t motor) {
 			return;
 		}
 
-		vnh5019_set(&motors[motor], out_int);
+		vnh5019_set(&motor, out_int);
 
 
 		// Send status info
@@ -118,46 +118,22 @@ void run_motor(uint8_t motor) {
 }
 
 void motor_init() {
-	motors[0].digital.in_a.pin = MOTORA_INA_PIN;
-	motors[0].digital.in_a.port = MOTORA_INA_PORT;
-	motors[0].digital.in_b.pin = MOTORA_INB_PIN;
-	motors[0].digital.in_b.port = MOTORA_INB_PORT;
-	motors[0].digital.en_a.pin = MOTORA_ENA_PIN;
-	motors[0].digital.en_a.port = MOTORA_ENA_PORT;
-	motors[0].digital.en_b.pin = MOTORA_ENB_PIN;
-	motors[0].digital.en_b.port = MOTORA_ENB_PORT;
+	motor.digital.in_a.pin =    MOTOR_INA_PIN;
+	motor.digital.in_a.port =   MOTOR_INA_PORT;
+	motor.digital.in_b.pin =    MOTOR_INB_PIN;
+	motor.digital.in_b.port =   MOTOR_INB_PORT;
+	motor.digital.en_a.pin =    MOTOR_ENA_PIN;
+	motor.digital.en_a.port =   MOTOR_ENA_PORT;
+	motor.digital.en_b.pin =    MOTOR_ENB_PIN;
+	motor.digital.en_b.port =   MOTOR_ENB_PORT;
 
-	motors[0].pwm.pin 		= MOTORA_PWM_PIN;
-	motors[0].pwm.port 		= MOTORA_PWM_PORT;
-	motors[0].pwm.tim_instance = MOTORA_PWM_TIM_INSTANCE;
-	motors[0].pwm.tim_af	= MOTORA_PWM_TIM_AF;
-	motors[0].pwm.tim_ch 	= MOTORA_PWM_TIM_CHANNEL;
+	motor.pwm.pin =             MOTOR_PWM_PIN;
+	motor.pwm.port =            MOTOR_PWM_PORT;
+	motor.pwm.tim_instance =    MOTOR_PWM_TIM_INSTANCE;
+	motor.pwm.tim_af =          MOTOR_PWM_TIM_AF;
+	motor.pwm.tim_ch =          MOTOR_PWM_TIM_CHANNEL;
 
-	vnh5019_init(&motors[0]);
-
-	motors[1].digital.in_a.pin = MOTORB_INA_PIN;
-	motors[1].digital.in_a.port = MOTORB_INA_PORT;
-	motors[1].digital.in_b.pin = MOTORB_INB_PIN;
-	motors[1].digital.in_b.port = MOTORB_INB_PORT;
-	motors[1].digital.en_a.pin = MOTORB_ENA_PIN;
-	motors[1].digital.en_a.port = MOTORB_ENA_PORT;
-	motors[1].digital.en_b.pin = MOTORB_ENB_PIN;
-	motors[1].digital.en_b.port = MOTORB_ENB_PORT;
-
-	motors[1].pwm.pin 		= MOTORB_PWM_PIN;
-	motors[1].pwm.port 		= MOTORB_PWM_PORT;
-	motors[1].pwm.tim_instance = MOTORB_PWM_TIM_INSTANCE;
-	motors[1].pwm.tim_af	= MOTORB_PWM_TIM_AF;
-	motors[1].pwm.tim_ch 	= MOTORB_PWM_TIM_CHANNEL;
-
-	vnh5019_init(&motors[1]);
-
-
-	/* Insanely large number, so no motor checks should happen
-	 * until a position is received.
-	 */
-	last_run_times[0] = INT16_MAX;
-	last_run_times[1] = INT16_MAX;
+	vnh5019_init(&motor);
 }
 
 uint8_t read_node_id(void) {
@@ -188,54 +164,51 @@ uint8_t read_node_id(void) {
  * If settings are invalid, it will disable the motors and set the nodestatus
  * appropriately
  */
-void check_settings(void) {
+void check_settings(void)
+{
 	bool error = false;
 
-	// Make sure checks run for both motors
-	for (uint8_t i = 0; i < 2; i++) {
-		// Only run checks if the motor is even enabled
-		if (run_settings.motor[i].enabled) {
-			// Encoder should have more than 0 range of motion
-			if (run_settings.motor[i].encoder.min >= run_settings.motor[i].encoder.max) {
-				error = true;
-			}
+    // Only run checks if the motor is even enabled
+    if (run_settings.motor.enabled) {
+        // Encoder should have more than 0 range of motion
+        if (run_settings.motor.encoder.min >= run_settings.motor.encoder.max) {
+            error = true;
+        }
 
-			// Checking for radial settings
-			if (run_settings.motor[i].encoder.to_radians != 0) {
-				// Linear settings should not be set
-				if (run_settings.motor[i].linear.support_length != 0) {
-					error = true;
-				}
-			}
+        // Checking for radial settings
+        if (run_settings.motor.encoder.to_radians != 0) {
+            // Linear settings should not be set
+            if (run_settings.motor.linear.support_length != 0) {
+                error = true;
+            }
+        }
 
-			// Checking for linear settings
-			if (run_settings.motor[i].linear.support_length != 0) {
-				// All values should be more than 0
-				if ((run_settings.motor[i].linear.support_length <= 0) ||
-						(run_settings.motor[i].linear.arm_length <= 0) ||
-						(run_settings.motor[i].linear.length_min <= 0) ||
-						(run_settings.motor[i].linear.length_max <= 0)) {
-					error = true;
-				}
+        // Checking for linear settings
+        if (run_settings.motor.linear.support_length != 0) {
+            // All values should be more than 0
+            if ((run_settings.motor.linear.support_length <= 0) ||
+                    (run_settings.motor.linear.arm_length <= 0) ||
+                    (run_settings.motor.linear.length_min <= 0) ||
+                    (run_settings.motor.linear.length_max <= 0)) {
+                error = true;
+            }
 
-				// Extends positively
-				if ((run_settings.motor[i].linear.length_min >=
-						run_settings.motor[i].linear.length_max)) {
-					error = true;
-				}
+            // Extends positively
+            if ((run_settings.motor.linear.length_min >=
+                    run_settings.motor.linear.length_max)) {
+                error = true;
+            }
 
-				// Radial settings should not be set
-				if (run_settings.motor[i].encoder.to_radians != 0) {
-					error = true;
-				}
-			}
-		}
-	}
+            // Radial settings should not be set
+            if (run_settings.motor.encoder.to_radians != 0) {
+                error = true;
+            }
+        }
+    }
 
 	// On configuration error, disable motors and change NodeStatus
 	if (error) {
-		run_settings.motor[0].enabled = 0;
-		run_settings.motor[1].enabled = 0;
+		run_settings.motor.enabled = 0;
 		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_ERROR;
 	} else {
 		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;

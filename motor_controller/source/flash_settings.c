@@ -26,28 +26,26 @@ static void firstboot_check(void) {
 	// Start with sane settings.
 	if (saved_settings.boot != 1) {
 		current_settings.boot = 1;
-		for (int i = 0; i < 2; i++) {
-			current_settings.motor[i].enabled = 0;
-			current_settings.motor[i].actuator_id = 42; // Realistically, there will never be 42 actuators
-			current_settings.motor[i].reversed = 0;
-			current_settings.motor[i].continuous = 0;
+        current_settings.motor.enabled = 0;
+        current_settings.motor.actuator_id = 42; // Realistically, there will never be 42 actuators
+        current_settings.motor.reversed = 0;
+        current_settings.motor.continuous = 0;
 
-			current_settings.motor[i].pid.Kp = 0;
-			current_settings.motor[i].pid.Ki = 0;
-			current_settings.motor[i].pid.Kd = 0;
+        current_settings.motor.pid.Kp = 0;
+        current_settings.motor.pid.Ki = 0;
+        current_settings.motor.pid.Kd = 0;
 
-			current_settings.motor[i].encoder.type = ENCODER_POTENTIOMETER;
-			current_settings.motor[i].encoder.min = 0;
-			current_settings.motor[i].encoder.max = 0;
-			current_settings.motor[i].encoder.to_radians = 0;
-			current_settings.motor[i].encoder.endstop_min = ENDSTOP_DISABLED;
-			current_settings.motor[i].encoder.endstop_max = ENDSTOP_DISABLED;
+        current_settings.motor.encoder.type = ENCODER_POTENTIOMETER;
+        current_settings.motor.encoder.min = 0;
+        current_settings.motor.encoder.max = 0;
+        current_settings.motor.encoder.to_radians = 0;
+        current_settings.motor.encoder.endstop_min = ENDSTOP_DISABLED;
+        current_settings.motor.encoder.endstop_max = ENDSTOP_DISABLED;
 
-			current_settings.motor[i].linear.support_length = 0;
-			current_settings.motor[i].linear.arm_length = 0;
-			current_settings.motor[i].linear.length_min = 0;
-			current_settings.motor[i].linear.length_max = 0;
-		}
+        current_settings.motor.linear.support_length = 0;
+        current_settings.motor.linear.arm_length = 0;
+        current_settings.motor.linear.length_min = 0;
+        current_settings.motor.linear.length_max = 0;
 		program_settings(); // Write settings to flash
 	}
 

@@ -64,7 +64,7 @@ typedef struct {
 
 typedef struct {
 	uint8_t boot;						//< Check to see if this is the first boot
-	motor_settings_t motor[2];
+	motor_settings_t motor;
 } flash_settings_t;
 
 extern flash_settings_t saved_settings;

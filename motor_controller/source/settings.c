@@ -170,113 +170,103 @@ static void parameter_return_value(CanardInstance* ins,
 		uavcan_protocol_param_GetSetResponse response;
 		uint8_t out_buf[100];
 		uint16_t index;
-		uint8_t motor_select = 0;
-
-		// If motor B, select from second set of parameters
-		if (p_msg->index > ((NUM_PARAMETERS / 2) - 1)) {
-			index = p_msg->index - (NUM_PARAMETERS / 2);
-			motor_select = 1;
-		} else {
-			index = p_msg->index;
-			motor_select = 0;
-		}
 
 		// This should probably be another function
 		switch (index) {
 		case (0):
 			// Motor enabled?
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].enabled;
+			response.value.integer_value = saved_settings.motor.enabled;
 			break;
 		case (1):
 			// Motor actuator ID
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].actuator_id;
+			response.value.integer_value = saved_settings.motor.actuator_id;
 			break;
 		case (2):
 			// Motor reversed?
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].reversed;
+			response.value.integer_value = saved_settings.motor.reversed;
 			break;
 		case (3):
 			// Motor continuous?
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].continuous;
+			response.value.integer_value = saved_settings.motor.continuous;
 			break;
 		case (4):
 			// Motor Kp
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor[motor_select].pid.Kp;
+			response.value.real_value = saved_settings.motor.pid.Kp;
 			break;
 		case (5):
 			// Motor Ki
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor[motor_select].pid.Ki;
+			response.value.real_value = saved_settings.motor.pid.Ki;
 			break;
 		case (6):
 			// Motor Kd
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor[motor_select].pid.Kd;
+			response.value.real_value = saved_settings.motor.pid.Kd;
 			break;
 		case (7):
 			// Motor encoder type
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].encoder.type;
+			response.value.integer_value = saved_settings.motor.encoder.type;
 			break;
 		case (8):
 			// Motor encoder min value
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].encoder.min;
+			response.value.integer_value = saved_settings.motor.encoder.min;
 			break;
 		case (9):
 			// Motor encoder max value
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].encoder.max;
+			response.value.integer_value = saved_settings.motor.encoder.max;
 			break;
 		case (10):
 			// Motor encoder to_radians
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor[motor_select].encoder.to_radians;
+			response.value.real_value = saved_settings.motor.encoder.to_radians;
 			break;
 		case (11):
 			// Motor encoder min endstop enabled?
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].encoder.endstop_min;
+			response.value.integer_value = saved_settings.motor.encoder.endstop_min;
 			break;
 		case (12):
 			// Motor encoder max value
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor[motor_select].encoder.endstop_max;
+			response.value.integer_value = saved_settings.motor.encoder.endstop_max;
 			break;
 		case (13):
 			// Linear actuator support joint length
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor[motor_select].linear.support_length;
+			response.value.real_value = saved_settings.motor.linear.support_length;
 			break;
 		case (14):
 			// Linear actuator "upper arm" joint length
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor[motor_select].linear.arm_length;
+			response.value.real_value = saved_settings.motor.linear.arm_length;
 			break;
 		case (15):
 			// Linear actuator min length
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor[motor_select].linear.length_min;
+			response.value.real_value = saved_settings.motor.linear.length_min;
 			break;
 		case (16):
 			// Linear actuator max length
 			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor[motor_select].linear.length_max;
+			response.value.real_value = saved_settings.motor.linear.length_max;
 			break;
 
 
 		default:
-			// Something fucked up
+			// Something messed up
 			while(1);
 		}
 
-		response.name.data = (uint8_t *) parameters[index + (motor_select * (NUM_PARAMETERS / 2))];
-		response.name.len = strlen(parameters[index + (motor_select * (NUM_PARAMETERS / 2))]);
+		response.name.data = (uint8_t *) parameters[index];
+		response.name.len = strlen(parameters[index]);
 		response.default_value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
 		response.min_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
 		response.max_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
@@ -309,95 +299,85 @@ static void parameter_set_value(CanardInstance* ins,
 
 		// return current value
 		uint16_t index;
-		uint8_t motor_select = 0;
-
-		// If motor B, select from second set of parameters
-		if (p_msg->index > ((NUM_PARAMETERS / 2) - 1)) {
-			index = p_msg->index - (NUM_PARAMETERS / 2);
-			motor_select = 1;
-		} else {
-			index = p_msg->index;
-			motor_select = 0;
-		}
 
 		// This should probably be another function
 		switch (index) {
 		case (0):
 			// Motor enabled?
-			current_settings.motor[motor_select].enabled = p_msg->value.integer_value;
+			current_settings.motor.enabled = p_msg->value.integer_value;
 			break;
 		case (1):
 			// Motor actuator ID
-			current_settings.motor[motor_select].actuator_id = p_msg->value.integer_value;
+			current_settings.motor.actuator_id = p_msg->value.integer_value;
 			break;
 		case (2):
 			// Motor reversed?
-			current_settings.motor[motor_select].reversed = p_msg->value.integer_value;
+			current_settings.motor.reversed = p_msg->value.integer_value;
 			break;
 		case (3):
 			// Motor continuous?
-			current_settings.motor[motor_select].continuous = p_msg->value.integer_value;
+			current_settings.motor.continuous = p_msg->value.integer_value;
 			break;
 		case (4):
 			// Motor Kp
-			current_settings.motor[motor_select].pid.Kp = p_msg->value.real_value;
-			pid[motor_select].Kp = p_msg->value.real_value;
-			arm_pid_init_f32(&pid[motor_select], 0);
+			current_settings.motor.pid.Kp = p_msg->value.real_value;
+			pid.Kp = p_msg->value.real_value;
+			arm_pid_init_f32(&pid, 0);
 			break;
 		case (5):
 			// Motor Ki
-			current_settings.motor[motor_select].pid.Ki = p_msg->value.real_value;
-			pid[motor_select].Ki = p_msg->value.real_value;
-			arm_pid_init_f32(&pid[motor_select], 0);
+			current_settings.motor.pid.Ki = p_msg->value.real_value;
+			pid.Ki = p_msg->value.real_value;
+			arm_pid_init_f32(&pid, 0);
 			break;
 		case (6):
 			// Motor Kd
-			current_settings.motor[motor_select].pid.Kd = p_msg->value.real_value;
-			pid[motor_select].Kd = p_msg->value.real_value;
-			arm_pid_init_f32(&pid[motor_select], 0);
+			current_settings.motor.pid.Kd = p_msg->value.real_value;
+			pid.Kd = p_msg->value.real_value;
+			arm_pid_init_f32(&pid, 0);
 			break;
 		case (7):
 			// Motor encoder type
-			current_settings.motor[motor_select].encoder.type = p_msg->value.integer_value;
+			current_settings.motor.encoder.type = p_msg->value.integer_value;
 			break;
 		case (8):
 			// Motor encoder min value
-			current_settings.motor[motor_select].encoder.min = p_msg->value.integer_value;
+			current_settings.motor.encoder.min = p_msg->value.integer_value;
 			break;
 		case (9):
 			// Motor encoder max value
-			current_settings.motor[motor_select].encoder.max = p_msg->value.integer_value;
+			current_settings.motor.encoder.max = p_msg->value.integer_value;
 			break;
 		case (10):
 			// Motor encoder to_radians
-			current_settings.motor[motor_select].encoder.to_radians = p_msg->value.real_value;
+			current_settings.motor.encoder.to_radians = p_msg->value.real_value;
 			break;
 		case (11):
 			// Motor encoder min endstop enabled?
-			current_settings.motor[motor_select].encoder.endstop_min = p_msg->value.integer_value;
+			current_settings.motor.encoder.endstop_min = p_msg->value.integer_value;
 			break;
 		case (12):
 			// Motor encoder max value
-			current_settings.motor[motor_select].encoder.endstop_max = p_msg->value.integer_value;
+			current_settings.motor.encoder.endstop_max = p_msg->value.integer_value;
 			break;
 		case (13):
 			// Linear actuator support joint length
-			current_settings.motor[motor_select].linear.support_length = p_msg->value.real_value;
+			current_settings.motor.linear.support_length = p_msg->value.real_value;
 			break;
 		case (14):
 			// Linear actuator "upper arm" joint length
-			current_settings.motor[motor_select].linear.arm_length = p_msg->value.real_value;
+			current_settings.motor.linear.arm_length = p_msg->value.real_value;
 			break;
 		case (15):
 			// Linear actuator support joint length
-			current_settings.motor[motor_select].linear.length_min = p_msg->value.real_value;
+			current_settings.motor.linear.length_min = p_msg->value.real_value;
 			break;
 		case (16):
 			// Linear actuator support joint length
-			current_settings.motor[motor_select].linear.length_max = p_msg->value.real_value;
+			current_settings.motor.linear.length_max = p_msg->value.real_value;
 			break;
 		default:
-			// Something fucked up
+			// Something messed up
 			while(1);
 		}
 
