@@ -1,3 +1,6 @@
 **/Debug/*
 **/build/*
 **/ipch/*
+
+**/.dep/*
+*.code-workspace

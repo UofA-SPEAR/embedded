@@ -14,6 +14,7 @@
 # Common directories
 #
 # These variables need to be defined in your makefile:
+#   TARGET - the name of your project
 # 	COMMON_DIR - the common/ folder, where everything not for a specific project is held
 # 	PROJ_DIR - Location of the current project
 # 	MCU_SERIES - f0, f3, etc... the series for STM32 you are using
@@ -70,17 +71,17 @@ PREFIX = arm-none-eabi-
 # The gcc compiler bin path can be either defined in make command via GCC_PATH variable (> make GCC_PATH=xxx)
 # either it can be added to the PATH environment variable.
 ifdef GCC_PATH
-CC = $(GCC_PATH)/$(PREFIX)gcc
-CXX = $(GCC_PATH)/$(PREFIX)g++
-AS = $(GCC_PATH)/$(PREFIX)gcc -x assembler-with-cpp
-CP = $(GCC_PATH)/$(PREFIX)objcopy
-SZ = $(GCC_PATH)/$(PREFIX)size
+CC = $(GCC_PATH)/$(PREFIX)gcc$(POSTFIX)
+CXX = $(GCC_PATH)/$(PREFIX)g++$(POSTFIX)
+AS = $(GCC_PATH)/$(PREFIX)gcc -x assembler-with-cpp$(POSTFIX)
+CP = $(GCC_PATH)/$(PREFIX)objcopy$(POSTFIX)
+SZ = $(GCC_PATH)/$(PREFIX)size$(POSTFIX)
 else
-CC = $(PREFIX)gcc
-CXX = $(PREFIX)g++
-AS = $(PREFIX)gcc -x assembler-with-cpp
-CP = $(PREFIX)objcopy
-SZ = $(PREFIX)size
+CC = $(PREFIX)gcc$(POSTFIX)
+CXX = $(PREFIX)g++$(POSTFIX)
+AS = $(PREFIX)gcc -x assembler-with-cpp$(POSTFIX)
+CP = $(PREFIX)objcopy$(POSTFIX)
+SZ = $(PREFIX)size$(POSTFIX)
 endif
 HEX = $(CP) -O ihex
 BIN = $(CP) -O binary -S
@@ -192,6 +193,8 @@ $(BUILD_DIR):
 	mkdir $@		
 
 
+.PHONY: clean flash debug help
+
 #######################################
 # clean up
 #######################################
@@ -209,7 +212,19 @@ flash: $(BUILD_DIR)/$(TARGET).elf
 
 debug: $(BUILD_DIR)/$(TARGET).elf
 	openocd -f $(COMMON_DIR)/$(MCU_SERIES)_openocd.cfg
-  
+
+################
+# Printing Stuff
+################
+help:
+	@echo "Targets:"
+	@echo "      - ${TARGET}: build project"
+	@echo "      - clean: clean up build folder"
+	@echo "      - flash: flash project to microcontroller with OpenOCD"
+	@echo "      - debug: launch an OpenOCD debug session"
+	@echo "      - help: print this message"
+
+
 #######################################
 # dependencies
 #######################################
