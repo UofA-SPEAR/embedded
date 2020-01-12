@@ -22,9 +22,9 @@ You need to have the following tools installed:
 
 ## Documentation
 
-- [ChibiOS Documentation](http://www.chibios.org/dokuwiki/doku.php?id=chibios:documentation:start)
-- [STM32 Datasheet](https://www.st.com/resource/en/datasheet/stm32f303vc.pdf)
-- [STM32 Reference Manual](https://www.st.com/content/ccc/resource/technical/document/reference_manual/4a/19/6e/18/9d/92/43/32/DM00043574.pdf/files/DM00043574.pdf/jcr:content/translations/en.DM00043574.pdf)
+- [ChibiOS Documentation](http://www.chibios.org/dokuwiki/doku.php?id=chibios:documentation:start) (We are using 19.1.x)
+- [STM32F303 Datasheet](https://www.st.com/resource/en/datasheet/stm32f303vc.pdf)
+- [STM32F303 Reference Manual](https://www.st.com/content/ccc/resource/technical/document/reference_manual/4a/19/6e/18/9d/92/43/32/DM00043574.pdf/files/DM00043574.pdf/jcr:content/translations/en.DM00043574.pdf) (this is where you go for peripheral information)
 
 ### Windows
 
@@ -47,7 +47,7 @@ git submodule update --init
 
 ## Creating a project ##
 
-Copy the example project, embedded/example_project as your own project folder.
+Copy the example project, `embedded/chibios_example` as your own project folder.
 
 Edit the Makefile within your new project to match your project's requirements.
 
@@ -62,6 +62,8 @@ Congrats! You've built a project!
 `make help` will give you more information on all the available targets.
 
 ## Debugging/Flashing ##
+
+### THIS MAY CHANGE SOON ###
 
 To flash the firmware, simply run
 

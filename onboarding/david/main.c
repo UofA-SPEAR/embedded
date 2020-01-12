@@ -25,18 +25,15 @@
 static THD_WORKING_AREA(waThread1, 128);
 static THD_FUNCTION(Thread1, arg) {
 
-  (void*) arg;
+  (void)arg;
+  chRegSetThreadName("blinker");
   while (true) {
-    palClearPad(GPIOC, GPIOC_LED);
+    palClearPad(GPIOA, GPIOA_LED_GREEN);
     chThdSleepMilliseconds(500);
-    palSetPad(GPIOC, GPIOC_LED);
+    palSetPad(GPIOA, GPIOA_LED_GREEN);
     chThdSleepMilliseconds(500);
   }
 }
-
-THD_TABLE_BEGIN
-THD_TABLE_ENTRY(waThread1, "blinker", Thread1, NULL)
-THD_TABLE_END
 
 /*
  * Application entry point.
@@ -53,6 +50,7 @@ int main(void) {
   halInit();
   chSysInit();
 
+
   // Activate USART w/ custom config
   UARTConfig usart_config = {
     .txend1_cb   = NULL,
@@ -65,6 +63,11 @@ int main(void) {
     .speed       = 9600
   };
   uartStart(&UARTD2, &usart_config);
+
+  /*
+   * Creates the blinker thread.
+   */
+  chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
 
   // main() thread activity, just outputs Hello World!
   while (true) {
