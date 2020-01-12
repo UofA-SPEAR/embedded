@@ -1,5 +1,5 @@
-/*
- * main.h
+/**
+ * @file main.h
  *
  *  Created on: Jan 25, 2019
  *      Author: isthatme
@@ -55,8 +55,13 @@
 #define MOTORB_ENB_PIN 	        GPIO_PIN_13
 #define MOTORB_ENB_PORT	        GPIOB
 
+/** Period of motor control loop */
+#define MOTOR_CONTROL_PERIOD    100
+
 extern int32_t desired_positions[2];
 extern arm_pid_instance_f32 pid[2];
+
+extern bool flag_motor_running;
 
 
 int32_t last_run_times[2];

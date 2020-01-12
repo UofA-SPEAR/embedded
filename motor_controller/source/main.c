@@ -25,6 +25,8 @@ vnh5019_t motors[2];
 arm_pid_instance_f32 pid[2];
 int32_t desired_positions[2];
 
+bool flag_motor_running = false;
+
 
 
 void setup(){
@@ -242,9 +244,34 @@ void check_settings(void) {
 	node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
 }
 
+/**
+ * @brief Runs motor control code once every MOTOR_CONTROL_PERIOD ms.
+ */
+static THD_WORKING_AREA(RunMotorWorkingArea, 128);
+static THD_FUNCTION(RunMotor, arg)
+{
+    (void) arg;
+    chRegSetThreadName("Run Motor");
+
+    systime_t time = chVTGetSystemTimeX();
+
+    while(true) {
+        time += M2ST(MOTOR_CONTROL_PERIOD);
+        run_motor(0);
+        chThdSleepUntil(time);
+    }
+}
+
+
 // To make a system reset, use NVIC_SystemReset()
 int main(void) {
+
+    halInit();
+    chSYsInit();
+
+
 	uint8_t node_id = false;
+    bool motor_run_thread_started = false;
 
 	node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
 	node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_INITIALIZATION;
@@ -293,19 +320,19 @@ int main(void) {
 
 
 	for (;;) {
+        // TODO fix this logic up, maybe handle it inside the thread?
+        if (flag_motor_running && !motor_run_thread_started) {
+            thread_t* thd = chThdCreateStatic(RunMotorWorkingArea,
+                    sizeof(RunMotorWorkingArea), HIGHPRIO, RunMotor, NULL);
 
-		if ((HAL_GetTick() - last_run_times[0] >= 100) && run_settings.motor[0].enabled
-				&& (last_run_times[0] != INT16_MAX)) {
-			run_motor(0);
-			last_run_times[0] = HAL_GetTick();
-			canardCleanupStaleTransfers(&m_canard_instance, can_timestamp_usec);
-		}
-		if ((HAL_GetTick() - last_run_times[1] >= 100) && run_settings.motor[1].enabled
-				&& (last_run_times[1] != INT16_MAX)) {
-			run_motor(1);
-			last_run_times[1] = HAL_GetTick();
-			canardCleanupStaleTransfers(&m_canard_instance, can_timestamp_usec);
-		}
+            if (thd != NULL) {
+                motor_run_thread_started = true;
+            } else {
+                // Abort!
+                return 0;
+            }
+        }
+
 
 		publish_nodeStatus();
 
