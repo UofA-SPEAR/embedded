@@ -10,12 +10,12 @@
 #include "main.h"
 
 // Settings saved to flash. Points to a specific flash location
-__attribute__((section("._user_settings"))) flash_settings_t saved_settings;
+__attribute__((section("._user_settings"))) struct setting saved_settings[NUM_SETTINGS];
 
 // Settings in use.
-flash_settings_t current_settings;
+struct setting current_settings[NUM_SETTINGS];
 // Run settings
-flash_settings_t run_settings;
+struct setting run_settings[NUM_SETTINGS];
 
 
 // If this is the first boot, settings in the flash will be garbage.
@@ -24,28 +24,28 @@ flash_settings_t run_settings;
 static void firstboot_check(void) {
 	// Kp should be between -1 and 1, if not it was misconfigured.
 	// Start with sane settings.
-	if (saved_settings.boot != 1) {
-		current_settings.boot = 1;
-        current_settings.motor.enabled = 0;
-        current_settings.motor.actuator_id = 42; // Realistically, there will never be 42 actuators
-        current_settings.motor.reversed = 0;
-        current_settings.motor.continuous = 0;
+	if (saved_settings[get_id_by_name("spear.motor.firstboot")].boolean != 1) {
+		current_settings[get_id_by_name("spear.motor.firstboot")].boolean = 1;
+        current_settings[get_id_by_name("spear.motor.enabled")].boolean = 0;
+        current_settings[get_id_by_name("spear.motor.actuator_id")].integer = 42; 
+        current_settings[get_id_by_name("spear.motor.reversed")].boolean = 0;
+        current_settings[get_id_by_name("spear.motor.continuous")].boolean = 0;
 
-        current_settings.motor.pid.Kp = 0;
-        current_settings.motor.pid.Ki = 0;
-        current_settings.motor.pid.Kd = 0;
+        current_settings[get_id_by_name("spear.motor.pid.Kp")].real = 0;
+        current_settings[get_id_by_name("spear.motor.pid.Ki")].real = 0;
+        current_settings[get_id_by_name("spear.motor.pid.Kd")].real = 0;
 
-        current_settings.motor.encoder.type = ENCODER_POTENTIOMETER;
-        current_settings.motor.encoder.min = 0;
-        current_settings.motor.encoder.max = 0;
-        current_settings.motor.encoder.to_radians = 0;
-        current_settings.motor.encoder.endstop_min = ENDSTOP_DISABLED;
-        current_settings.motor.encoder.endstop_max = ENDSTOP_DISABLED;
+        current_settings[get_id_by_name("spear.motor.encoder.type")].integer = ENCODER_POTENTIOMETER;
+        current_settings[get_id_by_name("spear.motor.encoder.min")].integer = 0;
+        current_settings[get_id_by_name("spear.motor.encoder.max")].integer = 0;
+        current_settings[get_id_by_name("spear.motor.encoder.to_radians")].real = 0;
+        current_settings[get_id_by_name("spear.motor.encoder.endstop_min")].integer = ENDSTOP_DISABLED;
+        current_settings[get_id_by_name("spear.motor.encoder.endstop_max")].integer = ENDSTOP_DISABLED;
 
-        current_settings.motor.linear.support_length = 0;
-        current_settings.motor.linear.arm_length = 0;
-        current_settings.motor.linear.length_min = 0;
-        current_settings.motor.linear.length_max = 0;
+        current_settings[get_id_by_name("spear.motor.linear.support_length")].real = 0;
+        current_settings[get_id_by_name("spear.motor.linear.arm_length")].real = 0;
+        current_settings[get_id_by_name("spear.motor.linear.length_min")].real = 0;
+        current_settings[get_id_by_name("spear.motor.linear.length_max")].real = 0;
 		program_settings(); // Write settings to flash
 	}
 
@@ -57,7 +57,6 @@ void load_settings(void) {
 
 	current_settings = saved_settings;
 }
-
 
 HAL_StatusTypeDef program_settings(void) {
 	HAL_StatusTypeDef rc;

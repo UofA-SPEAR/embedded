@@ -32,356 +32,100 @@ static uint8_t* p_dynamic_array_buf = dynamic_array_buf;
 
 extern uint8_t inout_transfer_id;
 
-// Parameters can be found in settings_parameters.c
-extern char* parameters[NUM_PARAMETERS];
+int8_t get_id_by_name(char* name)
+{
+    for (int8_t i = 0; i < NUM_SETTINGS; i++) {
+        // assumes strings are defined constant, thus have null termination
+        if (!strcmp(name, parameter_info[i].name))
+            return i;
+    }
 
-static void parameter_return_empty(CanardInstance* ins,
-		CanardRxTransfer* transfer);
-static void parameter_return_value(CanardInstance* ins,
-		CanardRxTransfer* transfer,
-		uavcan_protocol_param_GetSetRequest* p_msg);
-static void parameter_set_value(CanardInstance* ins,
-		CanardRxTransfer* transfer,
-		uavcan_protocol_param_GetSetRequest* p_msg);
-static void parameter_respond_from_id(CanardInstance* ins,
-		CanardRxTransfer* transfer,
-		uavcan_protocol_param_GetSetRequest* p_msg);
-static void parameter_respond_from_name(CanardInstance* ins,
-		CanardRxTransfer* transfer,
-		uavcan_protocol_param_GetSetRequest* p_msg);
+    return -1;
+}
+
 
 /** @brief Reads and writes to settings.
  *
  */
 void handle_getSet(CanardInstance* ins, CanardRxTransfer* transfer) {
-	if (transfer->payload_len > 300) { //ignore messages that are too long
+	uavcan_protocol_param_GetSetRequest msg;
+    uavcan_protocol_param_GetSetResponse resp;
+    uint8_t resp_buf[100];
+    char name_buf[UAVCAN_PROTOCOL_PARAM_VALUE_STRING_VALUE_MAX_LENGTH + 1];
+    int8_t setting;
+
+    // ignore messages that are too long
+	if (transfer->payload_len > 300) {
 		return;
 	}
-
-	uavcan_protocol_param_GetSetRequest msg;
 
 	uavcan_protocol_param_GetSetRequest_decode(transfer, transfer->payload_len,
 			&msg, &p_dynamic_array_buf);
 
-
 	if (msg.name.len > 0) {
-		parameter_respond_from_name(ins, transfer, &msg);
-	} else if (msg.index >= NUM_PARAMETERS) { // If there is no such parameter
-		parameter_return_empty(ins, transfer);
+        memcpy((void*) name_buf, (void*) msg.name.data, msg.name.len);
+        name_buf[msg.name.len] = '\0';
+        setting = get_id_by_name(name_buf);
 	} else {
-		parameter_respond_from_id(ins, transfer, &msg);
-	}
-}
-
-static void parameter_respond_from_id(CanardInstance* ins,
-		CanardRxTransfer* transfer,
-		uavcan_protocol_param_GetSetRequest* p_msg) {
-	// TODO respond to parameter requests without names
-
-	if (p_msg->value.union_tag == UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY) {
-		parameter_return_value(ins, transfer, p_msg);
-	} else {
-		// Value is given, so set this value, then return that set value
-		parameter_set_value(ins, transfer, p_msg);
-	}
-}
-
-/*
- * Scans through given parameter name,
- */
-static void parameter_respond_from_name(CanardInstance* ins,
-		CanardRxTransfer* transfer,
-		uavcan_protocol_param_GetSetRequest* p_msg) {
-	char name_buf[92]; // max length of name is 92 bytes
-	uint8_t correct_name = 0;
-
-	// Copy name into temporary buffer
-	memcpy(name_buf, p_msg->name.data, p_msg->name.len);
-	name_buf[p_msg->name.len] = 0;
-
-	if (strstr((char*)p_msg->name.data, "spear.arm.motor") != NULL) { // ignore stuff not in the right namespace
-		for (int i = 0; i < NUM_PARAMETERS; i++) {
-			if (strcmp(name_buf, parameters[i]) == 0) {
-				// Make sure that the index is the correct value to pass it on
-				// If the index is not correct the next functions WILL fail
-				p_msg->index = i;
-
-				if (p_msg->value.union_tag == UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY) {
-					parameter_return_value(ins, transfer, p_msg);
-				} else {
-					parameter_set_value(ins, transfer, p_msg);
-				}
-
-
-				correct_name = 1;
-				break; // Don't waste cycles
-			}
-		}
+        setting = msg.index;
 	}
 
-	if (!correct_name) {
-		// There is no parameter by that name,
-		// return an empty response
-		parameter_return_empty(ins, transfer);
-	}
+    if (setting >= 0) {
+        resp.name.len = strlen(parameter_info[setting].name);
+        msg.name.data = (uint8_t*) parameter_info[setting].name;
+
+        switch (parameter_info[setting].union_tag) {
+            case (SETTING_REAL):
+                resp.value.union_tag = SETTING_REAL;
+
+                if (msg.value.union_tag != UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY)
+                    current_settings[setting].value.real = msg.value.real_value;
+
+                resp.value.real_value = current_settings[setting].value.real;
+                break;
+            case (SETTING_INTEGER):
+                resp.value.union_tag = SETTING_INTEGER;
+
+                if (msg.value.union_tag != UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY)
+                    current_settings[setting].value.integer = msg.value.integer_value;
+
+                resp.value.integer_value = current_settings[setting].value.integer;
+                break;
+            case (SETTING_BOOLEAN):
+                resp.value.union_tag = SETTING_BOOLEAN;
+
+                if (msg.value.union_tag != UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY)
+                    current_settings[setting].value.boolean = msg.value.boolean_value;
+
+                resp.value.boolean_value = current_settings[setting].value.boolean;
+                break;
+            default:
+                // TODO better error handling
+                while(1); // should never reach here
+                break;
+        }
+
+        if (msg.value.union_tag != UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY) {
+            import_settings();
+            program_settings();
+        }
+    } else {
+        // Return empty data
+        resp.name.len = 0;
+        resp.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
+    }
+
+    uint8_t len = uavcan_protocol_param_GetSetResponse_encode(&resp, resp_buf);
+
+    canardRequestOrRespond(ins,
+            transfer->source_node_id,
+            UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE,
+            UAVCAN_PROTOCOL_PARAM_GETSET_ID,
+            &inout_transfer_id,
+            CAN_GETSET_PRIORITY,
+            CanardResponse,
+            (void*) resp_buf,
+            len);
 }
 
-/*
- * Returns empty GetSet response.
- *
- * Used if parameter does not exist
- */
-static void parameter_return_empty(CanardInstance* ins,
-		CanardRxTransfer* transfer) {
-	uavcan_protocol_param_GetSetResponse msg;
-	uint8_t msg_buf[10];
 
-	msg.name.len = 0;
-	msg.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
-	msg.default_value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
-	msg.min_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
-	msg.max_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
-
-	uint8_t len = uavcan_protocol_param_GetSetResponse_encode(&msg, msg_buf);
-
-	canardRequestOrRespond(ins,
-			transfer->source_node_id,
-			UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE,
-			UAVCAN_PROTOCOL_PARAM_GETSET_ID,
-			&inout_transfer_id,
-			CAN_GETSET_PRIORITY,
-			CanardResponse,
-			msg_buf,
-			len);
-}
-
-/*
- * Gets value given by CAN bus.
- *
- * Filters by given or implied parameter index.
- * The message index needs to be valid (set according to the name)
- * or else behaviour is undefined.
- */
-static void parameter_return_value(CanardInstance* ins,
-		CanardRxTransfer* transfer,
-		uavcan_protocol_param_GetSetRequest* p_msg) {
-
-		// return current value
-		uavcan_protocol_param_GetSetResponse response;
-		uint8_t out_buf[100];
-		uint16_t index;
-
-		// This should probably be another function
-		switch (index) {
-		case (0):
-			// Motor enabled?
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor.enabled;
-			break;
-		case (1):
-			// Motor actuator ID
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor.actuator_id;
-			break;
-		case (2):
-			// Motor reversed?
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor.reversed;
-			break;
-		case (3):
-			// Motor continuous?
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor.continuous;
-			break;
-		case (4):
-			// Motor Kp
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor.pid.Kp;
-			break;
-		case (5):
-			// Motor Ki
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor.pid.Ki;
-			break;
-		case (6):
-			// Motor Kd
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor.pid.Kd;
-			break;
-		case (7):
-			// Motor encoder type
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor.encoder.type;
-			break;
-		case (8):
-			// Motor encoder min value
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor.encoder.min;
-			break;
-		case (9):
-			// Motor encoder max value
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor.encoder.max;
-			break;
-		case (10):
-			// Motor encoder to_radians
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor.encoder.to_radians;
-			break;
-		case (11):
-			// Motor encoder min endstop enabled?
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor.encoder.endstop_min;
-			break;
-		case (12):
-			// Motor encoder max value
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE;
-			response.value.integer_value = saved_settings.motor.encoder.endstop_max;
-			break;
-		case (13):
-			// Linear actuator support joint length
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor.linear.support_length;
-			break;
-		case (14):
-			// Linear actuator "upper arm" joint length
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor.linear.arm_length;
-			break;
-		case (15):
-			// Linear actuator min length
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor.linear.length_min;
-			break;
-		case (16):
-			// Linear actuator max length
-			response.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE;
-			response.value.real_value = saved_settings.motor.linear.length_max;
-			break;
-
-
-		default:
-			// Something messed up
-			while(1);
-		}
-
-		response.name.data = (uint8_t *) parameters[index];
-		response.name.len = strlen(parameters[index]);
-		response.default_value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
-		response.min_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
-		response.max_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
-
-		uint8_t len = uavcan_protocol_param_GetSetResponse_encode(&response, out_buf);
-
-		canardRequestOrRespond(ins,
-				transfer->source_node_id,
-				UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE,
-				UAVCAN_PROTOCOL_PARAM_GETSET_ID,
-				&inout_transfer_id,
-				CAN_GETSET_PRIORITY,
-				CanardResponse,
-				out_buf,
-				len);
-
-}
-
-/*
- * Sets value given by CAN bus.
- *
- * Filters by given or implied parameter index.
- * The message index needs to be valid (set according to the name)
- * or else behaviour is undefined.
- */
-static void parameter_set_value(CanardInstance* ins,
-		CanardRxTransfer* transfer,
-		uavcan_protocol_param_GetSetRequest* p_msg) {
-
-
-		// return current value
-		uint16_t index;
-
-		// This should probably be another function
-		switch (index) {
-		case (0):
-			// Motor enabled?
-			current_settings.motor.enabled = p_msg->value.integer_value;
-			break;
-		case (1):
-			// Motor actuator ID
-			current_settings.motor.actuator_id = p_msg->value.integer_value;
-			break;
-		case (2):
-			// Motor reversed?
-			current_settings.motor.reversed = p_msg->value.integer_value;
-			break;
-		case (3):
-			// Motor continuous?
-			current_settings.motor.continuous = p_msg->value.integer_value;
-			break;
-		case (4):
-			// Motor Kp
-			current_settings.motor.pid.Kp = p_msg->value.real_value;
-			pid.Kp = p_msg->value.real_value;
-			arm_pid_init_f32(&pid, 0);
-			break;
-		case (5):
-			// Motor Ki
-			current_settings.motor.pid.Ki = p_msg->value.real_value;
-			pid.Ki = p_msg->value.real_value;
-			arm_pid_init_f32(&pid, 0);
-			break;
-		case (6):
-			// Motor Kd
-			current_settings.motor.pid.Kd = p_msg->value.real_value;
-			pid.Kd = p_msg->value.real_value;
-			arm_pid_init_f32(&pid, 0);
-			break;
-		case (7):
-			// Motor encoder type
-			current_settings.motor.encoder.type = p_msg->value.integer_value;
-			break;
-		case (8):
-			// Motor encoder min value
-			current_settings.motor.encoder.min = p_msg->value.integer_value;
-			break;
-		case (9):
-			// Motor encoder max value
-			current_settings.motor.encoder.max = p_msg->value.integer_value;
-			break;
-		case (10):
-			// Motor encoder to_radians
-			current_settings.motor.encoder.to_radians = p_msg->value.real_value;
-			break;
-		case (11):
-			// Motor encoder min endstop enabled?
-			current_settings.motor.encoder.endstop_min = p_msg->value.integer_value;
-			break;
-		case (12):
-			// Motor encoder max value
-			current_settings.motor.encoder.endstop_max = p_msg->value.integer_value;
-			break;
-		case (13):
-			// Linear actuator support joint length
-			current_settings.motor.linear.support_length = p_msg->value.real_value;
-			break;
-		case (14):
-			// Linear actuator "upper arm" joint length
-			current_settings.motor.linear.arm_length = p_msg->value.real_value;
-			break;
-		case (15):
-			// Linear actuator support joint length
-			current_settings.motor.linear.length_min = p_msg->value.real_value;
-			break;
-		case (16):
-			// Linear actuator support joint length
-			current_settings.motor.linear.length_max = p_msg->value.real_value;
-			break;
-		default:
-			// Something messed up
-			while(1);
-		}
-
-		program_settings();
-
-		parameter_return_value(ins, transfer, p_msg);
-}
