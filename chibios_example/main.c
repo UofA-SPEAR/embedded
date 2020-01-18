@@ -16,20 +16,21 @@
 
 #include "ch.h"
 #include "hal.h"
+#include "rt_test_root.h"
+#include "oslib_test_root.h"
 
 /*
  * Green LED blinker thread, times are in milliseconds.
  */
 static THD_WORKING_AREA(waThread1, 128);
 static THD_FUNCTION(Thread1, arg) {
-
   (void)arg;
   chRegSetThreadName("blinker");
   while (true) {
-    palClearPad(GPIOA, GPIOA_LED_GREEN);
-    chThdSleepMilliseconds(500);
-    palSetPad(GPIOA, GPIOA_LED_GREEN);
-    chThdSleepMilliseconds(500);
+    palClearPad(GPIOC, GPIOC_LED);
+    chThdSleepMilliseconds(50);
+    palSetPad(GPIOC, GPIOC_LED);
+    chThdSleepMilliseconds(50);
   }
 }
 
@@ -48,24 +49,10 @@ int main(void) {
   halInit();
   chSysInit();
 
-
-  UARTConfig uart_config = {
-    .txend1_cb  = NULL,
-    .txend2_cb  = NULL,
-    .rxend_cb   = NULL,
-    .rxchar_cb  = NULL,
-    .rxerr_cb   = NULL,
-    .timeout_cb = NULL,
-    .timeout    = 1000,
-    .speed      = 9600,
-    .cr1        = 0, // There is more config here, but default should work.
-    .cr2        = 0
-  };
-
   /*
-   * Activates the UART Driver 2 using our configuration
+   * Activates the serial driver 2 using the driver default configuration.
    */
-   uartStart(&UARTD2, &uart_config);
+  sdStart(&SD2, NULL);
 
   /*
    * Creates the blinker thread.
@@ -77,6 +64,10 @@ int main(void) {
    * sleeping in a loop and check the button state.
    */
   while (true) {
+//    if (!palReadPad(GPIOC, GPIOC_BUTTON)) {
+//      test_execute((BaseSequentialStream *)&SD2, &rt_test_suite);
+//      test_execute((BaseSequentialStream *)&SD2, &oslib_test_suite);
+//    }
     chThdSleepMilliseconds(500);
   }
 }
