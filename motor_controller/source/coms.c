@@ -23,14 +23,12 @@
 #include "uavcan/protocol/GetNodeInfo.h"
 
 /* TODO:
- * - convert to using ChibiOS driver
- * - add message passing from interrupt thread instead of custom FIFO
- * - clean up init
  * - change to nicer message handling infrastructure
  */
 
 // Small enough to not be too bad, large enough to be useful
-#define DYNAMIC_ARRAY_BUF_SIZE 1000
+#define DYNAMIC_ARRAY_BUF_SIZE 	1000
+#define RX_FIFO_LEN				10
 
 CanardInstance m_canard_instance;
 static uint8_t libcanard_memory_pool[LIBCANARD_MEM_POOL_SIZE];
@@ -43,21 +41,37 @@ uint8_t out_buf[100];
 
 uint8_t inout_transfer_id;
 
+static objects_fifo_t rx_fifo;
+static CanardCANFrame rx_fifo_buffer[RX_FIFO_LEN];
+static msg_t rx_fifo_msg_buffer[RX_FIFO_LEN];
+
 static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);
 static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer);
 
 
-void updateComs(void)
+CH_IRQ_HANDLER(CAN_RX1_IRQn)
 {
-	tx_once();
-	rx_once();
+	CH_IRQ_PROLOGUE();
+	chSysLockFromISR();
+
+	CanardCANFrame frame;
+
+	// TODO check error here
+	canardSTM32Receive(&frame);
+
+	chFifoSendObjectI(&rx_fifo, (void*) &frame);
+
+	chSysUnlockFromISR();
+	CH_IRQ_EPILOGUE();
 }
 
 void comInit(void)
 {
 	CanardSTM32CANTimings timings;
 	CANConfig CAN;
-	palEnablePadEvent();
+
+	chFifoObjectInit(&rx_fifo, sizeof(CanardCANFrame), RX_FIFO_LEN,
+		STM32_NATURAL_ALIGNMENT, rx_fifo_buffer, rx_fifo_msg_buffer);
 
 	canardSTM32ComputeCANTimings(72000000 / 2, 250000, &timings);	
 
@@ -75,6 +89,39 @@ void comInit(void)
 	libcanard_init(on_reception, should_accept, NULL, 32000000, 250000);
 	// Sets to default filter
 	canSTM32SetFilters(&CAND1, 0, 0, NULL);
+}
+
+/** 
+ * @brief Takes control of thread to deal with coms.
+ */
+void coms_handle_forever()
+{
+	int8_t retval = LIBCANARD_SUCCESS;
+	CanardCANFrame *frame;
+	int16_t rc;
+
+	while (1) {
+
+		frame = chFifoTakeObjectI(&rx_fifo);
+
+		if (frame != NULL)
+			canardHandleRxFrame(&m_canard_instance, frame,
+				TIME_I2MS(chVTGetSystemTimeX()));
+
+		frame = canardPeekTxQueue(&m_canard_instance);
+
+		if (frame != NULL) { // If there are any frames to transmit
+			rc = canardSTM32Transmit(frame);
+
+			if (rc == 1) { // If transmit is successful
+				canardPopTxQueue(&m_canard_instance);
+			} else if (rc == 0) { // If the TX queue is full
+				retval = LIBCANARD_ERR_TX_QUEUE_FULL;
+			} else {
+				// TODO handle these errors properly
+			}
+		}
+	}
 }
 
 // Should this be moved somewhere else?
@@ -162,7 +209,8 @@ static int32_t linear_position_get(uint8_t motor, float in_angle)
  *
  * Updates position values according to stuff
  */
-static void handle_actuator_command(CanardRxTransfer* transfer)
+static void handle_actuator_command(CanardInstance *ins,
+	CanardRxTransfer *transfer)
 {
 	uavcan_equipment_actuator_ArrayCommand msg;
 
@@ -206,6 +254,15 @@ static void handle_actuator_command(CanardRxTransfer* transfer)
 
 }
 
+struct can_msg_handler can_request_handlers[] = {
+	CAN_MSG_HANDLER(UAVCAN_PROTOCOL_PARAM_GETSET_ID,
+		UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE, handle_getSet),
+};
+
+struct can_msg_handler can_broadcast_handlers[] = {
+	CAN_MSG_HANDLER(UAVCAN_EQUIPMENT_ACTUATOR_COMMAND_ID,
+		UAVCAN_EQUIPMENT_ACTUATOR_COMMAND_SIGNATURE, handle_actuator_command),
+}
 
 bool should_accept(const CanardInstance* ins,
 					uint64_t* out_data_type_signature,
@@ -215,29 +272,19 @@ bool should_accept(const CanardInstance* ins,
 	{
 
 	if (transfer_type == CanardTransferTypeBroadcast) {
-		switch (data_type_id) {
-
-		case (UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID):
-			*out_data_type_signature = UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_SIGNATURE;
-			return true;
-		case (UAVCAN_PROTOCOL_NODESTATUS_ID):
-			return false;
-		default:
-			return false;
+		for (int i = 0; i < NELEM(can_broadcast_handlers); i++) {
+			if (data_type_id == can_broadcast_handlers[i].id) {
+				*out_data_type_signature = can_broadcast_handlers[i].signature;
+			}
 		}
 	}
 
 	if (transfer_type == CanardTransferTypeRequest) {
-		switch (data_type_id) {
-		case (UAVCAN_PROTOCOL_PARAM_GETSET_ID):
-			*out_data_type_signature = UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE;
-			return true;
-		case (UAVCAN_PROTOCOL_RESTARTNODE_ID):
-			return true;
-		case (UAVCAN_PROTOCOL_GETNODEINFO_ID):
-			return true;
-		default:
-			return false;
+		for (int i = 0; i < NELEM(can_request_handlers); i++) {
+			if (data_type_id == can_request_handlers[i].id) {
+				*out_data_type_signature = can_request_handlers[i].signature;
+				return true;
+			}
 		}
 	}
 
@@ -247,31 +294,20 @@ bool should_accept(const CanardInstance* ins,
 void on_reception(CanardInstance* ins, CanardRxTransfer* transfer)
 {
 	if (transfer->transfer_type == CanardTransferTypeBroadcast) {
-		switch (transfer->data_type_id) {
-		case (UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID):
-			handle_actuator_command(transfer);
-			break;
-		default:
-			break;
+		for (int i = 0; i < NELEM(can_request_handlers; i++) {
+			if (transfer->data_type_id == can_broadcast_handlers[i].id)
+				can_broadcast_handlers[i].handler(ins,
+					transfer);
 		}
 	}
 
 	if (transfer->transfer_type == CanardTransferTypeRequest) {
-		switch (transfer->data_type_id) {
-		case(UAVCAN_PROTOCOL_PARAM_GETSET_ID):
-			handle_getSet(ins, transfer);
-			break;
-		case (UAVCAN_PROTOCOL_RESTARTNODE_ID):
-			restart_node(ins, transfer);
-			break;
-		case (UAVCAN_PROTOCOL_GETNODEINFO_ID):
-			return_node_info(ins, transfer);
-			break;
-		default:
-			break;
+		for (int i = 0; i < NELEM(can_request_handlers; i++) {
+			if (transfer->data_type_id == can_request_handlers[i].id)
+				can_request_handlers[i].handler(ins,
+					transfer);
 		}
 	}
-
 }
 
 static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer) {
@@ -318,24 +354,6 @@ static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer) {
 }
 
 int8_t tx_once(void) {
-	int8_t retval = LIBCANARD_SUCCESS;
-	int16_t rc;
-
-	const CanardCANFrame* p_frame = canardPeekTxQueue(&m_canard_instance);
-
-	if (p_frame != NULL) { // If there are any frames to transmit
-		rc = canardSTM32Transmit(p_frame);
-
-		if (rc == 1) { // If transmit is successful
-			canardPopTxQueue(&m_canard_instance);
-		} else if (rc == 0) { // If the TX queue is full
-			retval = LIBCANARD_ERR_TX_QUEUE_FULL;
-		} else {
-			// TODO handle these errors properly
-		}
-
-	}
-	return retval;
 }
 
 // Timestamp should come from the input of this

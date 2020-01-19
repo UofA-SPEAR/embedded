@@ -45,6 +45,21 @@ extern uint64_t can_timestamp_usec;
 
 extern uint8_t inout_transfer_id;
 
+struct can_msg_handler {
+	uint16_t id;
+	uint64_t signature;
+	(void) (*handler)(CanardInstance *ins, CanardRxTransfer *transfer);
+};
+
+#define CAN_MSG_HANDLER(id, signature, handler) \
+	{ \
+		.id = id, \
+		.signature = signature, \
+		.handler = handler \
+	}
+
+#define NELEM(a) (sizeof(a) / sizeof(*a))
+
 // Public variables to set nodestatus
 uint32_t node_health;
 uint32_t node_mode;

@@ -309,8 +309,7 @@ int main(void) {
 
 		publish_nodeStatus();
 
-		tx_once();
-		handle_frame();
+		coms_handle_forever();
 	}
 }
 
