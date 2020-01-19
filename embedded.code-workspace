@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "chibios_example"
+		},
+		{
+			"path": "ChibiOS"
+		}
+	],
+	"settings": {}
+}

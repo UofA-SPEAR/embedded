@@ -4,6 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
+<<<<<<< HEAD
             "label": "build",
             "type": "shell",
             "command": "make USE_VERBOSE_COMPILE=yes -j4",
