@@ -22,6 +22,13 @@
 #include "uavcan/protocol/RestartNode.h"
 #include "uavcan/protocol/GetNodeInfo.h"
 
+/* TODO:
+ * - convert to using ChibiOS driver
+ * - add message passing from interrupt thread instead of custom FIFO
+ * - clean up init
+ * - change to nicer message handling infrastructure
+ */
+
 // Small enough to not be too bad, large enough to be useful
 #define DYNAMIC_ARRAY_BUF_SIZE 1000
 
@@ -36,34 +43,43 @@ uint8_t out_buf[100];
 
 uint8_t inout_transfer_id;
 
-TIM_HandleTypeDef htim7;
-
-uint64_t can_timestamp_usec;
-
-static void timestamp_tim_init(void);
 static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);
 static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer);
 
 
-void updateComs(void) {
+void updateComs(void)
+{
 	tx_once();
 	rx_once();
 }
 
-void comInit(void) {
-	timestamp_tim_init();
-	fifo_init();
+void comInit(void)
+{
+	CanardSTM32CANTimings timings;
+	CANConfig CAN;
+	palEnablePadEvent();
+
+	canardSTM32ComputeCANTimings(72000000 / 2, 250000, &timings);	
+
+	CAN = {
+		.mcr = 0x00010002,
+	}
+	CAN.btr = (timings.bit_rate_prescaler << CAN_BTR_BRP_Pos) & CAN_BTR_BRP,
+	CAN.btr |= (timings.bit_segment_1 << CAN_BTR_TS1_Pos) & CAN_BTR_TS1;
+	CAN.btr |= (timings.bit_segment_2 << CAN_BTR_TS2_Pos) & CAN_BTR_TS2;
+	CAN.btr |= (timings.max_resynchronization_jump_width << CAN_BTR_SJW_Pos)
+				& CAN_BTR_SJW;
+
+	canObjectInit(&CAND1);
+	canStart(&CAND1, &CAN);
 	libcanard_init(on_reception, should_accept, NULL, 32000000, 250000);
-	setup_hardware_can_filters();
-    // Configure interrupts
-    // We only need to worry about the RX FIFO 0, because that's how the CAN interface is by default
-    NVIC_SetPriority(USB_LP_CAN_RX0_IRQn, 1);
-    NVIC_EnableIRQ(USB_LP_CAN_RX0_IRQn);
-    CAN->IER |= 1 << CAN_IER_FMPIE0_Pos; // Enable CAN interrupt
+	// Sets to default filter
+	canSTM32SetFilters(&CAND1, 0, 0, NULL);
 }
 
 // Should this be moved somewhere else?
-static int32_t radial_position_get(uint8_t motor, float in_angle) {
+static int32_t radial_position_get(uint8_t motor, float in_angle)
+{
 	int32_t position;
 
 
@@ -93,7 +109,8 @@ static int32_t radial_position_get(uint8_t motor, float in_angle) {
 }
 
 // Should this be moved somewhere else?
-static int32_t linear_position_get(uint8_t motor, float in_angle) {
+static int32_t linear_position_get(uint8_t motor, float in_angle)
+{
 	float desired_length;
 	int32_t position;
 
@@ -145,7 +162,8 @@ static int32_t linear_position_get(uint8_t motor, float in_angle) {
  *
  * Updates position values according to stuff
  */
-static void handle_actuator_command(CanardRxTransfer* transfer) {
+static void handle_actuator_command(CanardRxTransfer* transfer)
+{
 	uavcan_equipment_actuator_ArrayCommand msg;
 
 	// Pull message data
@@ -193,7 +211,8 @@ bool should_accept(const CanardInstance* ins,
 					uint64_t* out_data_type_signature,
 					uint16_t data_type_id,
 					CanardTransferType transfer_type,
-					uint8_t source_node_id) {
+					uint8_t source_node_id)
+	{
 
 	if (transfer_type == CanardTransferTypeBroadcast) {
 		switch (data_type_id) {
@@ -225,7 +244,8 @@ bool should_accept(const CanardInstance* ins,
 	return false;
 }
 
-void on_reception(CanardInstance* ins, CanardRxTransfer* transfer){
+void on_reception(CanardInstance* ins, CanardRxTransfer* transfer)
+{
 	if (transfer->transfer_type == CanardTransferTypeBroadcast) {
 		switch (transfer->data_type_id) {
 		case (UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID):
@@ -339,7 +359,8 @@ int8_t handle_frame() {
 	CanardCANFrame frame;
 
 	if (fifo_pop(&frame) == FIFO_OK) {
-		canardHandleRxFrame(&m_canard_instance, &frame, can_timestamp_usec + TIM7->CNT);
+		uint64_t timestamp = TIME_I2MS(chVTGetSystemTimeX());
+		canardHandleRxFrame(&m_canard_instance, &frame, timestamp);
 		return LIBCANARD_SUCCESS;
 	} else {
 		// something I guess
@@ -355,63 +376,17 @@ int8_t handle_frame() {
  * PA12 -> CANTX
  */
 static void bxcan_init(void) {
-    // Enable clocks
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_CAN1_CLK_ENABLE();
+    // Enable CAN clock
+	RCC->APB1ENR |= RCC_APB1ENR_CANEN;
 
-    GPIO_InitTypeDef GPIO_InitStruct;
-
-    // Configure PA11 & PA12 with CAN AF.
-    GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_12;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF9_CAN;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-
+	palSetPadMode(GPIOA, 11, PAL_STM32_ALTERNATE(9));
+	palSetPadMode(GPIOA, 12, PAL_STM32_ALTERNATE(9));
 }
 
 void USB_LP_CAN_RX0_IRQHandler(void) {
 	// Not sure if this will turn out to be a good idea.
 	rx_once();
 }
-
-static void timestamp_tim_init(void) {
-	__HAL_RCC_TIM7_CLK_ENABLE();
-
-	// Initialize to run at 1MHz
-	// Reset every 1ms
-	htim7.Instance = TIM7;
-	htim7.Init.Prescaler = 32;
-	htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim7.Init.Period = 1000;
-	htim7.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-	HAL_TIM_Base_Init(&htim7);
-
-	// Make it independent
-	TIM_MasterConfigTypeDef sMasterConfig;
-	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-	HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig);
-
-
-	// Enable interrupts
-	NVIC_SetPriority(TIM7_IRQn, 0);
-	NVIC_EnableIRQ(TIM7_IRQn);
-
-	// Start interrupts
-	HAL_TIM_Base_Start_IT(&htim7);
-}
-
-void TIM7_IRQHandler() {
-	__HAL_TIM_CLEAR_IT(&htim7, TIM_IT_UPDATE);
-	can_timestamp_usec += TIM2->CNT;
-	// Updates once a millisecond
-}
-
-
 
 int16_t libcanard_init(CanardOnTransferReception on_reception,
 		CanardShouldAcceptTransfer should_accept, void* user_reference,
