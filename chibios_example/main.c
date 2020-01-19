@@ -27,9 +27,9 @@ static THD_FUNCTION(Thread1, arg) {
 
   (void*) arg;
   while (true) {
-    palClearPad(GPIOA, GPIOA_LED_GREEN);
+    palClearPad(GPIOC, GPIOC_LED);
     chThdSleepMilliseconds(500);
-    palSetPad(GPIOA, GPIOA_LED_GREEN);
+    palSetPad(GPIOC, GPIOC_LED);
     chThdSleepMilliseconds(500);
   }
 }

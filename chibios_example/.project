@@ -28,7 +28,7 @@
 		<link>
 			<name>board</name>
 			<type>2</type>
-			<locationURI>CHIBIOS/os/hal/boards/ST_NUCLEO64_F303RE</locationURI>
+			<location>C:/Users/Jarrett Yu/Documents/STM_Embedded/embedded/common/SPEAR_SPEEDY_F3</location>
 		</link>
 		<link>
 			<name>os</name>
