@@ -223,18 +223,46 @@ void check_settings(void)
 static THD_WORKING_AREA(RunMotorWorkingArea, 128);
 static THD_FUNCTION(RunMotor, arg)
 {
+	systime_t time;
     (void) arg;
+
     chRegSetThreadName("Run Motor");
 
-    systime_t time = chVTGetSystemTimeX();
+    time = chVTGetSystemTimeX();
 
-    while(true) {
-        time += M2ST(MOTOR_CONTROL_PERIOD);
-        run_motor(0);
-        chThdSleepUntil(time);
-    }
+	if (flag_motor_running) {
+		while(true) {
+			time += M2ST(MOTOR_CONTROL_PERIOD);
+			run_motor(0);
+			chThdSleepUntil(time);
+
+			// TODO find better way of shutting off
+			if (!flag_motor_running)
+				break;
+		}
+	}
+
 }
 
+static THD_WORKING_AREA(HeartbeatWorkingArea, 128);
+static THD_FUNCTION(Heartbeat, arg)
+{
+	systime_t time;
+	(void) arg;
+
+	chRegSetThreadName("Heartbeat");
+
+	time = chVTGetSystemTimeX();
+
+	while (true) {
+		time += M2ST(1000);
+		palToggleLine(LINE_LED);
+		
+		publish_nodeStatus();
+
+		chThdSleepUntil(time);
+	}
+}
 
 // To make a system reset, use NVIC_SystemReset()
 int main(void) {
@@ -293,22 +321,15 @@ int main(void) {
 
 
 	for (;;) {
-        // TODO fix this logic up, maybe handle it inside the thread?
-        if (flag_motor_running && !motor_run_thread_started) {
-            thread_t* thd = chThdCreateStatic(RunMotorWorkingArea,
-                    sizeof(RunMotorWorkingArea), HIGHPRIO, RunMotor, NULL);
 
-            if (thd != NULL) {
-                motor_run_thread_started = true;
-            } else {
-                // Abort!
-                return 0;
-            }
-        }
+		// TODO maybe handle errors here?
+		chThdCreateStatic(RunMotorWorkingArea,
+				sizeof(RunMotorWorkingArea), HIGHPRIO, RunMotor, NULL);
 
+		chThdCreateStatic(HeartbeatWorkingArea,
+			sizeof(HeartbeatWorkingArea, ))
 
-		publish_nodeStatus();
-
+		chThdSetPriority(LOWPRIO);
 		coms_handle_forever();
 	}
 }
