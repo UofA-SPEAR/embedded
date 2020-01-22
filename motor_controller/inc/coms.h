@@ -3,7 +3,7 @@
 #include "canard.h"
 
 
-void comInit();
+void comInit(void);
 void updateComs(void);
 
 /* ------------ Error Definitions --------------- */
@@ -48,7 +48,7 @@ extern uint8_t inout_transfer_id;
 struct can_msg_handler {
 	uint16_t id;
 	uint64_t signature;
-	(void) (*handler)(CanardInstance *ins, CanardRxTransfer *transfer);
+	void (*handler)(CanardInstance *ins, CanardRxTransfer *transfer);
 };
 
 #define CAN_MSG_HANDLER(id, signature, handler) \

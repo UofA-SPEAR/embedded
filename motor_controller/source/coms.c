@@ -22,9 +22,6 @@
 #include "uavcan/protocol/RestartNode.h"
 #include "uavcan/protocol/GetNodeInfo.h"
 
-/* TODO:
- * - change to nicer message handling infrastructure
- */
 
 // Small enough to not be too bad, large enough to be useful
 #define DYNAMIC_ARRAY_BUF_SIZE 	1000
@@ -49,7 +46,7 @@ static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);
 static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer);
 
 
-CH_IRQ_HANDLER(CAN_RX1_IRQn)
+CH_IRQ_HANDLER(USB_LP_CAN_RX0_IRQn)
 {
 	CH_IRQ_PROLOGUE();
 	chSysLockFromISR();
@@ -70,6 +67,12 @@ void comInit(void)
 	CanardSTM32CANTimings timings;
 	CANConfig CAN;
 
+    // Enable CAN clock
+	RCC->APB1ENR |= RCC_APB1ENR_CANEN;
+
+	palSetPadMode(GPIOA, 11, PAL_STM32_ALTERNATE(9));
+	palSetPadMode(GPIOA, 12, PAL_STM32_ALTERNATE(9));
+
 	chFifoObjectInit(&rx_fifo, sizeof(CanardCANFrame), RX_FIFO_LEN,
 		STM32_NATURAL_ALIGNMENT, rx_fifo_buffer, rx_fifo_msg_buffer);
 
@@ -86,7 +89,11 @@ void comInit(void)
 
 	canObjectInit(&CAND1);
 	canStart(&CAND1, &CAN);
-	libcanard_init(on_reception, should_accept, NULL, 32000000, 250000);
+
+	canardInit(&m_canard_instance, &libcanard_memory_pool,
+		LIBCANARD_MEM_POOL_SIZE, on_reception, should_accept,
+		NULL);
+
 	// Sets to default filter
 	canSTM32SetFilters(&CAND1, 0, 0, NULL);
 }
@@ -387,32 +394,11 @@ int8_t handle_frame() {
 	return LIBCANARD_ERR;
 }
 
-/**
- * Initializes CAN clock and GPIO.
- *
- * PA11 -> CANRX
- * PA12 -> CANTX
- */
-static void bxcan_init(void) {
-    // Enable CAN clock
-	RCC->APB1ENR |= RCC_APB1ENR_CANEN;
-
-	palSetPadMode(GPIOA, 11, PAL_STM32_ALTERNATE(9));
-	palSetPadMode(GPIOA, 12, PAL_STM32_ALTERNATE(9));
-}
-
-void USB_LP_CAN_RX0_IRQHandler(void) {
-	// Not sure if this will turn out to be a good idea.
-	rx_once();
-}
-
 int16_t libcanard_init(CanardOnTransferReception on_reception,
 		CanardShouldAcceptTransfer should_accept, void* user_reference,
 		const uint32_t clock_rate, const uint32_t bitrate) {
 
 	// Initializes the libcanard instance
-	canardInit(&m_canard_instance, &libcanard_memory_pool,
-	LIBCANARD_MEM_POOL_SIZE, on_reception, should_accept, user_reference);
 
 	// Computes optimal timings based on peripheral clock
 	// and the bitrate you want.

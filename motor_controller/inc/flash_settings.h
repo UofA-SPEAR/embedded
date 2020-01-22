@@ -27,6 +27,6 @@ void load_settings(void);
 /** @brief writes current user settings into flash memory.
  *
  */
-HAL_StatusTypeDef program_settings(void);
+void program_settings(void);
 
 #endif /* FLASH_SETTINGS_H_ */

@@ -8,18 +8,17 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#include "stm32f3xx.h"
 #ifndef ARM_MATH_CM4
 #define ARM_MATH_CM4
-#endif
-#include "arm_math.h"
+#endif //ARM_MATH_CM4
 
-#include "vnh5019.h"
+#include "ch.h"
 #include "encoders.h"
-#include "clocks.h"
 #include "coms.h"
 #include "flash_settings.h"
-#include "ems22.h"
+
+
+#include "arm_math.h"
 
 #define ROUND_UP(dividend, divisor) ((dividend + (divisor - 1)) / divisor)
 

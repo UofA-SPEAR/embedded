@@ -2,8 +2,9 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "stm32f3xx.h"
-#include "stm32f3xx_hal.h"
+#include "ch.h"
+#include "hal.h"
+
 #include "core_cm4.h"
 
 #include "main.h"
@@ -26,14 +27,6 @@ arm_pid_instance_f32 pid[2];
 int32_t desired_position;
 
 bool flag_motor_running = false;
-
-
-
-void setup(){
-	HAL_Init();
-
-	SystemClock_Config();
-}
 
 // Run PID and motor control
 void run_motor(void) {
@@ -100,7 +93,7 @@ void run_motor(void) {
 			return;
 		}
 
-		vnh5019_set(&motor, out_int);
+		//vnh5019_set(&motor, out_int);
 
 
 		// Send status info
@@ -133,7 +126,7 @@ void motor_init() {
 	motor.pwm.tim_af =          MOTOR_PWM_TIM_AF;
 	motor.pwm.tim_ch =          MOTOR_PWM_TIM_CHANNEL;
 
-	vnh5019_init(&motor);
+	//vnh5019_init(&motor);
 }
 
 uint8_t read_node_id(void) {
@@ -268,7 +261,7 @@ static THD_FUNCTION(Heartbeat, arg)
 int main(void) {
 
     halInit();
-    chSYsInit();
+    chSysInit();
 
 
 	uint8_t node_id = false;
@@ -283,24 +276,7 @@ int main(void) {
 	run_settings = saved_settings;
 	check_settings();
 	motor_init();
-
-	// Initialize feedback
-	for (uint8_t i = 0; i < 2; i++) {
-		switch (run_settings.motor[i].encoder.type) {
-		case (ENCODER_POTENTIOMETER):
-				pot_init(0);
-				break;
-		case (ENCODER_QUADRATURE):
-				encoder_init();
-				break;
-		case (ENCODER_ABSOLUTE_DIGITAL):
-				ems22_init();
-				break;
-		default:
-				// do nothing
-				break;
-		}
-	}
+	encoder_init(run_settings.motor.encoder.type);
 
 	comInit();
 	node_id = read_node_id();
@@ -327,11 +303,15 @@ int main(void) {
 				sizeof(RunMotorWorkingArea), HIGHPRIO, RunMotor, NULL);
 
 		chThdCreateStatic(HeartbeatWorkingArea,
-			sizeof(HeartbeatWorkingArea, ))
+			sizeof(HeartbeatWorkingArea), NORMALPRIO, Heartbeat, NULL);
 
 		chThdSetPriority(LOWPRIO);
 		coms_handle_forever();
 	}
 }
 
-
+// Simply needs to be defined somewhere
+void usleep(useconds_t usec)
+{
+	chThdSleepMicroseconds(usec);
+}

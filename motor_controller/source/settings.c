@@ -106,7 +106,7 @@ void handle_getSet(CanardInstance* ins, CanardRxTransfer* transfer) {
         }
 
         if (msg.value.union_tag != UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY) {
-            import_settings();
+            load_settings();
             program_settings();
         }
     } else {

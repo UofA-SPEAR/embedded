@@ -5,9 +5,10 @@
  *      Author: David Lenfesty
  */
 
-#include <stm32f3xx.h>
 #include "flash_settings.h"
+#include "settings.h"
 #include "main.h"
+#include "hal.h"
 
 // Settings saved to flash. Points to a specific flash location
 __attribute__((section("._user_settings"))) struct setting saved_settings[NUM_SETTINGS];
@@ -24,28 +25,28 @@ struct setting run_settings[NUM_SETTINGS];
 static void firstboot_check(void) {
 	// Kp should be between -1 and 1, if not it was misconfigured.
 	// Start with sane settings.
-	if (saved_settings[get_id_by_name("spear.motor.firstboot")].boolean != 1) {
-		current_settings[get_id_by_name("spear.motor.firstboot")].boolean = 1;
-        current_settings[get_id_by_name("spear.motor.enabled")].boolean = 0;
-        current_settings[get_id_by_name("spear.motor.actuator_id")].integer = 42; 
-        current_settings[get_id_by_name("spear.motor.reversed")].boolean = 0;
-        current_settings[get_id_by_name("spear.motor.continuous")].boolean = 0;
+	if (saved_settings[get_id_by_name("spear.motor.firstboot")].value.boolean != 1) {
+		current_settings[get_id_by_name("spear.motor.firstboot")].value.boolean = 1;
+        current_settings[get_id_by_name("spear.motor.enabled")].value.boolean = 0;
+        current_settings[get_id_by_name("spear.motor.actuator_id")].value.integer = 42; 
+        current_settings[get_id_by_name("spear.motor.reversed")].value.boolean = 0;
+        current_settings[get_id_by_name("spear.motor.continuous")].value.boolean = 0;
 
-        current_settings[get_id_by_name("spear.motor.pid.Kp")].real = 0;
-        current_settings[get_id_by_name("spear.motor.pid.Ki")].real = 0;
-        current_settings[get_id_by_name("spear.motor.pid.Kd")].real = 0;
+        current_settings[get_id_by_name("spear.motor.pid.Kp")].value.real = 0;
+        current_settings[get_id_by_name("spear.motor.pid.Ki")].value.real = 0;
+        current_settings[get_id_by_name("spear.motor.pid.Kd")].value.real = 0;
 
-        current_settings[get_id_by_name("spear.motor.encoder.type")].integer = ENCODER_POTENTIOMETER;
-        current_settings[get_id_by_name("spear.motor.encoder.min")].integer = 0;
-        current_settings[get_id_by_name("spear.motor.encoder.max")].integer = 0;
-        current_settings[get_id_by_name("spear.motor.encoder.to_radians")].real = 0;
-        current_settings[get_id_by_name("spear.motor.encoder.endstop_min")].integer = ENDSTOP_DISABLED;
-        current_settings[get_id_by_name("spear.motor.encoder.endstop_max")].integer = ENDSTOP_DISABLED;
+        current_settings[get_id_by_name("spear.motor.encoder.type")].value.integer = ENCODER_POTENTIOMETER;
+        current_settings[get_id_by_name("spear.motor.encoder.min")].value.integer = 0;
+        current_settings[get_id_by_name("spear.motor.encoder.max")].value.integer = 0;
+        current_settings[get_id_by_name("spear.motor.encoder.to_radians")].value.real = 0;
+        current_settings[get_id_by_name("spear.motor.encoder.endstop_min")].value.integer = ENDSTOP_DISABLED;
+        current_settings[get_id_by_name("spear.motor.encoder.endstop_max")].value.integer = ENDSTOP_DISABLED;
 
-        current_settings[get_id_by_name("spear.motor.linear.support_length")].real = 0;
-        current_settings[get_id_by_name("spear.motor.linear.arm_length")].real = 0;
-        current_settings[get_id_by_name("spear.motor.linear.length_min")].real = 0;
-        current_settings[get_id_by_name("spear.motor.linear.length_max")].real = 0;
+        current_settings[get_id_by_name("spear.motor.linear.support_length")].value.real = 0;
+        current_settings[get_id_by_name("spear.motor.linear.arm_length")].value.real = 0;
+        current_settings[get_id_by_name("spear.motor.linear.length_min")].value.real = 0;
+        current_settings[get_id_by_name("spear.motor.linear.length_max")].value.real = 0;
 		program_settings(); // Write settings to flash
 	}
 
@@ -58,39 +59,47 @@ void load_settings(void) {
 	current_settings = saved_settings;
 }
 
-HAL_StatusTypeDef program_settings(void) {
-	HAL_StatusTypeDef rc;
-
-	// Need to unlock the flash before we start
-	rc = HAL_FLASH_Unlock();
-
-	if (rc != HAL_OK) { while(1); }
-
-	// Assuming we only have one page of data to erase
-	FLASH_EraseInitTypeDef Erase_Init;
-	uint32_t page_error;
-	Erase_Init.NbPages = 1;
-	Erase_Init.PageAddress = (uint32_t) &saved_settings;
-	Erase_Init.TypeErase = FLASH_TYPEERASE_PAGES;
-	HAL_FLASHEx_Erase(&Erase_Init, &page_error);
-
-	// More to this, but page_error will be 0xFFFFFFFF if it works.
-	if (page_error != 0xFFFFFFFF) { while(1); }
-
-	// Pointer assignments to make things look pretty
+void program_settings(void)
+{
+	// Pointer assignments to make things not look like garbage
 	uint32_t* p_saved_settings = (uint32_t*) &saved_settings;
 	uint32_t* p_current_settings = (uint32_t*) &current_settings;
 
+	// Unlock flash
+	FLASH->KEYR = 0x45670123;
+	FLASH->KEYR = 0xCDEF89AB;
 
-	// Loop through words (32 bits) of settings
-	for (uint32_t i = 0; i < ROUND_UP(sizeof(saved_settings), 4); i++) {
-		rc = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, (uint32_t) (p_saved_settings + i),
-				(uint32_t) *(p_current_settings + i));
-		if (rc != HAL_OK) { while(1); };
+	// TODO actual error handling if flash remains locked
+	if (FLASH->CR & FLASH_CR_LOCK)
+		while (1);
+
+	// Erase one page of flash
+	while (FLASH->SR & FLASH_SR_BSY); // Wait for flash to not be busy
+	FLASH->CR |= FLASH_CR_PER; // Select page erase
+	FLASH->AR = (uint32_t) &saved_settings;
+	FLASH->CR |= FLASH_CR_STRT;
+	asm("nop"); // Must wait at least one cycle before checking BSY
+	while (FLASH->SR & FLASH_SR_BSY); // Wait for operation to finish
+	if (FLASH->SR & FLASH_SR_EOP) { // flash operation complete
+		FLASH->SR |= FLASH_SR_EOP;
+	} else {
+		// TODO actual error handling
+		while(1);
 	}
 
-	// At this point, all the flash we care about should be written to,
-	// so lock flash down just in case.
-	rc = HAL_FLASH_Lock();
-	return rc;
+	// Loop through half words (16 bits) of settings
+	for (uint32_t i = 0; i < ROUND_UP(sizeof(saved_settings), 2); i++) {
+		FLASH->CR |= FLASH_CR_PG; // select program
+		*(p_saved_settings + i) = *(p_current_settings); // write data
+		while (FLASH->SR & FLASH_SR_BSY); // Wait for operation to complete
+		if (FLASH->SR & FLASH_SR_EOP) { // flash operation complete
+			FLASH->SR |= FLASH_SR_EOP; // clear flag
+		} else {
+			// TODO actuall error handling
+			while(1);
+		}
+	}
+
+	// Re-lock flash
+	FLASH->CR |= FLASH_CR_LOCK;
 }

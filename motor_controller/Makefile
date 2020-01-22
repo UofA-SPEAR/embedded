@@ -119,7 +119,7 @@ include $(COMMON)/libcanard.mk
 include $(COMMON)/uavcan_msgs.mk
 
 # Define linker script file here
-LDSCRIPT= $(STARTUPLD)/STM32F303xB.ld
+LDSCRIPT= ./STM32F303xB_settings.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
