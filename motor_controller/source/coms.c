@@ -1,15 +1,11 @@
 #include <stdbool.h>
 
-#include "stm32f3xx.h"
-#include "stm32f3xx_hal.h"
-
 #include "canard.h"
 #include "canard_stm32.h"
 #include "coms.h"
 #include "main.h"
 #include "flash_settings.h"
 #include "settings.h"
-#include "can_fifo.h"
 
 #ifndef ARM_MATH_CM4
 #define ARM_MATH_CM4

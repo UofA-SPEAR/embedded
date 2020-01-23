@@ -56,7 +56,9 @@ static void firstboot_check(void) {
 void load_settings(void) {
 	firstboot_check();
 
-	current_settings = saved_settings;
+	for (int i = 0; i < NUM_SETTINGS; i++) {
+		current_settings[i].value = saved_settings[i].value;
+	}
 }
 
 void program_settings(void)
