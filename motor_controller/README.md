@@ -14,8 +14,6 @@ Don't set anything if you don't know what you're doing.
 
 ## TODO ##
 
-- Add software motor direction changing
-- Add configuration via CAN bus
-- Add current sense/limiting
-- Add incremental encoder inputs
-- Add EMS22A encoder support
+- Change encoder stuff into a better method, and put in encoders.c
+- Get rid of all errors/warnings
+- figure out ADC things
