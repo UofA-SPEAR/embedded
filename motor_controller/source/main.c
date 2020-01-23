@@ -112,23 +112,18 @@ void run_motor(void) {
 
 uint8_t read_node_id(void)
 {
-	// Enable GPIO clock
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-
-	GPIO_InitTypeDef GPIO_InitStruct;
-	GPIO_InitStruct.Pin = GPIO_PIN_1 | GPIO_PIN_2 |
-			GPIO_PIN_10 | GPIO_PIN_11;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
 	uint8_t node_id = BASE_NODE_ID;
 	uint8_t tmp = 0;
 
-	tmp =  HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) << 3;
-	tmp |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2) << 2;
-	tmp |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_10) << 1;
-	tmp |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11);
+	palSetPadMode(GPIOB, 1, PAL_MODE_INPUT);
+	palSetPadMode(GPIOB, 2, PAL_MODE_INPUT);
+	palSetPadMode(GPIOB, 10, PAL_MODE_INPUT);
+	palSetPadMode(GPIOB, 11, PAL_MODE_INPUT);
+
+	tmp  = palReadPad(GPIOB, 1) << 3;
+	tmp |= palReadPad(GPIOB, 2) << 2;
+	tmp |= palReadPad(GPIOB, 10) << 1;
+	tmp |= palReadPad(GPIOB, 11);
 
 	node_id += tmp;
 	return node_id;
