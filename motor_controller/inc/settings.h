@@ -41,20 +41,20 @@ struct setting {
 };
 
 /** @brief Standard initialisation for a real setting */
-#define CAN_SETTING_REAL(name) \
-    {.name = name, .union_tag = SETTING_REAL}
+#define CAN_SETTING_REAL(str) \
+    {.name = str, .union_tag = SETTING_REAL}
 
 /** @brief Standard initialisation for an integer setting */
-#define CAN_SETTING_INTEGER(name) \
-    {.name = name, .union_tag = SETTING_INTEGER}
+#define CAN_SETTING_INTEGER(str) \
+    {.name = str, .union_tag = SETTING_INTEGER}
 
 /** @brief Standard initialisation for a boolean setting */
-#define CAN_SETTING_BOOLEAN(name) \
-    {.name = name, .union_tag = SETTING_BOOLEAN}
+#define CAN_SETTING_BOOLEAN(str) \
+    {.name = str, .union_tag = SETTING_BOOLEAN}
 
 #define NUM_SETTINGS 18
 
-extern struct parameter parameter_info[NUM_SETTINGS];
+extern const struct parameter parameter_info[NUM_SETTINGS];
 extern struct setting saved_settings[NUM_SETTINGS];
 extern struct setting current_settings[NUM_SETTINGS];
 extern struct setting run_settings[NUM_SETTINGS];

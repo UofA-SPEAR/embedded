@@ -1,6 +1,8 @@
 #include "drv8701.h"
 #include "hal.h"
 
+#include <stdlib.h>
+
 #define DRV8701_PH_PORT GPIOB
 #define DRV8701_PH_PIN 8
 #define DRV8701_PH_MODE PAL_MODE_OUTPUT_PUSHPULL
@@ -15,7 +17,7 @@
 
 #define DRV8701_nSLEEP_PORT GPIOB
 #define DRV8701_nSLEEP_PIN 5
-#define DRV8701_nSLEEP_MODE PAL_MODE_PUSHPULL
+#define DRV8701_nSLEEP_MODE PAL_MODE_OUTPUT_PUSHPULL
 
 #define DRV8701_SNSOUT_PORT GPIOB
 #define DRV8701_SNSOUT_PIN 14
@@ -24,13 +26,13 @@
 
 #define DRV8701_VREF_PORT GPIOA
 #define DRV8701_VREF_PIN 4
-#define DRV8701_VREF_MODE PAL_MODE_ANALOG
+#define DRV8701_VREF_MODE PAL_STM32_MODE_ANALOG
 
 #define DRV8701_SO_PORT GPIOA
 #define DRV8701_SO_PIN 1
-#define DRV8701_SO_MODE PAL_MODE_ANALOG
+#define DRV8701_SO_MODE PAL_STM32_MODE_ANALOG
 
-static const PWMConfig pwmcfg = {
+const PWMConfig pwmcfg = {
 	4000000, // 1MHz Timer Frequency
 	500, // period is 500us to set the PWM signal to 80kHz
 	NULL,
@@ -44,20 +46,20 @@ static const PWMConfig pwmcfg = {
 	0
 };
 
-static const DACConfig dac1cfg1 = {
+const DACConfig dac1cfg1 = {
 	.init = 4047U,
 	.datamode = DAC_DHRM_12BIT_RIGHT
 };
 
 void drv8701_init(void)
 {
-	palSetMode(DRV8701_PH_PORT, DRV8701_PH_PIN, DRV8701_PH_MODE);
-	palSetMode(DRV8701_EN_PORT, DRV8701_EN_PIN, DRV8701_EN_MODE);
-	palSetMode(DRV8701_nFAULT_PORT, DRV8701_nFAULT_PIN, DRV8701_nFAULT_MODE);
-	palSetMode(DRV8701_nSLEEP_PORT, DRV8701_nSLEEP_PIN, DRV8701_nSLEEP_MODE);
-	palSetMode(DRV8701_SNSOUT_PORT, DRV8701_SNSOUT_PIN, DRV8701_SNSOUT_MODE);
-	palSetMode(DRV8701_VREF_PORT, DRV8701_VREF_PIN, DRV8701_VREF_MODE);
-	palSetMode(DRV8701_SO_PORT, DRV8701_SO_PIN, DRV8701_SO_MODE);
+	palSetPadMode(DRV8701_PH_PORT, DRV8701_PH_PIN, DRV8701_PH_MODE);
+	palSetPadMode(DRV8701_EN_PORT, DRV8701_EN_PIN, DRV8701_EN_MODE);
+	palSetPadMode(DRV8701_nFAULT_PORT, DRV8701_nFAULT_PIN, DRV8701_nFAULT_MODE);
+	palSetPadMode(DRV8701_nSLEEP_PORT, DRV8701_nSLEEP_PIN, DRV8701_nSLEEP_MODE);
+	palSetPadMode(DRV8701_SNSOUT_PORT, DRV8701_SNSOUT_PIN, DRV8701_SNSOUT_MODE);
+	palSetPadMode(DRV8701_VREF_PORT, DRV8701_VREF_PIN, DRV8701_VREF_MODE);
+	palSetPadMode(DRV8701_SO_PORT, DRV8701_SO_PIN, DRV8701_SO_MODE);
 
 
 	// Start PWM and DAC
@@ -72,19 +74,11 @@ void drv8701_init(void)
 	* Activates the ADC1 driver and the temperature sensor.
 	*/
 	adcStart(&ADCD1, NULL);
-	adcSTM32EnableTS(&ADCD1);
-	adcSTM32EnableVBAT(&ADCD1);
-
-	/*
-	* Linear conversion.
-	*/
-	adcConvert(&ADCD1, &adcgrpcfg1, samples1, ADC_GRP1_BUF_DEPTH);
-	chThdSleepMilliseconds(1000);
 }
 
 void drv8701_set(int16_t velocity)
 {
-	unit16_t speed = abs(velocity);
+	uint16_t speed = abs(velocity);
 
 	if(speed > 10000)
 		speed = 10000;

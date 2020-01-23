@@ -8,12 +8,36 @@
 
 static int32_t (*read_encoder)(void);
 
+const ADCConversionGroup adcgrpcfg1 = {
+	FALSE,
+	1,
+	NULL,
+	NULL,
+	ADC_CFGR_CONT,            /* CFGR    */
+	ADC_TR(0, 4095),          /* TR1     */
+	{                         /* SMPR[2] */
+		ADC_SMPR1_SMP_AN1(ADC_SMPR_SMP_61P5),
+		0
+	},
+	{                         /* SQR[4]  */
+		ADC_SQR1_SQ1_N(ADC_CHANNEL_IN2),
+		0,
+		0,
+		0
+	}
+};
+
 static void pot_init(void) {
 	// do stuff
+	adcStart(&ADCD1, NULL);
 }
 
 static int32_t pot_read(void) {
-	return 42;
+	adcsample_t buf;
+
+	adcConvert(&ADCD1, &adcgrpcfg1, &buf, 1);
+
+	return buf;
 }
 
 static void quadrature_init(void)

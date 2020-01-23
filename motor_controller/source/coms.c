@@ -11,6 +11,7 @@
 #define ARM_MATH_CM4
 #endif
 #include "arm_math.h"
+#include "hal.h"
 
 #include "uavcan/equipment/actuator/ArrayCommand.h"
 #include "uavcan/protocol/param/GetSet.h"
@@ -34,57 +35,31 @@ uint8_t out_buf[100];
 
 uint8_t inout_transfer_id;
 
-static objects_fifo_t rx_fifo;
-static CanardCANFrame rx_fifo_buffer[RX_FIFO_LEN];
-static msg_t rx_fifo_msg_buffer[RX_FIFO_LEN];
-
 static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);
 static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer);
-
-
-CH_IRQ_HANDLER(USB_LP_CAN_RX0_IRQn)
-{
-	CH_IRQ_PROLOGUE();
-	chSysLockFromISR();
-
-	CanardCANFrame frame;
-
-	// TODO check error here
-	canardSTM32Receive(&frame);
-
-	chFifoSendObjectI(&rx_fifo, (void*) &frame);
-
-	chSysUnlockFromISR();
-	CH_IRQ_EPILOGUE();
-}
 
 void comInit(void)
 {
 	CanardSTM32CANTimings timings;
-	CANConfig CAN;
+	CANConfig config;
 
-    // Enable CAN clock
+	// Enable CAN clock
 	RCC->APB1ENR |= RCC_APB1ENR_CANEN;
 
 	palSetPadMode(GPIOA, 11, PAL_STM32_ALTERNATE(9));
 	palSetPadMode(GPIOA, 12, PAL_STM32_ALTERNATE(9));
 
-	chFifoObjectInit(&rx_fifo, sizeof(CanardCANFrame), RX_FIFO_LEN,
-		STM32_NATURAL_ALIGNMENT, rx_fifo_buffer, rx_fifo_msg_buffer);
-
 	canardSTM32ComputeCANTimings(72000000 / 2, 250000, &timings);	
 
-	CAN = {
-		.mcr = 0x00010002,
-	}
-	CAN.btr = (timings.bit_rate_prescaler << CAN_BTR_BRP_Pos) & CAN_BTR_BRP,
-	CAN.btr |= (timings.bit_segment_1 << CAN_BTR_TS1_Pos) & CAN_BTR_TS1;
-	CAN.btr |= (timings.bit_segment_2 << CAN_BTR_TS2_Pos) & CAN_BTR_TS2;
-	CAN.btr |= (timings.max_resynchronization_jump_width << CAN_BTR_SJW_Pos)
-				& CAN_BTR_SJW;
+	config.mcr = 0x00010002;
+	config.btr = (timings.bit_rate_prescaler << CAN_BTR_BRP_Pos) & CAN_BTR_BRP_Msk,
+	config.btr |= (timings.bit_segment_1 << CAN_BTR_TS1_Pos) & CAN_BTR_TS1_Msk;
+	config.btr |= (timings.bit_segment_2 << CAN_BTR_TS2_Pos) & CAN_BTR_TS2_Msk;
+	config.btr |= (timings.max_resynchronization_jump_width << CAN_BTR_SJW_Pos)
+				& CAN_BTR_SJW_Msk;
 
 	canObjectInit(&CAND1);
-	canStart(&CAND1, &CAN);
+	canStart(&CAND1, &config);
 
 	canardInit(&m_canard_instance, &libcanard_memory_pool,
 		LIBCANARD_MEM_POOL_SIZE, on_reception, should_accept,
@@ -97,29 +72,27 @@ void comInit(void)
 /** 
  * @brief Takes control of thread to deal with coms.
  */
-void coms_handle_forever()
+void coms_handle_forever(void)
 {
-	int8_t retval = LIBCANARD_SUCCESS;
-	CanardCANFrame *frame;
+	const CanardCANFrame *out_frame;
+	CanardCANFrame in_frame;
 	int16_t rc;
 
 	while (1) {
-
-		frame = chFifoTakeObjectI(&rx_fifo);
-
-		if (frame != NULL)
-			canardHandleRxFrame(&m_canard_instance, frame,
+		if (canardSTM32Receive(&in_frame)) {
+			canardHandleRxFrame(&m_canard_instance, &in_frame,
 				TIME_I2MS(chVTGetSystemTimeX()));
+		}
 
-		frame = canardPeekTxQueue(&m_canard_instance);
+		out_frame = canardPeekTxQueue(&m_canard_instance);
 
-		if (frame != NULL) { // If there are any frames to transmit
-			rc = canardSTM32Transmit(frame);
+		if (out_frame) { // If there are any frames to transmit
+			rc = canardSTM32Transmit(out_frame);
 
 			if (rc == 1) { // If transmit is successful
 				canardPopTxQueue(&m_canard_instance);
 			} else if (rc == 0) { // If the TX queue is full
-				retval = LIBCANARD_ERR_TX_QUEUE_FULL;
+				// do nothing
 			} else {
 				// TODO handle these errors properly
 			}
@@ -133,7 +106,7 @@ static int32_t radial_position_get(uint8_t motor, float in_angle)
 	int32_t position;
 
 
-	if (run_settings.motor[motor].encoder.type == ENCODER_POTENTIOMETER) {
+	if (run_settings[get_id_by_name("motor.encoder.type")].value.integer == ENCODER_POTENTIOMETER) {
 		// radians / (radians/integer) = integers
 		position = in_angle / run_settings.motor[motor].encoder.to_radians;
 
