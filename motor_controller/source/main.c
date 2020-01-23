@@ -8,6 +8,7 @@
 #include "core_cm4.h"
 
 #include "main.h"
+#include "drv8701.h"
 
 #include "uavcan/protocol/NodeStatus.h"
 #include "uavcan/equipment/actuator/Status.h"
@@ -19,8 +20,8 @@
 #define BASE_NODE_ID 30
 
 // "dead" zone so we aren't oscillating
-#define LINEAR_ACTUATOR_DEADZONE	350
-#define LINEAR_ACTUATOR_POWER		500
+#define LINEAR_ACTUATOR_DEADZONE	3500
+#define LINEAR_ACTUATOR_POWER		5000
 
 vnh5019_t motor;
 arm_pid_instance_f32 pid[2];
@@ -73,7 +74,7 @@ void run_motor(void) {
 
 		if (run_settings.motor.encoder.to_radians != (float)  0.0) {
 			float out = arm_pid_f32(&pid, error);
-			out_int = out * 1000;
+			out_int = out * 10000;
 		} else if (run_settings.motor.linear.support_length >= 0) {
 			// constant motor power, instead of PID, simpler
 
@@ -93,8 +94,7 @@ void run_motor(void) {
 			return;
 		}
 
-		//vnh5019_set(&motor, out_int);
-
+		drv8701_set(out_int);
 
 		// Send status info
 		uint8_t status_buf[20];
@@ -110,26 +110,8 @@ void run_motor(void) {
 	}
 }
 
-void motor_init() {
-	motor.digital.in_a.pin =    MOTOR_INA_PIN;
-	motor.digital.in_a.port =   MOTOR_INA_PORT;
-	motor.digital.in_b.pin =    MOTOR_INB_PIN;
-	motor.digital.in_b.port =   MOTOR_INB_PORT;
-	motor.digital.en_a.pin =    MOTOR_ENA_PIN;
-	motor.digital.en_a.port =   MOTOR_ENA_PORT;
-	motor.digital.en_b.pin =    MOTOR_ENB_PIN;
-	motor.digital.en_b.port =   MOTOR_ENB_PORT;
-
-	motor.pwm.pin =             MOTOR_PWM_PIN;
-	motor.pwm.port =            MOTOR_PWM_PORT;
-	motor.pwm.tim_instance =    MOTOR_PWM_TIM_INSTANCE;
-	motor.pwm.tim_af =          MOTOR_PWM_TIM_AF;
-	motor.pwm.tim_ch =          MOTOR_PWM_TIM_CHANNEL;
-
-	//vnh5019_init(&motor);
-}
-
-uint8_t read_node_id(void) {
+uint8_t read_node_id(void)
+{
 	// Enable GPIO clock
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 
@@ -275,7 +257,7 @@ int main(void) {
 	load_settings();
 	run_settings = saved_settings;
 	check_settings();
-	motor_init();
+	drv8701_init();
 	encoder_init(run_settings.motor.encoder.type);
 
 	comInit();
