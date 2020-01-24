@@ -11,6 +11,10 @@
 #include <stddef.h>
 #include <math.h>
 
+#define ENCODER_CC PAL_LINE(GPIOB, 2)
+#define ENCODER_C0 PAL_LINE(GPIOB, 0)
+#define ENCODER_C1 PAL_LINE(GPIOB, 1)
+
 static int32_t (*read_encoder)(void);
 
 const ADCConversionGroup adcgrpcfg1 = {
@@ -220,20 +224,30 @@ void encoder_init(void)
 	linear.length_max =
 		run_settings[get_id_by_name("spear.motor.linear.length_max")].value.real;
 
+	palSetLineMode(ENCODER_CC, PAL_MODE_OUTPUT_PUSHPULL);
+	palSetLineMode(ENCODER_C0, PAL_MODE_OUTPUT_PUSHPULL);
+	palSetLineMode(ENCODER_C1, PAL_MODE_OUTPUT_PUSHPULL);
+	palSetLine(ENCODER_CC, 0);
+	palSetLine(ENCODER_C0, 0);
+	palSetLine(ENCODER_C1, 0);
 
 	switch (encoder_type) {
 		case (ENCODER_POTENTIOMETER):
 			pot_init();
+			palSetLine(ENCODER_C1, 1);
 			read_encoder = pot_read;
 			get_position = pot_get_position;
 			break;
 		case (ENCODER_QUADRATURE):
 			quadrature_init();
+			// We need to bodge the pins...
 			read_encoder = quadrature_read;
 			get_position = digital_get_position;
 			break;
 		case (ENCODER_ABSOLUTE_DIGITAL):
 			ems22_init();
+			palSetLine(ENCODER_CC, 1);
+			palSetLine(ENCODER_C0, 1);
 			read_encoder = ems22_read;
 			get_position = digital_get_position;
 			break;
