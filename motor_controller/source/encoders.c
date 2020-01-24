@@ -239,7 +239,7 @@ void encoder_init(void)
 			break;
 		default:
 			// TODO decent error handling
-			while (1);
+			while (0);
 	}
 
 	if (general.to_radians == (float) 0.0) {

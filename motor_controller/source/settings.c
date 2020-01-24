@@ -36,7 +36,7 @@ int8_t get_id_by_name(char* name)
 {
     for (int8_t i = 0; i < NUM_SETTINGS; i++) {
         // assumes strings are defined constant, thus have null termination
-        if (!strcmp(name, parameter_info[i].name))
+        if (strcmp(name, parameter_info[i].name) == 0)
             return i;
     }
 
