@@ -25,7 +25,8 @@ typedef enum {
 	ENCODER_ABSOLUTE_DIGITAL 	= 2, // specifically the digital encoder we are using
 } encoder_type_t;
 
-void encoder_init(int encoder_type);
+void encoder_init(void);
 int32_t encoder_read(void);
+int32_t encoder_get_position(float in_angle);
 
 #endif

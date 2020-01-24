@@ -43,12 +43,10 @@
 #define MOTOR_CONTROL_PERIOD    100
 
 extern int32_t desired_positions[2];
-extern arm_pid_instance_f32 pid[2];
+extern arm_pid_instance_f32 pid;
 
 extern bool flag_motor_running;
 
-
-int32_t last_run_times[2];
-
+void motor_set(float position);
 
 #endif /* MAIN_H_ */

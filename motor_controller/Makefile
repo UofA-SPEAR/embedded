@@ -166,7 +166,7 @@ UINCDIR = inc/ ../common/CMSIS/core/
 ULIBDIR = ../common/CMSIS/lib/
 
 # List all user libraries here
-ULIBS = arm_math
+ULIBS = -l:libarm_math.a -l:libm.a
 
 #
 # End of user section

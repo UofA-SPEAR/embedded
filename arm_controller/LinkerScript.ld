@@ -63,7 +63,6 @@ MEMORY
 {
   RAM (xrw)		: ORIGIN = 0x20000000, LENGTH = 32K
   ROM (rx)		: ORIGIN = 0x8000000, LENGTH = 126K
-  SETTINGS (rw) : ORIGIN = ORIGIN(ROM) + LENGTH(ROM), LENGTH = 2K
 }
 
 /* Sections */

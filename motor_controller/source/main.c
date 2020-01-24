@@ -1,7 +1,3 @@
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-
 #include "ch.h"
 #include "hal.h"
 
@@ -9,9 +5,16 @@
 
 #include "main.h"
 #include "drv8701.h"
+#include "settings.h"
+#include "encoders.h"
 
 #include "uavcan/protocol/NodeStatus.h"
 #include "uavcan/equipment/actuator/Status.h"
+
+#include <stdlib.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <string.h>
 
 // these bounds are needed, as not the potentiometers will not experience their full range
 #define LOWER_POT_BOUND 0
@@ -23,91 +26,97 @@
 #define LINEAR_ACTUATOR_DEADZONE	3500
 #define LINEAR_ACTUATOR_POWER		5000
 
-vnh5019_t motor;
-arm_pid_instance_f32 pid[2];
+arm_pid_instance_f32 pid;
 int32_t desired_position;
 
 bool flag_motor_running = false;
 
-// Run PID and motor control
-void run_motor(void) {
-	int16_t out_int;
-	static int32_t current_position = 0;
-
+static void motor_run_angular(void)
+{
 	uavcan_equipment_actuator_Status status;
+	static int32_t current_position = 0;
+	uint8_t status_buf[20];
+	float error, out;
+	int16_t out_int;
 
-	// Check if the motor is even enabled
-	if (run_settings.motor.enabled) {
-		// Check if encoder is potentiometer type.
-		if (run_settings.motor.encoder.type == ENCODER_POTENTIOMETER) {
-			// Read potentiometer position
-			current_position = pot_read(0);
-		} else if (run_settings.motor.encoder.type == ENCODER_QUADRATURE) {
-			// Read current encoder position. We don't care about wraps at the moment
-			current_position = (TIM8->CNT) - ENCODER_START_VAL;
-		} else if (run_settings.motor.encoder.type == ENCODER_ABSOLUTE_DIGITAL) {
-			int32_t tmp_position;
-			if ((tmp_position = ems22_read_position(0)) != -1) {
-				current_position = tmp_position;
-			}
-		} else {
-			// should never get here
-			status.position = 0;
-			return;
-		}
+	current_position = encoder_read();
 
-		// will be wrong in the linear case
-		if (run_settings.motor.linear.support_length != 0.0) {
-			status.position = current_position;
-		} else {
-			status.position = (float) current_position * run_settings.motor.encoder.to_radians;
-		}
+	// fix
+	status.position = current_position;
 
-		float error;
-		if (run_settings.motor.reversed) {
-			// Reverse the error.
-			// TODO evaluate if I should reverse the error or the motor output
-			error = (float) - (desired_position - current_position);
-		} else {
-			error = (float) desired_position - current_position;
-		}
+	error = (float) (desired_position - current_position);
 
-		if (run_settings.motor.encoder.to_radians != (float)  0.0) {
-			float out = arm_pid_f32(&pid, error);
-			out_int = out * 10000;
-		} else if (run_settings.motor.linear.support_length >= 0) {
-			// constant motor power, instead of PID, simpler
+	out = arm_pid_f32(&pid, error);
+	out_int = out * 10000;
 
-			if (error > LINEAR_ACTUATOR_DEADZONE) {
-				out_int = LINEAR_ACTUATOR_POWER;
-			} else if (error > (LINEAR_ACTUATOR_DEADZONE / 2)) {
-				out_int = LINEAR_ACTUATOR_POWER / 2;
-			} else if (error < -LINEAR_ACTUATOR_DEADZONE) {
-				out_int = -LINEAR_ACTUATOR_POWER;
-			} else if (error < -(LINEAR_ACTUATOR_DEADZONE / 2)) {
-				out_int = -LINEAR_ACTUATOR_POWER / 2;
-			} else {
-				out_int = 0;
-			}
-		} else {
-			// Should never get here
-			return;
-		}
+	drv8701_set(out_int);
 
-		drv8701_set(out_int);
+	// Send status info
+	int len = uavcan_equipment_actuator_Status_encode(&status, &status_buf);
 
-		// Send status info
-		uint8_t status_buf[20];
-		int len = uavcan_equipment_actuator_Status_encode(&status, &status_buf);
+	canardBroadcast(&m_canard_instance,
+		UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
+		UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID,
+		&inout_transfer_id,
+		5,
+		&status_buf,
+		len);
+}
 
-		canardBroadcast(&m_canard_instance,
-			UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
-			UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID,
-			&inout_transfer_id,
-			5,
-			&status_buf,
-			len);
+static void motor_run_linear(void)
+{
+	uavcan_equipment_actuator_Status status;
+	static int32_t current_position = 0;
+	uint8_t status_buf[20];
+	float error;
+	int16_t out_int;
+
+	current_position = encoder_read();
+
+	// fix
+	status.position = current_position;
+
+	error = (float) (desired_position - current_position);
+
+	if (error > LINEAR_ACTUATOR_DEADZONE) {
+		out_int = LINEAR_ACTUATOR_POWER;
+	} else if (error > (LINEAR_ACTUATOR_DEADZONE / 2)) {
+		out_int = LINEAR_ACTUATOR_POWER / 2;
+	} else if (error < -LINEAR_ACTUATOR_DEADZONE) {
+		out_int = -LINEAR_ACTUATOR_POWER;
+	} else if (error < -(LINEAR_ACTUATOR_DEADZONE / 2)) {
+		out_int = -LINEAR_ACTUATOR_POWER / 2;
+	} else {
+		out_int = 0;
 	}
+
+	drv8701_set(out_int);
+
+	// Send status info
+	int len = uavcan_equipment_actuator_Status_encode(&status, &status_buf);
+
+	canardBroadcast(&m_canard_instance,
+		UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
+		UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID,
+		&inout_transfer_id,
+		5,
+		&status_buf,
+		len);
+}
+
+static void (*motor_run)(void);
+
+void motor_init(void)
+{
+	if (run_settings[get_id_by_name("spear.motor.encoder.to-radians")].value.real == (float) 0.0)
+		motor_run = motor_run_linear;
+	else
+		motor_run = motor_run_angular;
+}
+
+void motor_set(float position)
+{
+        desired_position = encoder_get_position(position);
 }
 
 uint8_t read_node_id(void)
@@ -136,8 +145,9 @@ uint8_t read_node_id(void)
  */
 void check_settings(void)
 {
-	bool error = false;
+	//bool error = false;
 
+	/*
     // Only run checks if the motor is even enabled
     if (run_settings.motor.enabled) {
         // Encoder should have more than 0 range of motion
@@ -183,6 +193,7 @@ void check_settings(void)
 	} else {
 		node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
 	}
+	*/
 
 	node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
 }
@@ -202,8 +213,8 @@ static THD_FUNCTION(RunMotor, arg)
 
 	if (flag_motor_running) {
 		while(true) {
-			time += M2ST(MOTOR_CONTROL_PERIOD);
-			run_motor(0);
+			time += TIME_MS2I(MOTOR_CONTROL_PERIOD);
+			motor_run();
 			chThdSleepUntil(time);
 
 			// TODO find better way of shutting off
@@ -225,7 +236,7 @@ static THD_FUNCTION(Heartbeat, arg)
 	time = chVTGetSystemTimeX();
 
 	while (true) {
-		time += M2ST(1000);
+		time += TIME_MS2I(1000);
 		palToggleLine(LINE_LED);
 		
 		publish_nodeStatus();
@@ -236,42 +247,31 @@ static THD_FUNCTION(Heartbeat, arg)
 
 // To make a system reset, use NVIC_SystemReset()
 int main(void) {
+	uint8_t node_id = 0;
 
-    halInit();
-    chSysInit();
-
-
-	uint8_t node_id = false;
-    bool motor_run_thread_started = false;
+	halInit();
+	chSysInit();
 
 	node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
 	node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_INITIALIZATION;
 
-	setup();
-
 	load_settings();
-	run_settings = saved_settings;
+	for (int i = 0; i < NUM_SETTINGS; i++)
+		run_settings[i].value = saved_settings[i].value;
 	check_settings();
 	drv8701_init();
-	encoder_init(run_settings.motor.encoder.type);
+	encoder_init();
 
 	comInit();
 	node_id = read_node_id();
 	canardSetLocalNodeID(&m_canard_instance, node_id);
 
 	// setup PID
-	memset(&pid[0], 0, sizeof(arm_pid_instance_f32));
-	pid[0].Kp = run_settings.motor[0].pid.Kp;
-	pid[0].Ki = run_settings.motor[0].pid.Ki;
-	pid[0].Kd = run_settings.motor[0].pid.Kd;
-	arm_pid_init_f32(&pid[0], 1);
-
-	memset(&pid[1], 0, sizeof(arm_pid_instance_f32));
-	pid[1].Kp = run_settings.motor[1].pid.Kp;
-	pid[1].Ki = run_settings.motor[1].pid.Ki;
-	pid[1].Kd = run_settings.motor[1].pid.Kd;
-	arm_pid_init_f32(&pid[1], 1);
-
+	memset(&pid, 0, sizeof(arm_pid_instance_f32));
+	pid.Kp = run_settings[get_id_by_name("spear.motor.pid.Kp")].value.real;
+	pid.Ki = run_settings[get_id_by_name("spear.motor.pid.Ki")].value.real;
+	pid.Kd = run_settings[get_id_by_name("spear.motor.pid.Kd")].value.real;
+	arm_pid_init_f32(&pid, 1);
 
 	for (;;) {
 
@@ -288,7 +288,8 @@ int main(void) {
 }
 
 // Simply needs to be defined somewhere
-void usleep(useconds_t usec)
+int usleep(useconds_t usec)
 {
 	chThdSleepMicroseconds(usec);
+	return 0;
 }

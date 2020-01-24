@@ -22,7 +22,7 @@
 MEMORY
 {
     flash0  : org = 0x08000000, len = 126k
-    flash1  : org = ADDR(flash0) + SIZEOF(flash0), len = 2k
+    flash1  : org = 0x08000000 + 126k, len = 2k
     flash2  : org = 0x00000000, len = 0
     flash3  : org = 0x00000000, len = 0
     flash4  : org = 0x00000000, len = 0
