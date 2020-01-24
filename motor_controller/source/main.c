@@ -273,18 +273,15 @@ int main(void) {
 	pid.Kd = run_settings[get_id_by_name("spear.motor.pid.Kd")].value.real;
 	arm_pid_init_f32(&pid, 1);
 
-	for (;;) {
+	// TODO maybe handle errors here?
+	chThdCreateStatic(RunMotorWorkingArea,
+			sizeof(RunMotorWorkingArea), HIGHPRIO, RunMotor, NULL);
 
-		// TODO maybe handle errors here?
-		chThdCreateStatic(RunMotorWorkingArea,
-				sizeof(RunMotorWorkingArea), HIGHPRIO, RunMotor, NULL);
+	chThdCreateStatic(HeartbeatWorkingArea,
+		sizeof(HeartbeatWorkingArea), NORMALPRIO, Heartbeat, NULL);
 
-		chThdCreateStatic(HeartbeatWorkingArea,
-			sizeof(HeartbeatWorkingArea), NORMALPRIO, Heartbeat, NULL);
-
-		chThdSetPriority(LOWPRIO);
-		coms_handle_forever();
-	}
+	chThdSetPriority(LOWPRIO);
+	coms_handle_forever();
 }
 
 // Simply needs to be defined somewhere
