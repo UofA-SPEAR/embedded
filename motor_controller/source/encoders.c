@@ -25,11 +25,11 @@ const ADCConversionGroup adcgrpcfg1 = {
 	ADC_CFGR_CONT,            /* CFGR    */
 	ADC_TR(0, 4095),          /* TR1     */
 	{                         /* SMPR[2] */
-		ADC_SMPR1_SMP_AN1(ADC_SMPR_SMP_61P5),
+		ADC_SMPR1_SMP_AN0(ADC_SMPR_SMP_61P5),
 		0
 	},
 	{                         /* SQR[4]  */
-		ADC_SQR1_SQ1_N(ADC_CHANNEL_IN2),
+		ADC_SQR1_SQ1_N(ADC_CHANNEL_IN1),
 		0,
 		0,
 		0
@@ -227,14 +227,14 @@ void encoder_init(void)
 	palSetLineMode(ENCODER_CC, PAL_MODE_OUTPUT_PUSHPULL);
 	palSetLineMode(ENCODER_C0, PAL_MODE_OUTPUT_PUSHPULL);
 	palSetLineMode(ENCODER_C1, PAL_MODE_OUTPUT_PUSHPULL);
-	palSetLine(ENCODER_CC, 0);
-	palSetLine(ENCODER_C0, 0);
-	palSetLine(ENCODER_C1, 0);
+	palClearLine(ENCODER_CC);
+	palClearLine(ENCODER_C0);
+	palClearLine(ENCODER_C1);
 
 	switch (encoder_type) {
 		case (ENCODER_POTENTIOMETER):
 			pot_init();
-			palSetLine(ENCODER_C1, 1);
+			palSetLine(ENCODER_C1);
 			read_encoder = pot_read;
 			get_position = pot_get_position;
 			break;
@@ -246,8 +246,8 @@ void encoder_init(void)
 			break;
 		case (ENCODER_ABSOLUTE_DIGITAL):
 			ems22_init();
-			palSetLine(ENCODER_CC, 1);
-			palSetLine(ENCODER_C0, 1);
+			palSetLine(ENCODER_CC);
+			palSetLine(ENCODER_C0);
 			read_encoder = ems22_read;
 			get_position = digital_get_position;
 			break;

@@ -86,11 +86,11 @@ void drv8701_set(int16_t velocity)
 	if(velocity > 0) {
 		palSetPad(DRV8701_PH_PORT,DRV8701_PH_PIN);
 		palSetPad(DRV8701_nSLEEP_PORT,DRV8701_nSLEEP_PIN);
-		pwmChangePeriodI(&PWMD4, PWM_PERCENTAGE_TO_WIDTH(&PWMD4, speed));
+		pwmEnableChannel(&PWMD4, 3, PWM_PERCENTAGE_TO_WIDTH(&PWMD4, 0));
 	} else {
 		palClearPad(DRV8701_PH_PORT,DRV8701_PH_PIN);
 		palSetPad(DRV8701_nSLEEP_PORT,DRV8701_nSLEEP_PIN);
-		pwmChangePeriodI(&PWMD4, PWM_PERCENTAGE_TO_WIDTH(&PWMD4, speed));
+		pwmEnableChannel(&PWMD4, 3, PWM_PERCENTAGE_TO_WIDTH(&PWMD4, 0));
 	}
 }
 
