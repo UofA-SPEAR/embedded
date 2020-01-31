@@ -124,15 +124,10 @@ uint8_t read_node_id(void)
 	uint8_t node_id = BASE_NODE_ID;
 	uint8_t tmp = 0;
 
-	palSetPadMode(GPIOB, 1, PAL_MODE_INPUT);
-	palSetPadMode(GPIOB, 2, PAL_MODE_INPUT);
-	palSetPadMode(GPIOB, 10, PAL_MODE_INPUT);
-	palSetPadMode(GPIOB, 11, PAL_MODE_INPUT);
-
-	tmp  = palReadPad(GPIOB, 1) << 3;
-	tmp |= palReadPad(GPIOB, 2) << 2;
-	tmp |= palReadPad(GPIOB, 10) << 1;
-	tmp |= palReadPad(GPIOB, 11);
+	tmp  = palReadPad(GPIOB, 15) << 3;
+	tmp |= palReadPad(GPIOA, 8) << 2;
+	tmp |= palReadPad(GPIOA, 9) << 1;
+	tmp |= palReadPad(GPIOA, 10);
 
 	node_id += tmp;
 	return node_id;
@@ -201,7 +196,7 @@ void check_settings(void)
 /**
  * @brief Runs motor control code once every MOTOR_CONTROL_PERIOD ms.
  */
-static THD_WORKING_AREA(RunMotorWorkingArea, 128);
+static THD_WORKING_AREA(RunMotorWorkingArea, 1024);
 static THD_FUNCTION(RunMotor, arg)
 {
 	systime_t time;
@@ -225,7 +220,7 @@ static THD_FUNCTION(RunMotor, arg)
 
 }
 
-static THD_WORKING_AREA(HeartbeatWorkingArea, 128);
+static THD_WORKING_AREA(HeartbeatWorkingArea, 512);
 static THD_FUNCTION(Heartbeat, arg)
 {
 	systime_t time;

@@ -81,8 +81,8 @@ static void ems22_init(void) {
 		.cr2 = (0xFF << SPI_CR2_DS_Pos)
 	};
 
-	palSetPadMode(GPIOB, 3, PAL_STM32_ALTERNATE(11));
-	palSetPadMode(GPIOB, 4, PAL_STM32_ALTERNATE(11));
+	palSetPadMode(GPIOA, 5, PAL_STM32_ALTERNATE(5));
+	palSetPadMode(GPIOA, 6, PAL_STM32_ALTERNATE(5));
 
 	spiStart(&SPID1, &spi_config);
 }

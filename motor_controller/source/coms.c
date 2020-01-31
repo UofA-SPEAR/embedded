@@ -1,7 +1,7 @@
 #include <stdbool.h>
 
 #include "canard.h"
-#include "canard_stm32.h"
+//#include "canard_stm32.h"
 #include "coms.h"
 #include "main.h"
 #include "flash_settings.h"
@@ -41,27 +41,51 @@ uint8_t inout_transfer_id;
 static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);
 static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer);
 
+
+static void chibiosCanardHandler(CanardCANFrame *rx_frame, const CanardCANFrame *tx_frame, CANRxFrame *rxmsg, CANTxFrame *txmsg, bool mode) {
+	if(mode == true) {
+		txmsg->IDE = CAN_IDE_EXT;
+		txmsg->EID = tx_frame->id;
+		txmsg->RTR = CAN_RTR_DATA;
+		txmsg->DLC = tx_frame->data_len;
+		for(uint8_t i = 0; i < tx_frame->data_len; i++) {
+			txmsg->data8[i] = tx_frame->data[i];
+		}
+	}
+	else {
+		rx_frame->id = rxmsg->EID;
+		rx_frame->data_len = rxmsg->DLC;
+		for(uint8_t i = 0; i < rx_frame->data_len; i++) {
+			rx_frame->data[i] = rxmsg->data8[i];
+		}
+	}
+
+
+}
+
 void comInit(void)
 {
-	CanardSTM32CANTimings timings;
-	CANConfig config;
+//	CanardSTM32CANTimings timings;
 
 	// Enable CAN clock
-	RCC->APB1ENR |= RCC_APB1ENR_CANEN;
+//	RCC->APB1ENR |= RCC_APB1ENR_CANEN;
 
-	palSetPadMode(GPIOA, 11, PAL_STM32_ALTERNATE(9));
-	palSetPadMode(GPIOA, 12, PAL_STM32_ALTERNATE(9));
+//	palSetPadMode(GPIOA, 11, PAL_STM32_ALTERNATE(9));
+//	palSetPadMode(GPIOA, 12, PAL_STM32_ALTERNATE(9));
+//
+//	canardSTM32ComputeCANTimings(72000000 / 2, 250000, &timings);
 
-	canardSTM32ComputeCANTimings(72000000 / 2, 250000, &timings);	
-
-	config.mcr = 0x00010002;
-	config.btr = (timings.bit_rate_prescaler << CAN_BTR_BRP_Pos) & CAN_BTR_BRP_Msk,
-	config.btr |= (timings.bit_segment_1 << CAN_BTR_TS1_Pos) & CAN_BTR_TS1_Msk;
-	config.btr |= (timings.bit_segment_2 << CAN_BTR_TS2_Pos) & CAN_BTR_TS2_Msk;
-	config.btr |= (timings.max_resynchronization_jump_width << CAN_BTR_SJW_Pos)
-				& CAN_BTR_SJW_Msk;
-
-	canObjectInit(&CAND1);
+//	config.mcr = 0x00010002;
+//	config.btr = (timings.bit_rate_prescaler << CAN_BTR_BRP_Pos) & CAN_BTR_BRP_Msk,
+//	config.btr |= (timings.bit_segment_1 << CAN_BTR_TS1_Pos) & CAN_BTR_TS1_Msk;
+//	config.btr |= (timings.bit_segment_2 << CAN_BTR_TS2_Pos) & CAN_BTR_TS2_Msk;
+//	config.btr |= (timings.max_resynchronization_jump_width << CAN_BTR_SJW_Pos)
+//				& CAN_BTR_SJW_Msk;
+	const CANConfig config = {
+	/*.mcr = */ CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
+	/*.btr = */ CAN_BTR_SJW(1) | CAN_BTR_TS2(4) |
+	CAN_BTR_TS1(5) | CAN_BTR_BRP(5)
+	};
 	canStart(&CAND1, &config);
 
 	canardInit(&m_canard_instance, &libcanard_memory_pool,
@@ -79,10 +103,13 @@ void coms_handle_forever(void)
 {
 	const CanardCANFrame *out_frame;
 	CanardCANFrame in_frame;
-	int16_t rc;
+	volatile CANRxFrame rxmsg;
+	volatile CANTxFrame txmsg;
+	//int16_t rc;
 
 	while (1) {
-		if (canardSTM32Receive(&in_frame)) {
+		if (canReceiveTimeout(&CAND1, CAN_ANY_MAILBOX, &rxmsg, TIME_IMMEDIATE) == MSG_OK) {
+			chibiosCanardHandler(&in_frame, NULL, &rxmsg, NULL, 0);
 			canardHandleRxFrame(&m_canard_instance, &in_frame,
 				TIME_I2MS(chVTGetSystemTimeX()));
 		}
@@ -90,14 +117,9 @@ void coms_handle_forever(void)
 		out_frame = canardPeekTxQueue(&m_canard_instance);
 
 		if (out_frame) { // If there are any frames to transmit
-			rc = canardSTM32Transmit(out_frame);
-
-			if (rc == 1) { // If transmit is successful
+			chibiosCanardHandler(NULL, &(*out_frame), NULL, &txmsg, 1);
+			if (canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100)) == MSG_OK) { // If transmit is successful
 				canardPopTxQueue(&m_canard_instance);
-			} else if (rc == 0) { // If the TX queue is full
-				// do nothing
-			} else {
-				// TODO handle these errors properly
 			}
 		}
 	}
