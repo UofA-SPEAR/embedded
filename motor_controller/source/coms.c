@@ -93,7 +93,7 @@ void comInit(void)
 		NULL);
 
 	// Sets to default filter
-	canSTM32SetFilters(&CAND1, 0, 0, NULL);
+	//canSTM32SetFilters(&CAND1, 0, 0, NULL);
 }
 
 /** 
