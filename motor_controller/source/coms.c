@@ -116,7 +116,7 @@ void coms_handle_forever(void)
 		out_frame = canardPeekTxQueue(&m_canard_instance);
 
 		if (out_frame != NULL) { // If there are any frames to transmit
-			chibiosCanardHandler(NULL, &out_frame, NULL, &txmsg);
+			chibiosCanardHandler(NULL, &*out_frame, NULL, &txmsg);
 			if (canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100)) == MSG_OK) { // If transmit is successful
 				canardPopTxQueue(&m_canard_instance);
 			}
