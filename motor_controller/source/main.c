@@ -236,6 +236,7 @@ static THD_FUNCTION(Heartbeat, arg)
 		
 		publish_nodeStatus();
 
+
 		chThdSleepUntil(time);
 	}
 }

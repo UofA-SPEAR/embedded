@@ -42,8 +42,8 @@ static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);
 static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer);
 
 
-static void chibiosCanardHandler(CanardCANFrame *rx_frame, const CanardCANFrame *tx_frame, CANRxFrame *rxmsg, CANTxFrame *txmsg, bool mode) {
-	if(mode == true) {
+static void chibiosCanardHandler(CanardCANFrame *rx_frame, const CanardCANFrame *tx_frame, CANRxFrame *rxmsg, CANTxFrame *txmsg) {
+	if(txmsg != NULL) {
 		txmsg->IDE = CAN_IDE_EXT;
 		txmsg->EID = tx_frame->id;
 		txmsg->RTR = CAN_RTR_DATA;
@@ -66,15 +66,15 @@ static void chibiosCanardHandler(CanardCANFrame *rx_frame, const CanardCANFrame 
 void comInit(void)
 {
 //	CanardSTM32CANTimings timings;
-
-	// Enable CAN clock
+//	CANConfig config;
+//	// Enable CAN clock
 //	RCC->APB1ENR |= RCC_APB1ENR_CANEN;
 
 //	palSetPadMode(GPIOA, 11, PAL_STM32_ALTERNATE(9));
 //	palSetPadMode(GPIOA, 12, PAL_STM32_ALTERNATE(9));
 //
 //	canardSTM32ComputeCANTimings(72000000 / 2, 250000, &timings);
-
+//
 //	config.mcr = 0x00010002;
 //	config.btr = (timings.bit_rate_prescaler << CAN_BTR_BRP_Pos) & CAN_BTR_BRP_Msk,
 //	config.btr |= (timings.bit_segment_1 << CAN_BTR_TS1_Pos) & CAN_BTR_TS1_Msk;
@@ -103,21 +103,20 @@ void coms_handle_forever(void)
 {
 	const CanardCANFrame *out_frame;
 	CanardCANFrame in_frame;
-	volatile CANRxFrame rxmsg;
-	volatile CANTxFrame txmsg;
+	CANRxFrame rxmsg;
+	CANTxFrame txmsg;
 	//int16_t rc;
-
-	while (1) {
+	while(true) {
 		if (canReceiveTimeout(&CAND1, CAN_ANY_MAILBOX, &rxmsg, TIME_IMMEDIATE) == MSG_OK) {
-			chibiosCanardHandler(&in_frame, NULL, &rxmsg, NULL, 0);
+			chibiosCanardHandler(&in_frame, NULL, &rxmsg, NULL);
 			canardHandleRxFrame(&m_canard_instance, &in_frame,
 				TIME_I2MS(chVTGetSystemTimeX()));
 		}
 
 		out_frame = canardPeekTxQueue(&m_canard_instance);
 
-		if (out_frame) { // If there are any frames to transmit
-			chibiosCanardHandler(NULL, &(*out_frame), NULL, &txmsg, 1);
+		if (out_frame != NULL) { // If there are any frames to transmit
+			chibiosCanardHandler(NULL, &out_frame, NULL, &txmsg);
 			if (canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100)) == MSG_OK) { // If transmit is successful
 				canardPopTxQueue(&m_canard_instance);
 			}
