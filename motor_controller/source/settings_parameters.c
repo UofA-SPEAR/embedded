@@ -10,7 +10,7 @@
 
 // Strings for all the parameters
 const struct parameter parameter_info[NUM_SETTINGS] = {
-    CAN_SETTING_BOOLEAN("spear.motor.firstboot"),
+    CAN_SETTING_INTEGER("spear.motor.firstboot"),
     CAN_SETTING_BOOLEAN("spear.motor.enabled"),
     CAN_SETTING_INTEGER("spear.motor.actuator_id"),
     CAN_SETTING_BOOLEAN("spear.motor.reversed"),

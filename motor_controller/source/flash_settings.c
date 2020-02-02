@@ -27,11 +27,10 @@ struct setting run_settings[NUM_SETTINGS];
 // PID settings should theoretically reflect this
 // NOT foolproof by any means but should help avoid a few major issues
 static void firstboot_check(void) {
-	volatile char* thing = parameter_info[0].name;
 	// Kp should be between -1 and 1, if not it was misconfigured.
 	// Start with sane settings.
-	if (saved_settings[get_id_by_name("spear.motor.firstboot")].value.boolean != 1) {
-		current_settings[get_id_by_name("spear.motor.firstboot")].value.boolean = 1;
+	if (saved_settings[get_id_by_name("spear.motor.firstboot")].value.integer == -1) {
+		current_settings[get_id_by_name("spear.motor.firstboot")].value.integer = 1;
         current_settings[get_id_by_name("spear.motor.enabled")].value.boolean = 0;
         current_settings[get_id_by_name("spear.motor.actuator_id")].value.integer = 42; 
         current_settings[get_id_by_name("spear.motor.reversed")].value.boolean = 0;
