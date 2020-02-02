@@ -268,10 +268,10 @@ int main(void) {
 	arm_pid_init_f32(&pid, 1);
 
 	// TODO maybe handle errors here?
-	chThdCreateStatic(RunMotorWorkingArea,
+	RunMotor_thread = chThdCreateStatic(RunMotorWorkingArea,
 			sizeof(RunMotorWorkingArea), HIGHPRIO, RunMotor, NULL);
 
-	chThdCreateStatic(HeartbeatWorkingArea,
+	Heartbeat_thread = chThdCreateStatic(HeartbeatWorkingArea,
 		sizeof(HeartbeatWorkingArea), NORMALPRIO, Heartbeat, NULL);
 
 	chThdSetPriority(LOWPRIO);

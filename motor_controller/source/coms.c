@@ -230,6 +230,11 @@ static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer)
 
 
 	if (msg.magic_number == UAVCAN_PROTOCOL_RESTARTNODE_REQUEST_MAGIC_NUMBER) {
+		if (RunMotor_thread)
+			chThdTerminate(RunMotor_thread);
+		if (Heartbeat_thread)
+			chThdTerminate(Heartbeat_thread);
+
 		rsp.ok = true;
 		len = uavcan_protocol_RestartNodeResponse_encode(&rsp, rsp_msg_buf);
 		canardRequestOrRespond(&m_canard_instance,
@@ -243,15 +248,14 @@ static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer)
 				len);
 
 		out_frame = (CanardCANFrame *) canardPeekTxQueue(&m_canard_instance);
-		// Pump out all remaining messages, ignore errors
-		// this is incorrect behaviour, we actually need to wait
-		// until everything is fully sent to properly send the message
-		// We should add graceful shutdown stuff here
 		while (out_frame != NULL) {
 			canardSTM32Transmit(out_frame);
 			canardPopTxQueue(&m_canard_instance);
 			out_frame = (CanardCANFrame *) canardPeekTxQueue(&m_canard_instance);
 		}
+		while (!(CAN->TSR & CAN_TSR_TME2));
+		while (!(CAN->TSR & CAN_TSR_TME1));
+		while (!(CAN->TSR & CAN_TSR_TME0));
 		NVIC_SystemReset();
 	}
 }

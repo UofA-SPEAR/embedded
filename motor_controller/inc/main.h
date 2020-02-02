@@ -47,6 +47,9 @@ extern arm_pid_instance_f32 pid;
 
 extern bool flag_motor_running;
 
+extern thread_t *RunMotor_thread;
+extern thread_t *Heartbeat_thread;
+
 void motor_set(float position);
 
 #endif /* MAIN_H_ */
