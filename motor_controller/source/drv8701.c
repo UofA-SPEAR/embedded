@@ -101,9 +101,6 @@ void drv8701e_stop(void)
 
 void drv8701_set_current(dacsample_t current)
 {
-	if(current < 5) {
-		//ToDo: send error message through canbus
-	}
 
 	//write to DAC
 	current = current * 10 + 5;
