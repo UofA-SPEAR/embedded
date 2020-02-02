@@ -40,7 +40,7 @@ enum motor_reversal {
 };
 
 static int motor_reversed = MOTOR_FORWARDS;
-static bool motor_enabled = false;
+static bool flag_motor_enabled = false;
 
 static void motor_run_angular(void)
 {
@@ -117,6 +117,11 @@ static void motor_run_linear(void)
 		len);
 }
 
+static void motor_run_ol(void)
+{
+	drv8701_set(desired_position);
+}
+
 static void (*motor_run)(void);
 
 void motor_init(void)
@@ -126,11 +131,14 @@ void motor_init(void)
 	else
 		motor_run = motor_run_angular;
 
+	if (run_settings[get_id_by_name("spear.motor.encoder.type")].value.integer == ENCODER_NONE)
+		motor_run = motor_run_ol;
+
 	if (run_settings[get_id_by_name("spear.motor.reversed")].value.boolean)
 		motor_reversed = MOTOR_BACKWARDS;
 
 	if (run_settings[get_id_by_name("spear.motor.enabled")].value.boolean)
-		motor_enabled = true;
+		flag_motor_enabled = true;
 }
 
 void motor_set(float position)
@@ -230,7 +238,7 @@ static THD_FUNCTION(RunMotor, arg)
 		time += TIME_MS2I(MOTOR_CONTROL_PERIOD);
 
 		// TODO find better way of shutting off
-		if (flag_motor_running && motor_enabled)
+		if (flag_motor_running && flag_motor_enabled)
 			motor_run();
 
 		chThdSleepUntil(time);

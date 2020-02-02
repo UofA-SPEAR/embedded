@@ -210,6 +210,16 @@ static int32_t linear_get_position(float in_angle)
 	return position;
 }
 
+static int32_t none_get_position(float position)
+{
+	if (position > 1.0)
+		position = 1.0;
+	else if (position < -1.0)
+		position = -1.0;
+
+	return position * 10000;
+}
+
 void encoder_init(void)
 {
 	int encoder_type =
@@ -257,6 +267,9 @@ void encoder_init(void)
 			read_encoder = ems22_read;
 			get_position = digital_get_position;
 			break;
+		case (ENCODER_NONE):
+			read_encoder = NULL;
+			get_position = none_get_position;
 		default:
 			// TODO decent error handling
 			while (0);
