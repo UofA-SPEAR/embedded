@@ -217,14 +217,41 @@ void on_reception(CanardInstance* ins, CanardRxTransfer* transfer)
 
 static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer)
 {
+	uavcan_protocol_RestartNodeResponse rsp;
 	uavcan_protocol_RestartNodeRequest msg;
+	CanardCANFrame *out_frame;
+	uint8_t rsp_msg_buf[8]; // doesn't need to be this big
+	int32_t len;
 	(void) ins;
+
 
 	uavcan_protocol_RestartNodeRequest_decode(transfer, transfer->payload_len,
 			&msg, &p_dynamic_array_buf);
 
 
 	if (msg.magic_number == UAVCAN_PROTOCOL_RESTARTNODE_REQUEST_MAGIC_NUMBER) {
+		rsp.ok = true;
+		len = uavcan_protocol_RestartNodeResponse_encode(&rsp, rsp_msg_buf);
+		canardRequestOrRespond(&m_canard_instance,
+				transfer->source_node_id,
+				UAVCAN_PROTOCOL_RESTARTNODE_SIGNATURE,
+				UAVCAN_PROTOCOL_RESTARTNODE_ID,
+				&inout_transfer_id,
+				0,
+				CanardResponse,
+				(const void *) rsp_msg_buf,
+				len);
+
+		out_frame = (CanardCANFrame *) canardPeekTxQueue(&m_canard_instance);
+		// Pump out all remaining messages, ignore errors
+		// this is incorrect behaviour, we actually need to wait
+		// until everything is fully sent to properly send the message
+		// We should add graceful shutdown stuff here
+		while (out_frame != NULL) {
+			canardSTM32Transmit(out_frame);
+			canardPopTxQueue(&m_canard_instance);
+			out_frame = (CanardCANFrame *) canardPeekTxQueue(&m_canard_instance);
+		}
 		NVIC_SystemReset();
 	}
 }
