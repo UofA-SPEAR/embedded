@@ -145,6 +145,9 @@ static int32_t pot_get_position(float in_angle)
 	if (position > general.encoder_max)
 		position = general.encoder_max;
 
+	if (position < general.encoder_min)
+		position = general.encoder_min;
+
 	return position;
 }
 
