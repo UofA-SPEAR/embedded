@@ -218,20 +218,22 @@ bool should_accept(const CanardInstance* ins,
 void on_reception(CanardInstance* ins, CanardRxTransfer* transfer)
 {
 	if (transfer->transfer_type == CanardTransferTypeBroadcast) {
-		for (uint16_t i = 0; i < NELEM(can_request_handlers); i++) {
-			if (transfer->data_type_id == can_broadcast_handlers[i].id)
+		for (uint16_t i = 0; i < NELEM(can_broadcast_handlers); i++) {
+			if (transfer->data_type_id == can_broadcast_handlers[i].id) {
 				can_broadcast_handlers[i].handler(ins,
 					transfer);
-			break;
+				break;
+			}
 		}
 	}
 
 	if (transfer->transfer_type == CanardTransferTypeRequest) {
 		for (uint16_t i = 0; i < NELEM(can_request_handlers); i++) {
-			if (transfer->data_type_id == can_request_handlers[i].id)
+			if (transfer->data_type_id  == can_request_handlers[i].id) {
 				can_request_handlers[i].handler(ins,
 					transfer);
-			break;
+				break;
+			}
 		}
 	}
 }
