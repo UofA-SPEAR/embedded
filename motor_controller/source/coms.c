@@ -16,6 +16,7 @@
 #include "canard_stm32.h"
 
 #include "uavcan/equipment/actuator/ArrayCommand.h"
+#include "uavcan/equipment/actuator/Command.h"
 #include "uavcan/protocol/param/GetSet.h"
 #include "uavcan/protocol/NodeStatus.h"
 #include "uavcan/protocol/RestartNode.h"
@@ -106,7 +107,6 @@ void coms_handle_forever(void)
 {
 	const CanardCANFrame *out_frame;
 	CanardCANFrame in_frame;
-	CANRxFrame rxmsg;
 	CANTxFrame txmsg;
 	//int16_t rc;
 	while(true) {
@@ -126,15 +126,21 @@ void coms_handle_forever(void)
 	}
 }
 
+static void actuator_run_command(uavcan_equipment_actuator_Command *cmd)
+{
+	if (cmd->actuator_id == actuator_id) {
+		motor_set(cmd->command_value);
+	}
+}
+
 /** @brief Handles ActuatorCommand messages
  *
  * Updates position values according to stuff
  */
-static void handle_actuator_command(CanardInstance *ins,
+static void handle_Actuator_ArrayCommand(CanardInstance *ins,
 	CanardRxTransfer *transfer)
 {
 	uavcan_equipment_actuator_ArrayCommand msg;
-	uavcan_equipment_actuator_Command *cmd;
 	(void) ins;
 
 	// Pull message data
@@ -142,11 +148,19 @@ static void handle_actuator_command(CanardInstance *ins,
 			&msg, &p_dynamic_array_buf);
 
 	for (int i = 0; i < msg.commands.len; i++) {
-		cmd = &msg.commands.data[i];
-		if (cmd->actuator_id == 13) {
-			motor_set(cmd->command_value);
-		}
+		actuator_run_command(&msg.commands.data[i]);
 	}
+}
+
+static void handle_Actuator_Command(CanardInstance *ins,
+	CanardRxTransfer *transfer)
+{
+	uavcan_equipment_actuator_Command cmd;
+	(void) ins;
+
+	uavcan_equipment_actuator_Command_decode(transfer, transfer->payload_len, &cmd, &p_dynamic_array_buf);
+
+	actuator_run_command(&cmd);
 }
 
 struct can_msg_handler can_request_handlers[] = {
@@ -160,7 +174,10 @@ struct can_msg_handler can_request_handlers[] = {
 
 struct can_msg_handler can_broadcast_handlers[] = {
 	CAN_MSG_HANDLER(UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID,
-		UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_SIGNATURE, handle_actuator_command),
+		UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_SIGNATURE, handle_Actuator_ArrayCommand),
+	// this one shouldn't actually really be sent
+	CAN_MSG_HANDLER(2155,
+		UAVCAN_EQUIPMENT_ACTUATOR_COMMAND_SIGNATURE, handle_Actuator_Command),
 };
 
 bool should_accept(const CanardInstance* ins,
