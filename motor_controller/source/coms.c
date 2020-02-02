@@ -134,6 +134,7 @@ static void handle_actuator_command(CanardInstance *ins,
 	CanardRxTransfer *transfer)
 {
 	uavcan_equipment_actuator_ArrayCommand msg;
+	uavcan_equipment_actuator_Command *cmd;
 	(void) ins;
 
 	// Pull message data
@@ -141,11 +142,11 @@ static void handle_actuator_command(CanardInstance *ins,
 			&msg, &p_dynamic_array_buf);
 
 	for (int i = 0; i < msg.commands.len; i++) {
-		uavcan_equipment_actuator_Command* cmd = &msg.commands.data[i];
-
-		motor_set(cmd->command_value);
+		cmd = &msg.commands.data[i];
+		if (cmd->actuator_id == 13) {
+			motor_set(cmd->command_value);
+		}
 	}
-
 }
 
 struct can_msg_handler can_request_handlers[] = {
