@@ -31,6 +31,17 @@ int32_t desired_position;
 
 bool flag_motor_running = false;
 
+thread_t *RunMotor_thread;
+thread_t *Heartbeat_thread;
+
+enum motor_reversal {
+	MOTOR_BACKWARDS = -1,
+	MOTOR_FORWARDS = 1,
+};
+
+static int motor_reversed = MOTOR_FORWARDS;
+static bool motor_enabled = false;
+
 static void motor_run_angular(void)
 {
 	uavcan_equipment_actuator_Status status;
@@ -45,6 +56,7 @@ static void motor_run_angular(void)
 	status.position = current_position;
 
 	error = (float) (desired_position - current_position);
+	error *= motor_reversed;
 
 	out = arm_pid_f32(&pid, error);
 	out_int = out * 10000;
@@ -77,6 +89,7 @@ static void motor_run_linear(void)
 	status.position = current_position;
 
 	error = (float) (desired_position - current_position);
+	error *= motor_reversed;
 
 	if (error > LINEAR_ACTUATOR_DEADZONE) {
 		out_int = LINEAR_ACTUATOR_POWER;
@@ -112,6 +125,12 @@ void motor_init(void)
 		motor_run = motor_run_linear;
 	else
 		motor_run = motor_run_angular;
+
+	if (run_settings[get_id_by_name("spear.motor.reversed")].value.boolean)
+		motor_reversed = MOTOR_BACKWARDS;
+
+	if (run_settings[get_id_by_name("spear.motor.enabled")].value.boolean)
+		motor_enabled = true;
 }
 
 void motor_set(float position)
@@ -211,7 +230,7 @@ static THD_FUNCTION(RunMotor, arg)
 		time += TIME_MS2I(MOTOR_CONTROL_PERIOD);
 
 		// TODO find better way of shutting off
-		if (flag_motor_running)
+		if (flag_motor_running && motor_enabled)
 			motor_run();
 
 		chThdSleepUntil(time);

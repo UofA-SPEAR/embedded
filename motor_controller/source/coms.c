@@ -42,6 +42,8 @@ uint8_t out_buf[100];
 
 uint8_t inout_transfer_id;
 
+static uint8_t actuator_id;
+
 static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);
 static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer);
 
@@ -85,6 +87,8 @@ void comInit(void)
 //	config.btr |= (timings.bit_segment_2 << CAN_BTR_TS2_Pos) & CAN_BTR_TS2_Msk;
 //	config.btr |= (timings.max_resynchronization_jump_width << CAN_BTR_SJW_Pos)
 //				& CAN_BTR_SJW_Msk;
+	actuator_id = run_settings[get_id_by_name("spear.motor.actuator_id")].value.integer;
+
 	const CANConfig config = {
 	/*.mcr = */ CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
 	/*.btr = */ CAN_BTR_SJW(1) | CAN_BTR_TS2(4) |
