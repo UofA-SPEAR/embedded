@@ -13,6 +13,8 @@
 #include "arm_math.h"
 #include "hal.h"
 
+#include "canard_stm32.h"
+
 #include "uavcan/equipment/actuator/ArrayCommand.h"
 #include "uavcan/protocol/param/GetSet.h"
 #include "uavcan/protocol/NodeStatus.h"
@@ -28,8 +30,9 @@ CanardInstance m_canard_instance;
 static uint8_t libcanard_memory_pool[LIBCANARD_MEM_POOL_SIZE];
 
 // Dynamic array buffer for decoding messages
-static uint8_t dynamic_array_buf[DYNAMIC_ARRAY_BUF_SIZE];
-static uint8_t* p_dynamic_array_buf = dynamic_array_buf;
+uint8_t dynamic_array_buf[DYNAMIC_ARRAY_BUF_SIZE];
+// The below is necessary, otherwise a pointer to dynamic_array_buf resolves to NULL
+uint8_t *p_dynamic_array_buf = (uint8_t *) dynamic_array_buf;
 
 uint32_t node_health;
 uint32_t node_mode;
@@ -107,8 +110,7 @@ void coms_handle_forever(void)
 	CANTxFrame txmsg;
 	//int16_t rc;
 	while(true) {
-		if (canReceiveTimeout(&CAND1, CAN_ANY_MAILBOX, &rxmsg, TIME_IMMEDIATE) == MSG_OK) {
-			chibiosCanardHandler(&in_frame, NULL, &rxmsg, NULL);
+		if (canardSTM32Receive(&in_frame)) {
 			canardHandleRxFrame(&m_canard_instance, &in_frame,
 				TIME_I2MS(chVTGetSystemTimeX()));
 		}
@@ -157,7 +159,7 @@ struct can_msg_handler can_request_handlers[] = {
 
 struct can_msg_handler can_broadcast_handlers[] = {
 	CAN_MSG_HANDLER(UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID,
-		UAVCAN_EQUIPMENT_ACTUATOR_COMMAND_SIGNATURE, handle_actuator_command),
+		UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_SIGNATURE, handle_actuator_command),
 };
 
 bool should_accept(const CanardInstance* ins,
@@ -174,6 +176,7 @@ bool should_accept(const CanardInstance* ins,
 		for (uint16_t i = 0; i < NELEM(can_broadcast_handlers); i++) {
 			if (data_type_id == can_broadcast_handlers[i].id) {
 				*out_data_type_signature = can_broadcast_handlers[i].signature;
+				return true;
 			}
 		}
 	}
@@ -225,9 +228,9 @@ static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer)
 
 static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer) {
 	uavcan_protocol_GetNodeInfoResponse out_msg;
-
-	out_msg.name.len = strlen("Arm Controller");
-	out_msg.name.data = (uint8_t*) "Arm Controller";
+	char name_device[] = "Arm Controller";
+	out_msg.name.len = strlen(name_device);
+	out_msg.name.data = (uint8_t*)(name_device);
 	out_msg.software_version.major = 0;
 	out_msg.software_version.minor = 1;
 	out_msg.hardware_version.major = 1;
