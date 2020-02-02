@@ -55,23 +55,31 @@ static int32_t pot_read(void) {
 
 static void quadrature_init(void)
 {
-	RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;
+	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+	RCC->APB1RSTR |= RCC_APB1RSTR_TIM3RST;
+	RCC->APB1RSTR &= ~(RCC_APB1RSTR_TIM3RST);
+	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 
-	palSetPadMode(GPIOB, 6, PAL_STM32_ALTERNATE(10));
-	palSetPadMode(GPIOB, 8, PAL_STM32_ALTERNATE(10));
+	palSetPadMode(GPIOA, 6, PAL_STM32_ALTERNATE(2));
+	palSetPadMode(GPIOA, 7, PAL_STM32_ALTERNATE(2));
+	// I don't know why the PAL drive doesn't set MODE correctly
+	GPIOA->MODER |= (2 << GPIO_MODER_MODER6_Pos);
+	GPIOA->MODER |= (2 << GPIO_MODER_MODER7_Pos);
 
-	TIM8->SMCR = 3 & TIM_SMCR_SMS; // Encoder mode 3
-	TIM8->CCMR1 = ((uint32_t)0b01 << TIM_CCMR1_CC2S_Pos) |
+	TIM3->ARR = 0xFFFF;
+	TIM3->SMCR = 1 & TIM_SMCR_SMS; // Encoder mode 3
+	TIM3->CCMR1 = ((uint32_t)0b01 << TIM_CCMR1_CC2S_Pos) |
 		((uint32_t)0b01 << TIM_CCMR1_CC1S_Pos);
-	TIM8->CR1 = TIM_CR1_CEN;
+	TIM3->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
+	TIM3->CR1 = TIM_CR1_CEN;
 
 	// Start counter at the middle so we can go negative
-	TIM8->CNT = ENCODER_START_VAL;
+	TIM3->CNT = ENCODER_START_VAL;
 }
 
 static int32_t quadrature_read(void)
 {
-	return (TIM8->CNT) - ENCODER_START_VAL;
+	return (TIM3->CNT) - ENCODER_START_VAL;
 }
 
 static void ems22_init(void) {
