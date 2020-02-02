@@ -116,6 +116,7 @@ void motor_init(void)
 
 void motor_set(float position)
 {
+		flag_motor_running = true;
         desired_position = encoder_get_position(position);
 }
 
@@ -206,18 +207,15 @@ static THD_FUNCTION(RunMotor, arg)
 
     time = chVTGetSystemTimeX();
 
-	if (flag_motor_running) {
-		while(true) {
-			time += TIME_MS2I(MOTOR_CONTROL_PERIOD);
+	while(true) {
+		time += TIME_MS2I(MOTOR_CONTROL_PERIOD);
+
+		// TODO find better way of shutting off
+		if (flag_motor_running)
 			motor_run();
-			chThdSleepUntil(time);
 
-			// TODO find better way of shutting off
-			if (!flag_motor_running)
-				break;
-		}
-	}
-
+		chThdSleepUntil(time);
+    }
 }
 
 static THD_WORKING_AREA(HeartbeatWorkingArea, 512);
@@ -250,14 +248,14 @@ int main(void) {
 
 	node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
 	node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_INITIALIZATION;
-
 	load_settings();
 	for (int i = 0; i < NUM_SETTINGS; i++)
 		run_settings[i].value = saved_settings[i].value;
 	check_settings();
+	motor_init();
 	drv8701_init();
 	encoder_init();
-
+	drv8701_set_current(2u);
 	comInit();
 	node_id = read_node_id();
 	canardSetLocalNodeID(&m_canard_instance, node_id);
