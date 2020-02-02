@@ -70,9 +70,13 @@ void handle_getSet(CanardInstance* ins, CanardRxTransfer* transfer) {
         setting = msg.index;
 	}
 
-    if (setting >= 0) {
+	if (setting >= NUM_SETTINGS) {
+		// Return empty data
+		resp.name.len = 0;
+		resp.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
+	} else if (setting >= 0) {
         resp.name.len = strlen(parameter_info[setting].name);
-        msg.name.data = (uint8_t*) parameter_info[setting].name;
+        resp.name.data = (uint8_t*) parameter_info[setting].name;
 
         switch (parameter_info[setting].union_tag) {
             case (SETTING_REAL):
@@ -106,14 +110,18 @@ void handle_getSet(CanardInstance* ins, CanardRxTransfer* transfer) {
         }
 
         if (msg.value.union_tag != UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY) {
-            load_settings();
             program_settings();
+            load_settings();
         }
     } else {
         // Return empty data
         resp.name.len = 0;
         resp.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
     }
+
+    resp.default_value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
+    resp.max_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
+    resp.min_value.union_tag = UAVCAN_PROTOCOL_PARAM_NUMERICVALUE_EMPTY;
 
     uint8_t len = uavcan_protocol_param_GetSetResponse_encode(&resp, resp_buf);
 
