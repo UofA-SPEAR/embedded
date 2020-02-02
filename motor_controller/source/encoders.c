@@ -37,6 +37,10 @@ const ADCConversionGroup adcgrpcfg1 = {
 };
 
 static void pot_init(void) {
+	// Select inputs
+	palSetLine(ENCODER_C1);
+
+	palSetPadMode(GPIOA, 0, PAL_MODE_INPUT_ANALOG);
 	// do stuff
 	adcStart(&ADCD1, NULL);
 }
@@ -234,7 +238,6 @@ void encoder_init(void)
 	switch (encoder_type) {
 		case (ENCODER_POTENTIOMETER):
 			pot_init();
-			palSetLine(ENCODER_C1);
 			read_encoder = pot_read;
 			get_position = pot_get_position;
 			break;

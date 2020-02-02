@@ -9,7 +9,7 @@
 
 #define DRV8701_EN_PORT GPIOB
 #define DRV8701_EN_PIN 9
-#define DRV8701_EN_MODE PAL_MODE_ALTERNATE(1)
+#define DRV8701_EN_MODE PAL_MODE_ALTERNATE(2)
 
 #define DRV8701_nFAULT_PORT GPIOB
 #define DRV8701_nFAULT_PIN 7
@@ -31,6 +31,8 @@
 #define DRV8701_SO_PORT GPIOA
 #define DRV8701_SO_PIN 1
 #define DRV8701_SO_MODE PAL_STM32_MODE_ANALOG
+
+#define DRV8701_PWM_CHAN 3
 
 const PWMConfig pwmcfg = {
 	4000000, // 1MHz Timer Frequency
@@ -67,7 +69,8 @@ void drv8701_init(void)
 	dacStart(&DACD1, &dac1cfg1);
 
 	// enable TIM4 Channel 4
-	pwmEnableChannel(&PWMD4, 3, PWM_PERCENTAGE_TO_WIDTH(&PWMD4, 0));
+	pwmEnableChannel(&PWMD4, DRV8701_PWM_CHAN,
+					 PWM_PERCENTAGE_TO_WIDTH(&PWMD4, 0));
 
 	// Initialize the ADC
 	/*
@@ -86,11 +89,13 @@ void drv8701_set(int16_t velocity)
 	if(velocity > 0) {
 		palSetPad(DRV8701_PH_PORT,DRV8701_PH_PIN);
 		palSetPad(DRV8701_nSLEEP_PORT,DRV8701_nSLEEP_PIN);
-		pwmEnableChannel(&PWMD4, 3, PWM_PERCENTAGE_TO_WIDTH(&PWMD4, 0));
+		pwmEnableChannel(&PWMD4, DRV8701_PWM_CHAN,
+						 PWM_PERCENTAGE_TO_WIDTH(&PWMD4, speed));
 	} else {
 		palClearPad(DRV8701_PH_PORT,DRV8701_PH_PIN);
 		palSetPad(DRV8701_nSLEEP_PORT,DRV8701_nSLEEP_PIN);
-		pwmEnableChannel(&PWMD4, 3, PWM_PERCENTAGE_TO_WIDTH(&PWMD4, 0));
+		pwmEnableChannel(&PWMD4, DRV8701_PWM_CHAN,
+						 PWM_PERCENTAGE_TO_WIDTH(&PWMD4, speed));
 	}
 }
 
