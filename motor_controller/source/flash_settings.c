@@ -10,6 +10,10 @@
 #include "main.h"
 #include "hal.h"
 
+#define FLASH_WAIT_BUSY() \
+	asm("nop"); \
+	while(FLASH->SR & FLASH_SR_BSY)
+
 // Settings saved to flash. Points to a specific flash location
 __attribute__((section("._user_settings"))) struct setting saved_settings[NUM_SETTINGS];
 
@@ -65,8 +69,8 @@ void load_settings(void) {
 void program_settings(void)
 {
 	// Pointer assignments to make things not look like garbage
-	uint32_t* p_saved_settings = (uint32_t*) &saved_settings;
-	uint32_t* p_current_settings = (uint32_t*) &current_settings;
+	uint16_t* p_saved_settings = (uint16_t*) &saved_settings;
+	uint16_t* p_current_settings = (uint16_t*) &current_settings;
 
 	// Unlock flash
 	FLASH->KEYR = 0x45670123;
@@ -78,11 +82,10 @@ void program_settings(void)
 
 	// Erase one page of flash
 	while (FLASH->SR & FLASH_SR_BSY); // Wait for flash to not be busy
-	FLASH->CR |= FLASH_CR_PER; // Select page erase
+	FLASH->CR = FLASH_CR_PER; // Select page erase
 	FLASH->AR = (uint32_t) &saved_settings;
 	FLASH->CR |= FLASH_CR_STRT;
-	asm("nop"); // Must wait at least one cycle before checking BSY
-	while (FLASH->SR & FLASH_SR_BSY); // Wait for operation to finish
+	FLASH_WAIT_BUSY();
 	if (FLASH->SR & FLASH_SR_EOP) { // flash operation complete
 		FLASH->SR |= FLASH_SR_EOP;
 	} else {
@@ -92,9 +95,11 @@ void program_settings(void)
 
 	// Loop through half words (16 bits) of settings
 	for (uint32_t i = 0; i < ROUND_UP(sizeof(saved_settings), 2); i++) {
-		FLASH->CR |= FLASH_CR_PG; // select program
-		*(p_saved_settings + i) = *(p_current_settings); // write data
-		while (FLASH->SR & FLASH_SR_BSY); // Wait for operation to complete
+		uint16_t *write_addr = p_saved_settings + i;
+		uint16_t *read_addr = p_current_settings + i;
+		FLASH->CR = FLASH_CR_PG; // select program
+		*write_addr = *read_addr; // write data
+		FLASH_WAIT_BUSY();
 		if (FLASH->SR & FLASH_SR_EOP) { // flash operation complete
 			FLASH->SR |= FLASH_SR_EOP; // clear flag
 		} else {
