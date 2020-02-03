@@ -195,6 +195,10 @@ VSCODE_INCDIR = $(addprefix \"$$\{workspaceFolder\}/, $(addsuffix $(PAREN_COMMA)
 vscode_scan: $(INCDIR)
 	@echo $(VSCODE_INCDIR)
 
+flash: build/ch.elf
+	openocd -f ./st_nucleo_f3.cfg \
+		-c "program build/ch.elf verify reset exit" \
+
 #
 # Custom rules
 ##############################################################################
