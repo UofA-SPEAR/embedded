@@ -86,15 +86,18 @@ static void ems22_init(void) {
 	SPIConfig spi_config = {
 		.circular = false,
 		.end_cb = NULL,
-		.ssport = GPIOC,
-		.sspad = 11,
-		.cr1 = SPI_CR1_RXONLY | SPI_CR1_SPE | 
-			(0b101 << SPI_CR1_BR_Pos) | SPI_CR1_MSTR,
-		.cr2 = (0xFF << SPI_CR2_DS_Pos)
+		.ssport = GPIOB,
+		.sspad = 8,
+		.cr1 = SPI_CR1_BR_2 | SPI_CR1_BR_0,
+		.cr2 = (0x0F << SPI_CR2_DS_Pos)
 	};
 
 	palSetPadMode(GPIOA, 5, PAL_STM32_ALTERNATE(5));
+	GPIOA->MODER |= (2 << GPIO_MODER_MODER5_Pos);
 	palSetPadMode(GPIOA, 6, PAL_STM32_ALTERNATE(5));
+	GPIOA->MODER |= (2 << GPIO_MODER_MODER6_Pos);
+	palSetPadMode(GPIOB, 6, PAL_MODE_OUTPUT_PUSHPULL);
+	palSetPad(GPIOB, 6);
 
 	spiStart(&SPID1, &spi_config);
 }
@@ -110,9 +113,13 @@ static int32_t ems22_read(void) {
 		uint8_t even_parity : 1;
 	} in_data;
 
-	spiSelectI(&SPID1);
-	spiStartReceiveI(&SPID1, 2, &in_data);
-	spiUnselectI(&SPID1);
+	memset(&in_data, 0, sizeof(in_data));
+
+	//spiSelectI(&SPID1);
+	palClearPad(GPIOB, 6);
+	spiReceive(&SPID1, 1, &in_data);
+	palSetPad(GPIOB, 6);
+	//spiUnselectI(&SPID1);
 
 	{
 		uint16_t parity_check;
