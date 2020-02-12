@@ -47,11 +47,14 @@ static void pot_init(void) {
 }
 
 static int32_t pot_read(void) {
-	adcsample_t buf;
-
+	adcsample_t buf[4];
+	adcsample_t res = 0;
 	adcConvert(&ADCD1, &adcgrpcfg1, &buf, 1);
-
-	return buf;
+	for(int i = 0; i < 4; i++) {
+		res += buf[i];
+	}
+	res /= 4;
+	return res;
 }
 
 static void quadrature_init(void)

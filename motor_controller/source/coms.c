@@ -12,8 +12,8 @@
 #endif
 #include "arm_math.h"
 #include "hal.h"
-
-#include "canard_stm32.h"
+#include "ch.h"
+//#include "canard_stm32.h"
 
 #include "uavcan/equipment/actuator/ArrayCommand.h"
 #include "uavcan/equipment/actuator/Command.h"
@@ -48,10 +48,10 @@ static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer);
 static void return_node_info(CanardInstance* ins, CanardRxTransfer* transfer);
 
 
-static void chibiosCanardHandler(CanardCANFrame *rx_frame, const CanardCANFrame *tx_frame, CANRxFrame *rxmsg, CANTxFrame *txmsg) {
-	if(txmsg != NULL) {
+static void chibiosCanardHandler(CanardCANFrame* const rx_frame, const CanardCANFrame *tx_frame, CANRxFrame *rxmsg, CANTxFrame *txmsg) {
+	if(tx_frame != NULL) {
 		txmsg->IDE = CAN_IDE_EXT;
-		txmsg->EID = tx_frame->id;
+		txmsg->EID = tx_frame->id & CANARD_CAN_EXT_ID_MASK;
 		txmsg->RTR = CAN_RTR_DATA;
 		txmsg->DLC = tx_frame->data_len;
 		for(uint8_t i = 0; i < tx_frame->data_len; i++) {
@@ -59,9 +59,14 @@ static void chibiosCanardHandler(CanardCANFrame *rx_frame, const CanardCANFrame 
 		}
 	}
 	else {
-		rx_frame->id = rxmsg->EID;
+	    if(rxmsg->IDE) {
+	      rx_frame->id = CANARD_CAN_FRAME_EFF | rxmsg->EID;
+	    }
+	    else {
+	      rx_frame->id = rxmsg->SID;
+	    }
 		rx_frame->data_len = rxmsg->DLC;
-		for(uint8_t i = 0; i < rx_frame->data_len; i++) {
+		for(uint8_t i = 0; i < 8; i++) {
 			rx_frame->data[i] = rxmsg->data8[i];
 		}
 	}
@@ -71,22 +76,6 @@ static void chibiosCanardHandler(CanardCANFrame *rx_frame, const CanardCANFrame 
 
 void comInit(void)
 {
-//	CanardSTM32CANTimings timings;
-//	CANConfig config;
-//	// Enable CAN clock
-//	RCC->APB1ENR |= RCC_APB1ENR_CANEN;
-
-//	palSetPadMode(GPIOA, 11, PAL_STM32_ALTERNATE(9));
-//	palSetPadMode(GPIOA, 12, PAL_STM32_ALTERNATE(9));
-//
-//	canardSTM32ComputeCANTimings(72000000 / 2, 250000, &timings);
-//
-//	config.mcr = 0x00010002;
-//	config.btr = (timings.bit_rate_prescaler << CAN_BTR_BRP_Pos) & CAN_BTR_BRP_Msk,
-//	config.btr |= (timings.bit_segment_1 << CAN_BTR_TS1_Pos) & CAN_BTR_TS1_Msk;
-//	config.btr |= (timings.bit_segment_2 << CAN_BTR_TS2_Pos) & CAN_BTR_TS2_Msk;
-//	config.btr |= (timings.max_resynchronization_jump_width << CAN_BTR_SJW_Pos)
-//				& CAN_BTR_SJW_Msk;
 	actuator_id = run_settings[get_id_by_name("spear.motor.actuator_id")].value.integer;
 
 	const CANConfig config = {
@@ -99,9 +88,6 @@ void comInit(void)
 	canardInit(&m_canard_instance, &libcanard_memory_pool,
 		LIBCANARD_MEM_POOL_SIZE, on_reception, should_accept,
 		NULL);
-
-	// Sets to default filter
-	//canSTM32SetFilters(&CAND1, 0, 0, NULL);
 }
 
 /** 
@@ -112,18 +98,24 @@ void coms_handle_forever(void)
 	const CanardCANFrame *out_frame;
 	CanardCANFrame in_frame;
 	CANTxFrame txmsg;
+	CANRxFrame rxmsg;
 	//int16_t rc;
 	while(true) {
-		if (canardSTM32Receive(&in_frame)) {
+//		if (canardSTM32Receive(&in_frame)) {
+//			canardHandleRxFrame(&m_canard_instance, &in_frame,
+//				TIME_I2MS(chVTGetSystemTimeX()));
+//		}
+		if(canReceiveTimeout(&CAND1, CAN_ANY_MAILBOX, &rxmsg, TIME_IMMEDIATE) == MSG_OK) {
+			chibiosCanardHandler(&in_frame, NULL, &rxmsg, NULL);
 			canardHandleRxFrame(&m_canard_instance, &in_frame,
-				TIME_I2MS(chVTGetSystemTimeX()));
+					TIME_I2MS(chVTGetSystemTimeX()));
 		}
 
 		out_frame = canardPeekTxQueue(&m_canard_instance);
 
 		if (out_frame != NULL) { // If there are any frames to transmit
 			chibiosCanardHandler(NULL, &*out_frame, NULL, &txmsg);
-			if (canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100)) == MSG_OK) { // If transmit is successful
+			if (canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_IMMEDIATE) == MSG_OK) { // If transmit is successful
 				canardPopTxQueue(&m_canard_instance);
 			}
 		}
@@ -243,6 +235,7 @@ static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer)
 	uavcan_protocol_RestartNodeResponse rsp;
 	uavcan_protocol_RestartNodeRequest msg;
 	CanardCANFrame *out_frame;
+	CANTxFrame txmsg;
 	uint8_t rsp_msg_buf[8]; // doesn't need to be this big
 	int32_t len;
 	(void) ins;
@@ -271,10 +264,17 @@ static void restart_node(CanardInstance* ins, CanardRxTransfer* transfer)
 				len);
 
 		out_frame = (CanardCANFrame *) canardPeekTxQueue(&m_canard_instance);
-		while (out_frame != NULL) {
-			canardSTM32Transmit(out_frame);
-			canardPopTxQueue(&m_canard_instance);
-			out_frame = (CanardCANFrame *) canardPeekTxQueue(&m_canard_instance);
+//		while (out_frame != NULL) {
+//			canardSTM32Transmit(out_frame);
+//			canardPopTxQueue(&m_canard_instance);
+//			out_frame = (CanardCANFrame *) canardPeekTxQueue(&m_canard_instance);
+//		}
+		while (out_frame != NULL) { // If there are any frames to transmit
+			chibiosCanardHandler(NULL, &*out_frame, NULL, &txmsg);
+			if (canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100)) == MSG_OK) { // If transmit is successful
+				canardPopTxQueue(&m_canard_instance);
+				out_frame = (CanardCANFrame *) canardPeekTxQueue(&m_canard_instance);
+			}
 		}
 		while (!(CAN->TSR & CAN_TSR_TME2));
 		while (!(CAN->TSR & CAN_TSR_TME1));
