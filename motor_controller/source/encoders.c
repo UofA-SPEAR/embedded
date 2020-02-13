@@ -14,6 +14,9 @@
 #define ENCODER_CC PAL_LINE(GPIOB, 2)
 #define ENCODER_C0 PAL_LINE(GPIOB, 0)
 #define ENCODER_C1 PAL_LINE(GPIOB, 1)
+#define EMS22_CLK PAL_LINE(GPIOA, 15)
+#define EMS22_DIN PAL_LINE(GPIOB, 10)
+#define EMS22_CS PAL_LINE(GPIOB, 6)
 
 static int32_t (*read_encoder)(void);
 
@@ -49,7 +52,7 @@ static void pot_init(void) {
 static int32_t pot_read(void) {
 	adcsample_t buf[4];
 	adcsample_t res = 0;
-	adcConvert(&ADCD1, &adcgrpcfg1, &buf, 1);
+	adcConvert(&ADCD1, &adcgrpcfg1, buf, 4);
 	for(int i = 0; i < 4; i++) {
 		res += buf[i];
 	}
@@ -87,60 +90,92 @@ static int32_t quadrature_read(void)
 }
 
 static void ems22_init(void) {
-	SPIConfig spi_config = {
-		.circular = false,
-		.end_cb = NULL,
-		.ssport = GPIOC,
-		.sspad = 11,
-		.cr1 = SPI_CR1_RXONLY | SPI_CR1_SPE |
-			(0b101 << SPI_CR1_BR_Pos) | SPI_CR1_MSTR,
-		.cr2 = (0xFF << SPI_CR2_DS_Pos)
-	};
-	palSetLine(ENCODER_C1);
+//	SPIConfig spi_config = {
+//		.circular = false,
+//		.end_cb = NULL,
+//		.ssport = GPIOC,
+//		.sspad = 11,
+//		.cr1 = SPI_CR1_RXONLY | SPI_CR1_SPE |
+//			(0b101 << SPI_CR1_BR_Pos) | SPI_CR1_MSTR,
+//		.cr2 = (0xFF << SPI_CR2_DS_Pos)
+//	};
+	palClearLine(ENCODER_C1);
 	palClearLine(ENCODER_C0);
-	palSetLine(ENCODER_CC);
-	palSetPadMode(GPIOA, 5, PAL_STM32_ALTERNATE(5));
-	palSetPadMode(GPIOA, 6, PAL_STM32_ALTERNATE(5));
+	palClearLine(ENCODER_CC);
+	palSetLineMode(EMS22_CLK, PAL_MODE_OUTPUT_PUSHPULL);
+	palSetLineMode(EMS22_CS, PAL_MODE_OUTPUT_PUSHPULL);
+	palSetLineMode(EMS22_DIN, PAL_MODE_INPUT);
+	palSetLine(EMS22_CLK);
+	palClearLine(EMS22_CS);
+//	palSetPadMode(GPIOA, 5, PAL_STM32_ALTERNATE(5));
+//	palSetPadMode(GPIOA, 6, PAL_STM32_ALTERNATE(5));
 
 
 	//spiStart(&SPID1, &spi_config);
 }
 
 static int32_t ems22_read(void) {
-	struct {
-		uint16_t abs_position : 10;
-		uint8_t offset_compensation : 1;
-		uint8_t cordic_overflow : 1;
-		uint8_t linearity_alarm : 1;
-		uint8_t magnitude_increase : 1;
-		uint8_t magnitude_decrease : 1;
-		uint8_t even_parity : 1;
-	} in_data;
+//	struct {
+//		uint16_t abs_position : 10;
+//		uint8_t offset_compensation : 1;
+//		uint8_t cordic_overflow : 1;
+//		uint8_t linearity_alarm : 1;
+//		uint8_t magnitude_increase : 1;
+//		uint8_t magnitude_decrease : 1;
+//		uint8_t even_parity : 1;
+//	} in_data;
 
-	spiSelectI(&SPID1);
-	spiStartReceiveI(&SPID1, 2, &in_data);
-	spiUnselectI(&SPID1);
+//	spiSelectI(&SPID1);
+//	spiStartReceiveI(&SPID1, 2, &in_data);
+//	spiUnselectI(&SPID1);
 
-	{
-		uint16_t parity_check;
-		uint8_t bit_count = 0;
-
-		memcpy((void*) &parity_check, (void*) &in_data, 2);
-
-		// Count bits
-		while (parity_check) {
-			bit_count += parity_check & 1;
-			parity_check = parity_check >> 1;
+//	{
+//		uint16_t parity_check;
+//		uint8_t bit_count = 0;
+//
+//		memcpy((void*) &parity_check, (void*) &in_data, 2);
+//
+//		// Count bits
+//		while (parity_check) {
+//			bit_count += parity_check & 1;
+//			parity_check = parity_check >> 1;
+//		}
+//
+//		// Parity error
+//		if ((bit_count % 2) == in_data.even_parity) {
+//			return -1;
+//		}
+//	}
+//
+//	// If no errors, return data
+//	return in_data.abs_position;
+	palSetLine(EMS22_CS);
+	palClearLine(EMS22_CS);
+	uint8_t buff[16];
+	for (int i = 0; i < 16; i++) {
+		palClearLine(EMS22_CLK);
+		palSetLine(EMS22_CLK);
+		buff[i] = palReadLine(EMS22_DIN);
+	}
+	palClearLine(EMS22_CLK);
+	palSetLine(EMS22_CLK);
+	uint8_t bit_count = 0;
+	// Count bits
+	for(int i = 0; i < 16; i++)	{
+		bit_count += buff[i] & 1;
+	}
+	if(bit_count % 2 == buff[15]) {
+		return -1;
+	}
+	else {
+		uint16_t res = 0;
+		for(int i = 0; i < 10; i++) {
+			res |= buff[i];
+			if(i < 9) res = res << 1;
 		}
-
-		// Parity error
-		if ((bit_count % 2) == in_data.even_parity) {
-			return -1;
-		}
+		return res;
 	}
 
-	// If no errors, return data
-	return in_data.abs_position;
 }
 
 static int32_t (*get_position)(float in_angle);
@@ -285,6 +320,7 @@ void encoder_init(void)
 		case (ENCODER_NONE):
 			read_encoder = NULL;
 			get_position = none_get_position;
+			break;
 		default:
 			// TODO decent error handling
 			while (0);
