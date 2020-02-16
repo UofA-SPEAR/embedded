@@ -14,8 +14,8 @@
 #define ENCODER_CC PAL_LINE(GPIOB, 2)
 #define ENCODER_C0 PAL_LINE(GPIOB, 0)
 #define ENCODER_C1 PAL_LINE(GPIOB, 1)
-#define EMS22_CLK PAL_LINE(GPIOA, 15)
-#define EMS22_DIN PAL_LINE(GPIOB, 10)
+#define EMS22_CLK PAL_LINE(GPIOA, 5)
+#define EMS22_DIN PAL_LINE(GPIOA, 6)
 #define EMS22_CS PAL_LINE(GPIOB, 6)
 
 static int32_t (*read_encoder)(void);
@@ -99,12 +99,12 @@ static void ems22_init(void) {
 //			(0b101 << SPI_CR1_BR_Pos) | SPI_CR1_MSTR,
 //		.cr2 = (0xFF << SPI_CR2_DS_Pos)
 //	};
-	palClearLine(ENCODER_C1);
+	palSetLine(ENCODER_C1);
 	palClearLine(ENCODER_C0);
-	palClearLine(ENCODER_CC);
-	palSetLineMode(EMS22_CLK, PAL_MODE_OUTPUT_PUSHPULL);
-	palSetLineMode(EMS22_CS, PAL_MODE_OUTPUT_PUSHPULL);
-	palSetLineMode(EMS22_DIN, PAL_MODE_INPUT);
+	palSetLine(ENCODER_CC);
+	palSetLineMode(EMS22_CLK, PAL_MODE_OUTPUT_PUSHPULL | PAL_STM32_OSPEED_HIGHEST);
+	palSetLineMode(EMS22_CS, PAL_MODE_OUTPUT_PUSHPULL | PAL_STM32_OSPEED_HIGHEST);
+	palSetLineMode(EMS22_DIN, PAL_MODE_INPUT | PAL_STM32_OSPEED_HIGHEST);
 	palSetLine(EMS22_CLK);
 	palClearLine(EMS22_CS);
 //	palSetPadMode(GPIOA, 5, PAL_STM32_ALTERNATE(5));
@@ -124,11 +124,11 @@ static int32_t ems22_read(void) {
 //		uint8_t magnitude_decrease : 1;
 //		uint8_t even_parity : 1;
 //	} in_data;
-
+//
 //	spiSelectI(&SPID1);
 //	spiStartReceiveI(&SPID1, 2, &in_data);
 //	spiUnselectI(&SPID1);
-
+//
 //	{
 //		uint16_t parity_check;
 //		uint8_t bit_count = 0;
@@ -151,11 +151,12 @@ static int32_t ems22_read(void) {
 //	return in_data.abs_position;
 	palSetLine(EMS22_CS);
 	palClearLine(EMS22_CS);
-	uint8_t buff[16];
+	uint8_t buff[16] = {0};
 	for (int i = 0; i < 16; i++) {
 		palClearLine(EMS22_CLK);
 		palSetLine(EMS22_CLK);
 		buff[i] = palReadLine(EMS22_DIN);
+
 	}
 	palClearLine(EMS22_CLK);
 	palSetLine(EMS22_CLK);
@@ -266,6 +267,10 @@ static int32_t none_get_position(float position)
 		position = 1.0;
 	else if (position < -1.0)
 		position = -1.0;
+
+	if(run_settings[get_id_by_name("spear.motor.reversed")].value.boolean) {
+		position *= -1;
+	}
 
 	return position * 10000;
 }
