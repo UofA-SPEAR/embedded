@@ -115,51 +115,21 @@ static void ems22_init(void) {
 }
 
 static int32_t ems22_read(void) {
-//	struct {
-//		uint16_t abs_position : 10;
-//		uint8_t offset_compensation : 1;
-//		uint8_t cordic_overflow : 1;
-//		uint8_t linearity_alarm : 1;
-//		uint8_t magnitude_increase : 1;
-//		uint8_t magnitude_decrease : 1;
-//		uint8_t even_parity : 1;
-//	} in_data;
-//
-//	spiSelectI(&SPID1);
-//	spiStartReceiveI(&SPID1, 2, &in_data);
-//	spiUnselectI(&SPID1);
-//
-//	{
-//		uint16_t parity_check;
-//		uint8_t bit_count = 0;
-//
-//		memcpy((void*) &parity_check, (void*) &in_data, 2);
-//
-//		// Count bits
-//		while (parity_check) {
-//			bit_count += parity_check & 1;
-//			parity_check = parity_check >> 1;
-//		}
-//
-//		// Parity error
-//		if ((bit_count % 2) == in_data.even_parity) {
-//			return -1;
-//		}
-//	}
-//
-//	// If no errors, return data
-//	return in_data.abs_position;
 	palSetLine(EMS22_CS);
 	palClearLine(EMS22_CS);
 	uint8_t buff[16] = {0};
 	for (int i = 0; i < 16; i++) {
 		palClearLine(EMS22_CLK);
+		chThdSleep(TIME_US2I(1));
 		palSetLine(EMS22_CLK);
+		chThdSleep(TIME_US2I(1));
 		buff[i] = palReadLine(EMS22_DIN);
 
 	}
 	palClearLine(EMS22_CLK);
+	chThdSleep(TIME_US2I(1));
 	palSetLine(EMS22_CLK);
+	chThdSleep(TIME_US2I(1));
 	uint8_t bit_count = 0;
 	// Count bits
 	for(int i = 0; i < 16; i++)	{
