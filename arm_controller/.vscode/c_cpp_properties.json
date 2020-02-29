@@ -12,7 +12,8 @@
                 "${workspaceFolder}/../common/uavcan_dsdl/libcanard_dsdlc_generated/**"
             ],
             "defines": [
-                "STM32F303xC"
+                "STM32F303xC",
+                "USE_HAL_DRIVER"
             ],
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c11",

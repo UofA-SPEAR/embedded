@@ -22,12 +22,13 @@
 		<nature>org.eclipse.cdt.core.cnature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
+		<nature>org.eclipse.cdt.core.ccnature</nature>
 	</natures>
 	<linkedResources>
 		<link>
 			<name>board</name>
 			<type>2</type>
-			<location>C:/Users/Jarrett Yu/Documents/STM_Embedded/embedded/common/SPEAR_SPEEDY_F3</location>
+			<locationURI>CHIBIOS/os/hal/boards/ST_NUCLEO64_F303RE</locationURI>
 		</link>
 		<link>
 			<name>os</name>

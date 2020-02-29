@@ -1,1 +1,1 @@
-[]
+[{"node":"ADC1.CR","expanded":true,"format":0},{"node":"ADC2.CR","expanded":true,"format":0},{"node":"CRC.DR","expanded":true,"format":0},{"node":"CRC.POL","expanded":true,"format":0},{"node":"RCC.CR","expanded":true,"format":0},{"node":"SCB.MMFAR","expanded":true,"format":0},{"node":"SCB_ACTRL.ACTRL","expanded":true,"format":0},{"node":"TIM15","expanded":true,"format":0},{"node":"TIM15.SR","expanded":true,"format":0}]

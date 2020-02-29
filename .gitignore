@@ -1,6 +1,13 @@
 **/Debug/*
 **/build/*
+<<<<<<< HEAD
 
 **/.dep/*
 *.code-workspace
 **/ipch/*
+**/ipch/*
+
+**/.dep/*
+*.code-workspace
+**/.vscode/settings.json
+**/.vscode/cortex*

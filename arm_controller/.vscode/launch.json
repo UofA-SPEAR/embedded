@@ -8,10 +8,11 @@
             "cwd": "${workspaceRoot}",
             "executable": "./build/arm_controller.elf",
             "name": "Debug (OpenOCD)",
-            "device": "STM32F303CB",
+            "device": "STM32F303RB",
             "configFiles": [
                 "../common/f3_openocd.cfg"
-            ]
+            ],
+            "svdFile": "../common/CMSIS/svd/STM32F303.svd"
         }
     ]
 }
