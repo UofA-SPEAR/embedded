@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/drive_controller.elf",
+            "name": "Debug (OpenOCD)",
+            "device": "STM32F303CB",
+            "configFiles": [
+                "../common/f3_openocd.cfg"
+            ]
+        }
+    ]
+}
