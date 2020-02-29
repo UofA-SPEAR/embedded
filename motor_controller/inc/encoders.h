@@ -1,6 +1,8 @@
 #ifndef _ENCODERS_H_
 #define _ENCODERS_H_
 
+#include <stdint.h>
+
 #define POTA_PIN 	GPIO_PIN_0
 #define POTA_PORT	GPIOB
 
@@ -13,17 +15,19 @@
 
 #define ENCODER_START_VAL 30000
 
+// TODO find a more general way to handle this
+#define NUM_ENCODER_TYPES	3
+
 
 typedef enum {
 	ENCODER_POTENTIOMETER 		= 0, // Analog potentiometer (or any analog value)
 	ENCODER_QUADRATURE 			= 1, // Any quadrature encoder
 	ENCODER_ABSOLUTE_DIGITAL 	= 2, // specifically the digital encoder we are using
+	ENCODER_NONE				= 3, // in this case, running the drive motors
 } encoder_type_t;
 
-
-void pot_init(uint8_t motor);
-void encoder_init();
-uint32_t pot_read(uint8_t motor);
-
+void encoder_init(void);
+int32_t encoder_read(void);
+int32_t encoder_get_position(float in_angle);
 
 #endif

@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -66,7 +66,7 @@ endif
 
 # Enables the use of FPU (no, softfp, hard).
 ifeq ($(USE_FPU),)
-  USE_FPU = no
+  USE_FPU = hard
 endif
 
 # FPU-related options.
@@ -102,7 +102,7 @@ include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f3xx.m
 # HAL-OSAL files (optional).
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/hal/ports/STM32/STM32F3xx/platform.mk
-include $(CHIBIOS)/os/hal/boards/ST_NUCLEO64_F303RE/board.mk
+include $(COMMON)/SPEAR_SPEEDY_F3/board.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
@@ -119,7 +119,7 @@ include $(COMMON)/libcanard.mk
 include $(COMMON)/uavcan_msgs.mk
 
 # Define linker script file here
-LDSCRIPT= $(STARTUPLD)/STM32F303xB.ld
+LDSCRIPT= ./STM32F303xB_settings.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -166,7 +166,7 @@ UINCDIR = inc/ ../common/CMSIS/core/
 ULIBDIR = ../common/CMSIS/lib/
 
 # List all user libraries here
-ULIBS = arm_math
+ULIBS = -l:libarm_math.a -l:libm.a
 
 #
 # End of user section
@@ -194,6 +194,10 @@ VSCODE_INCDIR = $(addprefix \"$$\{workspaceFolder\}/, $(addsuffix $(PAREN_COMMA)
 
 vscode_scan: $(INCDIR)
 	@echo $(VSCODE_INCDIR)
+
+flash: build/ch.elf
+	openocd -f ./st_nucleo_f3.cfg \
+		-c "program build/ch.elf verify reset exit" \
 
 #
 # Custom rules

@@ -12,7 +12,7 @@
   <board_id>SPEAR_SPEEDY_F3</board_id>
   <board_functions></board_functions>
   <subtype>STM32F303xC</subtype>
-  <clocks HSEFrequency="8000000" HSEBypass="true" LSEFrequency="0"
+  <clocks HSEFrequency="8000000" HSEBypass="false" LSEFrequency="0"
   	LSEBypass="false" LSEDrive="3 High Drive (default)" ></clocks>
   <ports>
     <GPIOA>
@@ -111,7 +111,7 @@
         Speed="Maximum"
         Resistor="PullUp"
         Mode="Alternate"
-        Alternate="0" />
+        Alternate="9" />
       <pin12
         ID=""
         Type="PushPull"
@@ -119,7 +119,7 @@
         Speed="Maximum"
         Resistor="PullUp"
         Mode="Alternate"
-        Alternate="0" />
+        Alternate="9" />
       <pin13
         ID="SWDIO"
         Type="PushPull"

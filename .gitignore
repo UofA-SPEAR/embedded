@@ -11,3 +11,4 @@
 *.code-workspace
 **/.vscode/settings.json
 **/.vscode/cortex*
+*.swp

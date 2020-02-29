@@ -50,8 +50,6 @@
 #define STM32_HSECLK                8000000U
 #endif
 
-//#define STM32_HSE_BYPASS
-
 /*
  * MCU type as defined in the ST header.
  */
@@ -262,8 +260,8 @@
  * PA8  - PIN8                      (input pullup).
  * PA9  - PIN9                      (input pullup).
  * PA10 - PIN10                     (input pullup).
- * PA11 - PIN11                     (alternate 0).
- * PA12 - PIN12                     (alternate 0).
+ * PA11 - PIN11                     (alternate 9).
+ * PA12 - PIN12                     (alternate 9).
  * PA13 - SWDIO                     (alternate 0).
  * PA14 - SWCLK                     (alternate 0).
  * PA15 - PIN15                     (input pullup).
@@ -359,8 +357,8 @@
 #define VAL_GPIOA_AFRH              (PIN_AFIO_AF(GPIOA_PIN8, 0U) |          \
                                      PIN_AFIO_AF(GPIOA_PIN9, 0U) |          \
                                      PIN_AFIO_AF(GPIOA_PIN10, 0U) |         \
-                                     PIN_AFIO_AF(GPIOA_PIN11, 0U) |         \
-                                     PIN_AFIO_AF(GPIOA_PIN12, 0U) |         \
+                                     PIN_AFIO_AF(GPIOA_PIN11, 9U) |         \
+                                     PIN_AFIO_AF(GPIOA_PIN12, 9U) |         \
                                      PIN_AFIO_AF(GPIOA_SWDIO, 0U) |         \
                                      PIN_AFIO_AF(GPIOA_SWCLK, 0U) |         \
                                      PIN_AFIO_AF(GPIOA_PIN15, 0U))
@@ -458,7 +456,7 @@
                                      PIN_ODR_HIGH(GPIOB_PIN6) |             \
                                      PIN_ODR_HIGH(GPIOB_PIN7) |             \
                                      PIN_ODR_HIGH(GPIOB_PIN8) |             \
-                                     PIN_ODR_HIGH(GPIOB_PIN9) |             \
+                                     PIN_ODR_LOW(GPIOB_PIN9) |             \
                                      PIN_ODR_HIGH(GPIOB_PIN10) |            \
                                      PIN_ODR_HIGH(GPIOB_PIN11) |            \
                                      PIN_ODR_HIGH(GPIOB_PIN12) |            \

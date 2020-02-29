@@ -42,10 +42,10 @@
 #define STM32_PLS                           STM32_PLS_LEV0
 #define STM32_HSI_ENABLED                   TRUE
 #define STM32_LSI_ENABLED                   TRUE
-#define STM32_HSE_ENABLED                   FALSE
+#define STM32_HSE_ENABLED                   TRUE
 #define STM32_LSE_ENABLED                   FALSE
 #define STM32_SW                            STM32_SW_PLL
-#define STM32_PLLSRC                        STM32_PLLSRC_HSI
+#define STM32_PLLSRC                        STM32_PLLSRC_HSE
 #define STM32_PREDIV_VALUE                  1
 #define STM32_PLLMUL_VALUE                  9
 #define STM32_HPRE                          STM32_HPRE_DIV1
@@ -95,7 +95,7 @@
  */
 #define STM32_ADC_DUAL_MODE                 FALSE
 #define STM32_ADC_COMPACT_SAMPLES           FALSE
-#define STM32_ADC_USE_ADC1                  FALSE
+#define STM32_ADC_USE_ADC1                  TRUE
 #define STM32_ADC_USE_ADC2                  FALSE
 #define STM32_ADC_USE_ADC3                  FALSE
 #define STM32_ADC_USE_ADC4                  FALSE
@@ -120,7 +120,7 @@
 /*
  * CAN driver system settings.
  */
-#define STM32_CAN_USE_CAN1                  FALSE
+#define STM32_CAN_USE_CAN1                  TRUE
 #define STM32_CAN_CAN1_IRQ_PRIORITY         11
 
 /*
@@ -190,7 +190,7 @@
 #define STM32_PWM_USE_TIM1                  FALSE
 #define STM32_PWM_USE_TIM2                  FALSE
 #define STM32_PWM_USE_TIM3                  FALSE
-#define STM32_PWM_USE_TIM4                  FALSE
+#define STM32_PWM_USE_TIM4                  TRUE
 #define STM32_PWM_USE_TIM8                  FALSE
 #define STM32_PWM_USE_TIM15                 FALSE
 #define STM32_PWM_USE_TIM16                 FALSE
@@ -226,7 +226,7 @@
 /*
  * SPI driver system settings.
  */
-#define STM32_SPI_USE_SPI1                  FALSE
+#define STM32_SPI_USE_SPI1                  TRUE
 #define STM32_SPI_USE_SPI2                  FALSE
 #define STM32_SPI_USE_SPI3                  FALSE
 #define STM32_SPI_SPI1_DMA_PRIORITY         1

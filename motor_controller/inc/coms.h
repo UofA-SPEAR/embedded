@@ -3,7 +3,7 @@
 #include "canard.h"
 
 
-void comInit();
+void comInit(void);
 void updateComs(void);
 
 /* ------------ Error Definitions --------------- */
@@ -45,9 +45,24 @@ extern uint64_t can_timestamp_usec;
 
 extern uint8_t inout_transfer_id;
 
+struct can_msg_handler {
+	uint16_t id;
+	uint64_t signature;
+	void (*handler)(CanardInstance *ins, CanardRxTransfer *transfer);
+};
+
+#define CAN_MSG_HANDLER(topic_id, topic_signature, topic_handler) \
+	{ \
+		.id = topic_id, \
+		.signature = topic_signature, \
+		.handler = topic_handler \
+	}
+
+#define NELEM(a) (sizeof(a) / sizeof(*a))
+
 // Public variables to set nodestatus
-uint32_t node_health;
-uint32_t node_mode;
+extern uint32_t node_health;
+extern uint32_t node_mode;
 
 bool should_accept(const CanardInstance* ins,
 					uint64_t* out_data_type_signature,
@@ -64,6 +79,8 @@ int16_t libcanard_init(CanardOnTransferReception on_reception,
 		CanardShouldAcceptTransfer should_accept, void* user_reference,
 		const uint32_t clock_rate, const uint32_t bitrate);
 int16_t setup_hardware_can_filters(void);
+
+void coms_handle_forever(void);
 
 void publish_nodeStatus(void);
 

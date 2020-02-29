@@ -10,10 +10,12 @@
             "name": "Debug Microcontroller",
             "request": "launch",
             "type": "cortex-debug",
-            "servertype": "bmp",
+            "servertype": "openocd",
             "device": "STM32F303CB",
-            "BMPGDBSerialPort": "/dev/ttyACM0",
-            "targetId": 1
+            "armToolchainPath": "/home/david/gcc-arm-none-eabi-8-2019-q3-update/bin/",
+            "configFiles": [
+                "../common/f3_openocd.cfg"
+            ]
         }
     ]
 }

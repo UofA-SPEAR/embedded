@@ -182,7 +182,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_CFG_USE_REGISTRY)
-#define CH_CFG_USE_REGISTRY                 FALSE
+#define CH_CFG_USE_REGISTRY                 TRUE
 #endif
 
 /**
@@ -203,7 +203,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_CFG_USE_SEMAPHORES)
-#define CH_CFG_USE_SEMAPHORES               FALSE
+#define CH_CFG_USE_SEMAPHORES               TRUE
 #endif
 
 /**
@@ -320,7 +320,7 @@
  * @note    Requires @p CH_CFG_USE_SEMAPHORES.
  */
 #if !defined(CH_CFG_USE_MAILBOXES)
-#define CH_CFG_USE_MAILBOXES                FALSE
+#define CH_CFG_USE_MAILBOXES                TRUE 
 #endif
 
 /**
@@ -331,7 +331,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_CFG_USE_MEMCORE)
-#define CH_CFG_USE_MEMCORE                  FALSE
+#define CH_CFG_USE_MEMCORE                  TRUE
 #endif
 
 /**
@@ -356,7 +356,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_CFG_USE_MEMPOOLS)
-#define CH_CFG_USE_MEMPOOLS                 FALSE
+#define CH_CFG_USE_MEMPOOLS                 TRUE
 #endif
 
 /**
@@ -367,7 +367,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_CFG_USE_OBJ_FIFOS)
-#define CH_CFG_USE_OBJ_FIFOS                FALSE
+#define CH_CFG_USE_OBJ_FIFOS                TRUE
 #endif
 
 /**
