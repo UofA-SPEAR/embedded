@@ -6,7 +6,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "make USE_VERBOSE_COMPILE=yes -j4",
+            "command": "make USE_VERBOSE_COMPILE=yes -j",
             "group": {
                 "kind": "build",
                 "isDefault": true,
