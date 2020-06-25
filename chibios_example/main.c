@@ -25,7 +25,7 @@
 static THD_WORKING_AREA(waThread1, 128);
 static THD_FUNCTION(Thread1, arg) {
 
-  (void*) arg;
+  (void)arg;
   while (true) {
     palClearPad(GPIOC, GPIOC_LED);
     chThdSleepMilliseconds(500);
