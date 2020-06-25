@@ -118,6 +118,9 @@ include $(CHIBIOS)/test/oslib/oslib_test.mk
 include $(COMMON)/libcanard.mk
 include $(COMMON)/uavcan_msgs.mk
 
+# Flashing
+include $(COMMON)/flash.mk
+
 # Define linker script file here
 LDSCRIPT= $(STARTUPLD)/STM32F303xB.ld
 
