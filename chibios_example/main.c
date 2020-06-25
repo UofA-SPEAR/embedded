@@ -34,10 +34,6 @@ static THD_FUNCTION(Thread1, arg) {
   }
 }
 
-THD_TABLE_BEGIN
-THD_TABLE_ENTRY(waThread1, "blinker", Thread1, NULL)
-THD_TABLE_END
-
 /*
  * Application entry point.
  */
@@ -65,6 +61,8 @@ int main(void) {
     .speed       = 9600
   };
   uartStart(&UARTD2, &usart_config);
+
+  chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
 
   // main() thread activity, just outputs Hello World!
   while (true) {
