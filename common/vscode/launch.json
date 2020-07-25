@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            // Change this for your specific installation
+	    // Change this for your specific installation
             "armToolchainPath": "/home/david/install/gcc-arm-none-eabi-9-2020-q2-update/bin",
             // Common
             "cwd": "${workspaceRoot}",

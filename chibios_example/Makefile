@@ -105,7 +105,7 @@ include $(CHIBIOS)/os/hal/ports/STM32/STM32F3xx/platform.mk
 include $(COMMON)/SPEAR_SPEEDY_F3/board.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 # RTOS files (optional).
-include $(CHIBIOS)/os/nil/nil.mk
+include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 # Auto-build files in ./source recursively.
 include $(CHIBIOS)/tools/mk/autobuild.mk
@@ -117,6 +117,9 @@ include $(CHIBIOS)/test/oslib/oslib_test.mk
 # UAVCAN Stuff
 include $(COMMON)/libcanard.mk
 include $(COMMON)/uavcan_msgs.mk
+
+# Flashing
+include $(COMMON)/flash.mk
 
 # Define linker script file here
 LDSCRIPT= $(STARTUPLD)/STM32F303xB.ld
@@ -188,13 +191,6 @@ include $(RULESPATH)/rules.mk
 ##############################################################################
 # Custom rules
 #
-
-PAREN_COMMA := \",
-
-VSCODE_INCDIR = $(addprefix \"$$\{workspaceFolder\}/, $(addsuffix $(PAREN_COMMA), $(INCDIR)))
-
-vscode_scan: $(INCDIR)
-	@echo $(VSCODE_INCDIR)
 
 #
 # Custom rules
