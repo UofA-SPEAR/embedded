@@ -37,7 +37,8 @@
                 "${workspaceFolder}/../common/uavcan_dsdl/libcanard_dsdlc_generated",
                 "${workspaceFolder}/../ChibiOS/test/lib",
                 "${workspaceFolder}/../ChibiOS/test/rt/source/test",
-                "${workspaceFolder}/../ChibiOS/test/oslib/source/test"
+                "${workspaceFolder}/../ChibiOS/test/oslib/source/test",
+                "${workspaceFolder}/inc"
             ],
             "compilerPath": "arm-none-eabi-gcc",
             "intelliSenseMode": "gcc-x64",
@@ -47,6 +48,7 @@
         {
             "name": "Win32",
             "includePath": [
+                "${workspaceFolder}/./inc",
                 "${workspaceFolder}/./cfg",
                 "${workspaceFolder}/../ChibiOS/os/license",
                 "${workspaceFolder}/../ChibiOS/os/common/portability/GCC",

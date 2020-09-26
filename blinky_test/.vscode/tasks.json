@@ -4,11 +4,10 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build with creating c_cpp_properties.json",
+            "label": "build and create c_cpp_properties.json",
             "type": "shell",
             "command": "make clean && make -j | python3 ../common/vscode/c_cpp_properties.py -C arm-none-eabi-gcc > ./.vscode/c_cpp_properties.json",
-            "problemMatcher":"$gcc",
-
+            "problemMatcher": []
         },
         {
             "label": "build",
@@ -16,15 +15,15 @@
             "command": "make -j",
             "group": {
                 "kind": "build",
-                "isDefault": true,
+                "isDefault": true
             },
-            "problemMatcher":"$gcc",
-
+            "problemMatcher": "$gcc"
         },
         {
             "label": "clean",
             "type": "shell",
             "command": "make clean",
+            "problemMatcher": "$gcc"
         }
     ]
 }

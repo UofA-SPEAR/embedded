@@ -4,9 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build with creating c_cpp_properties.json",
+            "label": "build and create c_cpp_properties.json",
             "type": "shell",
-            "command": "make clean && make -j | python3 ../common/vscode/c_cpp_properties.py -C arm-none-eabi-gcc > ./.vscode/c_cpp_properties.json",
+            "command": "make clean && make -j | python3 ./.vscode/c_cpp_properties.py -C arm-none-eabi-gcc > ./.vscode/c_cpp_properties.json",
             "problemMatcher":"$gcc",
 
         },

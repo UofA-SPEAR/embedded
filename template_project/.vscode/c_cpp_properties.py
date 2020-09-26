@@ -34,10 +34,10 @@ def main(args = None):
                 "browse": {
                     "limitSymbolsToIncludedHeaders": True,
                     "databaseFilename": "",
-                    "path": includePath
-                },
-                "defines": defines,
-                "intelliSenseMode": "clang-x64"
+                    "path": includePath,
+                    "defines": defines,
+                    "intelliSenseMode": "clang-x64"
+                }
             }
         ],
         "version": 3
@@ -77,15 +77,21 @@ def parseCommandLine(args):
     # This is naive, since include order can matter, but I'm going
     # to assume it doesn't for now
     includePath = set()
-    defines = set()
+    defines = {}
 
     for line in sys.stdin.readlines():
         cc_args = line.split()
         if len(cc_args) and cc_args[0] == args.compiler:
             cc_args, unknown =  cc_parser.parse_known_args(cc_args[1:])
             includePath |= set(cc_args.includePath)
-            defines |= set(cc_args.defines)
-    return list(includePath), list(defines)
+            for define in cc_args.defines:
+                parts = define.split('=')
+                if len(parts) == 1:
+                    defines[parts[0]] = True
+                elif len(parts) == 2:
+                    name, value = parts
+                    defines[name] = value
+    return list(includePath), defines
 
 
 if __name__ == "__main__":

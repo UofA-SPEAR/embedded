@@ -5,14 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+
             "cwd": "${workspaceRoot}",
             "executable": "./build/ch.elf",
             "name": "Debug Microcontroller",
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "openocd",
-            "device": "STM32F303CB",
-            "armToolchainPath": "/home/david/gcc-arm-none-eabi-8-2019-q3-update/bin/",
+            "device": "STM32F303CC",
             "configFiles": [
                 "../common/f3_openocd.cfg"
             ]
