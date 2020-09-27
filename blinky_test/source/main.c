@@ -17,8 +17,7 @@
 #include "main.h"
 #include "can.h"
 
-
-static CanardConfig canprof;
+static CanardConfig canprofile;
 CanardRxSubscription heartbeat;
 static THD_WORKING_AREA(waThread1, 128);
 static THD_FUNCTION(Thread1, arg) {
@@ -35,10 +34,10 @@ static THD_FUNCTION(Thread1, arg) {
  */
 void setup(void) 
 {
-  canprof.can_cfg = get1MConfig();
-  canprof.can_driver = &CAND1;
-  canprof.node_id = 40;
-  canardStart(&canprof);
+  canprofile.can_cfg = get1MConfig();
+  canprofile.can_driver = &CAND1;
+  canprofile.node_id = 40;
+  canardStart(&canprofile);
   CanardInstance *ins = canardAcquire();
   canardRxSubscribe(ins, CanardTransferKindMessage, 32085, 7, 
                     CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, &heartbeat);

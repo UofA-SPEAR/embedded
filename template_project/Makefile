@@ -113,6 +113,7 @@ include $(CHIBIOS)/tools/mk/autobuild.mk
 include $(CHIBIOS)/test/lib/test.mk
 # include $(CHIBIOS)/test/rt/rt_test.mk
 include $(CHIBIOS)/test/oslib/oslib_test.mk
+include ./lib/lib.mk
 # UAVCAN Stuff uncomment these if you are using
 #include $(COMMON)/libcanard.mk
 #include $(COMMON)/uavcan_msgs.mk
