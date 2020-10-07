@@ -14,6 +14,7 @@
             "type": "cortex-debug",
             "servertype": "openocd",
             "device": "STM32F303CC",
+            
             "demangle": true,
             // OpenOCD specific
             "configFiles": ["./debug/f3_openocd.cfg"],
