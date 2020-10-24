@@ -59,7 +59,7 @@ int main(void) {
   chSysInit();
   sdStart(&SD2, NULL); // debug monitor, using PA2 and PA3
   chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL); 
-  setup();
+  // setup();
   // main() thread activity
   while (1) {
     //This is another thread

@@ -20,7 +20,7 @@ static uint8_t canMailPool[CAN_XFER_QUEUE_SIZE * sizeof(CanardTransfer)];
 static objects_fifo_t canardTransferMail;
 static msg_t canardTransferMsg[CAN_XFER_QUEUE_SIZE];
 __attribute__(( aligned(O1HEAP_ALIGNMENT) ))
-static uint8_t o1heap_pool[CAN_O1HEAP_SIZE];
+static char o1heap_pool[CAN_O1HEAP_SIZE];
 
 static CANConfig can1Mconfig = {
 	/*.mcr = */ CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
@@ -60,25 +60,25 @@ THD_FUNCTION(CanThread, can)
     	chMtxLock(&canard_mtx);
     	for (const CanardFrame* out_frame = NULL; (out_frame = canardTxPeek(&canard)) != NULL;)
     	{
-    	    if (out_frame->timestamp_usec > TIME_I2US(chVTGetSystemTime()))
-    	    {
-    	    	CANTxFrame tx_frame = {
-    	    			.DLC = CanardCANLengthToDLC[out_frame->payload_size],
-				        .RTR = 0,
-				        .IDE = 1,
-				        .EID = out_frame->extended_can_id,
-    	    	};
-    	    	memcpy(&tx_frame.data8[0], &out_frame->payload, out_frame->extended_can_id);
-    	        rc = canTransmitTimeout(can_device, CAN_ANY_MAILBOX, (const CANTxFrame*)&tx_frame, TIME_US2I(CAN_TX_TIMEOUT_US));
+        if (out_frame->timestamp_usec > TIME_I2US(chVTGetSystemTime()))
+        {
+          CANTxFrame tx_frame = {
+              .DLC = CanardCANLengthToDLC[out_frame->payload_size],
+              .RTR = 0,
+              .IDE = 1,
+              .EID = out_frame->extended_can_id,
+          };
+        memcpy(&tx_frame.data8[0], out_frame->payload, out_frame->payload_size);
+        rc = canTransmitTimeout(can_device, CAN_ANY_MAILBOX, (const CANTxFrame*)&tx_frame, TIME_US2I(CAN_TX_TIMEOUT_US));
 				if(rc == MSG_OK)
-    	        {
+    	  {
     	    	    canardTxPop(&canard);
     	    	    canard.memory_free(&canard, (CanardFrame*)out_frame);
     	        }
     	        else {
     	        	//ERROR Handler
     	        }
-    	    }
+    	  }
 
     	}
     	chMtxUnlock(&canard_mtx);
@@ -89,7 +89,7 @@ THD_FUNCTION(CanThread, can)
     	rc = canReceiveTimeout(can_device, CAN_ANY_MAILBOX, &rx_frame, TIME_IMMEDIATE);
     	if(rc == MSG_OK) {
     		CanardFrame raw_rx = {
-    				.payload_size = CanardCANDLCToLength[rx_frame.DLC],
+    			.payload_size = CanardCANDLCToLength[rx_frame.DLC],
 					.timestamp_usec = TIME_I2US(chVTGetSystemTime()),
 					.extended_can_id = rx_frame.EID,
 					.payload = (void*)&rx_frame.data8[0],
@@ -137,7 +137,7 @@ THD_FUNCTION(CanHeartbeatThread, arg)
     CanardTransfer out = {
       .timestamp_usec = TIME_I2US(time) + CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
       .priority = 0,
-      .port_id = 32085, // default heartbeat port id
+      .port_id = 7509, // default heartbeat port id
       .remote_node_id = CANARD_NODE_ID_UNSET,
       .transfer_id = 0,
       .payload_size = 7,

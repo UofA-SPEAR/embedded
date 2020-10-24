@@ -12,12 +12,8 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "ubuntu/focal64"
+  config.vm.box = "bento/ubuntu-20.04"
   config.vm.define "spear-embedded-box"
-  config.vm.provider :virtualbox do |v|
-    v.customize ["modifyvm", :id, "--uart1", "0x3F8", "4"]
-	v.customize ["modifyvm", :id, "--uartmode1", "file", File::NULL]
-  end
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -75,8 +71,7 @@ Vagrant.configure("2") do |config|
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
 	sudo apt-get update
-	sudo apt-get upgrade -y
-	sudo apt-get install -y python3-pip libtool build-essential autotools-dev autoconf pkg-config libusb-1.0-0 libusb-1.0-0-dev libftdi1 libftdi-dev git libc6 libncurses5 libstdc++6
+	sudo apt-get install -y python3-pip libtool build-essential autotools-dev autoconf pkg-config libusb-1.0-0 libusb-1.0-0-dev libftdi1 libftdi-dev git libc6 libncurses5 libstdc++6 minicom
 	cd /home/vagrant/
 	mkdir spear-embedded
 	cd spear-embedded
@@ -109,5 +104,7 @@ Vagrant.configure("2") do |config|
 	sudo apt-get autoremove -y
 	cd /home/vagrant/embedded
 	git submodule update --init --recursive
+	sudo apt-get autoremove
+	sudo apt-get autoclean
    SHELL
 end
