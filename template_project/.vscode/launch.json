@@ -14,10 +14,11 @@
             "type": "cortex-debug",
             "servertype": "openocd",
             "device": "STM32F303CC",
-            
+            "runToMain": true,
+            "preLaunchTask": "build",
             "demangle": true,
             // OpenOCD specific
-            "configFiles": ["./debug/f3_openocd.cfg"],
+            "configFiles": ["../common/f3_openocd.cfg"],
         }
     ]
 }
