@@ -95,12 +95,7 @@ Vagrant.configure("2") do |config|
 	cd /home/vagrant/spear-embedded
 	rm -f gcc-arm-none-eabi-9-2020-q2-update-x86_64-linux.tar.bz2
 	pip3 install pydsdl
-	git clone https://github.com/davidlenfesty/nunavut
-	cd nunavut
-	git checkout a34b2c31f87ff08bfc2c0d9894533a68f135d59f
-	sudo python3 setup.py install
-	cd ..
-	rm -r nunavut
+	pip3 install -U nunavut
 	sudo apt-get autoremove -y
 	cd /home/vagrant/embedded
 	git submodule update --init --recursive
