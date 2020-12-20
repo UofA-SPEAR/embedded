@@ -12,13 +12,16 @@ This code will run on STM32 chips, specifically the F103 or F303 series (prefera
 2. Install the [required toolchain](https://github.com/UofA-SPEAR/embedded/wiki/Setting-up-the-Development-Environment)
 3. Follow the [Onboarding Task](https://github.com/UofA-SPEAR/embedded/wiki/Onboarding-Task).
 
-## Dependencies ##
+## Requirements ##
 
 You need to have the following tools installed:
 
-- gcc-arm-none-eabi (GCC arm toolchain)
-- make tools
-- OpenOCD
+- Oracle Virtualbox
+- Oracle Virtualbox Extension Pack
+- STlink Driver
+- Vagrant
+- VScode
+- At least 4GB of storage space
 
 ## Documentation
 
@@ -28,40 +31,36 @@ You need to have the following tools installed:
 
 ### Windows
 
-Install Git Bash
+Install listed dependencies
 
-Install the ARM GNU toolchain from the ARM website: https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
-
-It works to build the makefile using git Bash, or anything like linux for windows, but I haven't done full integration into windows yet. (mostly because windows development sucks)
+It works by building a virtual machine via Vagrant that contains most of the required toolchain.
 
 ## Getting started ##
 
-First we need to clone this repository, and then we can update the submodules within it,
-so that we can write the code we need.
+- First clone this repository to the machine you will work on.
 
 ```
 git clone https://github.com/UofA-SPEAR/embedded
-cd embedded
-git submodule update --init
 ```
+
+- Navigate to the root directory of the embedded project.
+- Run `vagrant up`. The script will now setup the VM, this process may take a while. Ensure that you have internet access as it will download the VM.
+- Run `vagrant ssh-config` to retreive the ssh config for the VM.
+- Install the `Remote - SSH` extension for VScode
+- In the command pallet (ctrl + shift + p) type `remote-ssh: open ssh configuration file` and select the first option
+- Copy the output of `vagrant ssh-config` to the file that was opened.
+- In the command pallet (ctrl + shift + p) type `remote-ssh: connect to host` or click on the green icon in the bottom left corner of the VScode window.
+- Once connected, go find the c++ and cortex-debug extension in the VScode extension marketplace, and use the option 'install in spear-embedded-box' and reload the window once completed.
+- Go to `terminal > run task > build and create c_cpp_properties` in the reloaded window to generate VScode json.
+
 
 ## Creating a project ##
 
-Copy the example project, `embedded/chibios_example` as your own project folder.
-
-Edit the Makefile within your new project to match your project's requirements.
-
-Run:
-
-```
-make -j4
-```
-
-Congrats! You've built a project!
-
-`make help` will give you more information on all the available targets.
+Copy the example project, `embedded/template_project` as your own project folder.
 
 ## Debugging/Flashing ##
+
+### UPDATE THIS ###
 
 ### THIS MAY CHANGE SOON ###
 
@@ -110,3 +109,5 @@ You need to install the following VSCode plugins:
 
 There will be a good config in the .vscode folder within the example project.
 Use that for reference.
+
+### UPDATE THIS ###

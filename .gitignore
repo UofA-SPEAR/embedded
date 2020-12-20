@@ -12,3 +12,5 @@
 **/.vscode/settings.json
 **/.vscode/cortex*
 *.swp
+.vagrant
+**/.vscode/c_cpp_properties.json
