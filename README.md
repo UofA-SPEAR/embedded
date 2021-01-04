@@ -21,6 +21,7 @@ You need to have the following tools installed:
 - STlink Driver
 - Vagrant
 - VScode
+- Git
 - At least 4GB of storage space
 
 ## Documentation
@@ -43,7 +44,7 @@ It works by building a virtual machine via Vagrant that contains most of the req
 git clone https://github.com/UofA-SPEAR/embedded
 ```
 
-- Navigate to the root directory of the embedded project.
+- Navigate to the root directory of the embedded project via cmd terminal/bash.
 - Run `vagrant up`. The script will now setup the VM, this process may take a while. Ensure that you have internet access as it will download the VM.
 - Run `vagrant ssh-config` to retreive the ssh config for the VM.
 - Install the `Remote - SSH` extension for VScode
