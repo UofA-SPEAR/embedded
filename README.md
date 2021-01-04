@@ -48,10 +48,10 @@ git clone https://github.com/UofA-SPEAR/embedded
 - Run `vagrant up`. The script will now setup the VM, this process may take a while. Ensure that you have internet access as it will download the VM.
 - Run `vagrant ssh-config` to retreive the ssh config for the VM.
 - Install the `Remote - SSH` extension for VScode
-- In the command pallet (ctrl + shift + p) type `remote-ssh: open ssh configuration file` and select the first option
+- In the command pallet (ctrl + shift + p) type `remote-ssh: open configuration file` and select the first option
 - Copy the output of `vagrant ssh-config` to the file that was opened.
 - In the command pallet (ctrl + shift + p) type `remote-ssh: connect to host` or click on the green icon in the bottom left corner of the VScode window.
-- Once connected, go find the c++ and cortex-debug extension in the VScode extension marketplace, and use the option 'install in spear-embedded-box' and reload the window once completed.
+- Once connected, go find the `c/c++` and `cortex-debug` extension in the VScode extension marketplace, and use the option 'install in spear-embedded-box' and reload the window once completed.
 - Go to `terminal > run task > build and create c_cpp_properties` in the reloaded window to generate VScode json.
 
 
