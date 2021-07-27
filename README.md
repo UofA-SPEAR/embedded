@@ -47,7 +47,7 @@ git clone https://github.com/UofA-SPEAR/embedded
 - Navigate to the root directory of the embedded project via cmd terminal/bash.
 - Run `vagrant up`. The script will now setup the VM, this process may take a while. Ensure that you have internet access as it will download the VM.
 - Run `vagrant ssh-config` to retreive the ssh config for the VM.
-- Install the `Remote - SSH` extension for VScode
+- Install the `Remote - SSH` extension for VScode. See the VSCode section below for more info.
 - In the command pallet (ctrl + shift + p) type `remote-ssh: open configuration file` and select the first option
 - Copy the output of `vagrant ssh-config` to the file that was opened.
 - In the command pallet (ctrl + shift + p) type `remote-ssh: connect to host` or click on the green icon in the bottom left corner of the VScode window.
@@ -110,5 +110,10 @@ You need to install the following VSCode plugins:
 
 There will be a good config in the .vscode folder within the example project.
 Use that for reference.
+
+If you're using a pure open-source version of vscode, then you'll need this workaround in order to access the marketplace: https://github.com/VSCodium/vscodium/issues/418#issuecomment-643664182.
+Otherwise, you'll get an error like: "We cannot connect to the Extensions Marketplace at this time, please try again later".
+
+If you are using Arch, there is a AUR package to do this patching automatically: https://aur.archlinux.org/packages/code-marketplace/
 
 ### UPDATE THIS ###
