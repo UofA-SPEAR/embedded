@@ -117,4 +117,6 @@ You may also need to do this workaround: https://docs.microsoft.com/en-us/visual
 
 If you are using Arch, there is a AUR package to do this patching automatically: https://aur.archlinux.org/packages/code-marketplace/
 
+If you continue to run into issues with the open-source version, you may need to switch to the microsoft version of vscode.
+
 ### UPDATE THIS ###
