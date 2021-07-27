@@ -113,6 +113,7 @@ Use that for reference.
 
 If you're using a pure open-source version of vscode, then you'll need this workaround in order to access the marketplace: https://github.com/VSCodium/vscodium/issues/418#issuecomment-643664182.
 Otherwise, you'll get an error like: "We cannot connect to the Extensions Marketplace at this time, please try again later".
+You may also need to do this workaround: https://docs.microsoft.com/en-us/visualstudio/liveshare/reference/linux#vs-code-oss-issues if you get errors like "Command ... not found".
 
 If you are using Arch, there is a AUR package to do this patching automatically: https://aur.archlinux.org/packages/code-marketplace/
 
