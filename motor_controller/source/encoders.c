@@ -300,10 +300,6 @@ void encoder_init(void)
 			// TODO decent error handling
 			while (0);
 	}
-
-	if (general.to_radians == (float) 0.0) {
-		get_position = linear_get_position;
-	}
 }
 
 int32_t encoder_read(void)
