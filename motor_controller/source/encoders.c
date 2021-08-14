@@ -189,6 +189,9 @@ static int32_t linear_get_position(float in_angle)
 	float desired_length;
 	int32_t position;
 
+
+	// TODO add an angle offset
+
 	// Comes from cosine law
 	// c^2 = a^2 + b^2 - 2ab*cos(C)
 	desired_length = sqrt(
@@ -275,6 +278,7 @@ void encoder_init(void)
 
 	switch (encoder_type) {
 		case (ENCODER_POTENTIOMETER):
+			palSetLine(ENCODER_C1);
 			pot_init();
 			read_encoder = pot_read;
 			get_position = pot_get_position;
