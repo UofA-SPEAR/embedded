@@ -23,8 +23,8 @@
 #define BASE_NODE_ID 30
 
 // "dead" zone so we aren't oscillating
-#define LINEAR_ACTUATOR_DEADZONE	3500
-#define LINEAR_ACTUATOR_POWER		5000
+// TODO not really needed, just though it was needed due to previous issues
+#define LINEAR_ACTUATOR_DEADZONE     0	
 
 arm_pid_instance_f32 pid;
 int32_t desired_position;
@@ -80,30 +80,28 @@ static void motor_run_linear(void)
 	uavcan_equipment_actuator_Status status;
 	static int32_t current_position = 0;
 	uint8_t status_buf[20];
-	float error;
-	int16_t out_int;
+	float error, out;
+	int32_t out_int;
 
 	current_position = encoder_read();
 
-	// fix
+	// Actually return as position, not just encoder value maybe?
 	status.position = current_position;
 
 	error = (float) (desired_position - current_position);
 	error *= motor_reversed;
 
-	if (error > LINEAR_ACTUATOR_DEADZONE) {
-		out_int = LINEAR_ACTUATOR_POWER;
-	} else if (error > (LINEAR_ACTUATOR_DEADZONE / 2)) {
-		out_int = LINEAR_ACTUATOR_POWER / 2;
-	} else if (error < -LINEAR_ACTUATOR_DEADZONE) {
-		out_int = -LINEAR_ACTUATOR_POWER;
-	} else if (error < -(LINEAR_ACTUATOR_DEADZONE / 2)) {
-		out_int = -LINEAR_ACTUATOR_POWER / 2;
+
+	if (abs(error) >= LINEAR_ACTUATOR_DEADZONE) {
+		out = arm_pid_f32(&pid, error);
+		out_int = out * 1000;
+		if (out_int > 10000) out_int = 10000;
+		else if (out_int < -10000) out_int = -10000;
 	} else {
 		out_int = 0;
 	}
 
-	drv8701_set(out_int);
+	drv8701_set(out_int & 0xFFFF);
 
 	// Send status info
 	int len = uavcan_equipment_actuator_Status_encode(&status, &status_buf);
