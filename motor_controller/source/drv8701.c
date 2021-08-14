@@ -104,6 +104,13 @@ void drv8701e_stop(void)
 	palClearPad(DRV8701_nSLEEP_PORT, DRV8701_nSLEEP_PIN);
 }
 
+/// @brief Set chopping current of DRV8701.
+///
+/// @note This isn't a current limit being set, it actually just chops
+///       at this level and coasts for a bit, so RMS current will be
+///       somewhere below what is set.
+///
+/// @param[in] current	Current to set (in amps)
 void drv8701_set_current(dacsample_t current)
 {
 
