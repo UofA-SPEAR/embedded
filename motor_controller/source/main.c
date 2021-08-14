@@ -22,10 +22,6 @@
 
 #define BASE_NODE_ID 30
 
-// "dead" zone so we aren't oscillating
-// TODO not really needed, just though it was needed due to previous issues
-#define LINEAR_ACTUATOR_DEADZONE     0	
-
 arm_pid_instance_f32 pid;
 int32_t desired_position;
 
@@ -42,40 +38,8 @@ enum motor_reversal {
 static int motor_reversed = MOTOR_FORWARDS;
 static bool flag_motor_enabled = false;
 
+/// @brief Routine to keep motor in an angular position, according to config.
 static void motor_run_angular(void)
-{
-	uavcan_equipment_actuator_Status status;
-	static int32_t current_position = 0;
-	uint8_t status_buf[20];
-	float error, out;
-	int16_t out_int;
-
-	current_position = encoder_read();
-
-	// fix
-	status.position = current_position;
-
-	error = (float) (desired_position - current_position);
-	error *= motor_reversed;
-
-	out = arm_pid_f32(&pid, error);
-	out_int = out * 10000;
-
-	drv8701_set(out_int);
-
-	// Send status info
-	int len = uavcan_equipment_actuator_Status_encode(&status, &status_buf);
-
-	canardBroadcast(&m_canard_instance,
-		UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
-		UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID,
-		&inout_transfer_id,
-		5,
-		&status_buf,
-		len);
-}
-
-static void motor_run_linear(void)
 {
 	uavcan_equipment_actuator_Status status;
 	static int32_t current_position = 0;
@@ -84,28 +48,25 @@ static void motor_run_linear(void)
 	int32_t out_int;
 
 	current_position = encoder_read();
-
 	// Actually return as position, not just encoder value maybe?
 	status.position = current_position;
 
 	error = (float) (desired_position - current_position);
 	error *= motor_reversed;
 
-
-	if (abs(error) >= LINEAR_ACTUATOR_DEADZONE) {
-		out = arm_pid_f32(&pid, error);
-		out_int = out * 1000;
-		if (out_int > 10000) out_int = 10000;
-		else if (out_int < -10000) out_int = -10000;
-	} else {
-		out_int = 0;
-	}
+	// Run control loop
+	out = arm_pid_f32(&pid, error);
+	out_int = out * 1000;
+	// Cap at 100% effort
+	// TODO should be done in drv8701_set, but that should probably be don
+	//      with more revamp effort
+	if (out_int > 10000) out_int = 10000;
+	else if (out_int < -10000) out_int = -10000;
 
 	drv8701_set(out_int & 0xFFFF);
 
 	// Send status info
 	int len = uavcan_equipment_actuator_Status_encode(&status, &status_buf);
-
 	canardBroadcast(&m_canard_instance,
 		UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
 		UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID,
@@ -115,19 +76,22 @@ static void motor_run_linear(void)
 		len);
 }
 
+/// @brief Runs motor without speed or position control, need to send raw
+///        PWM values.
 static void motor_run_ol(void)
 {
 	drv8701_set(desired_position);
 }
 
+/// Function pointer to swap out motor control strategies.
 static void (*motor_run)(void);
 
+/// @brief Enable/disable motor and decide on run strategy
 void motor_init(void)
 {
-	if (run_settings[get_id_by_name("spear.motor.encoder.to-radians")].value.real == (float) 0.0)
-		motor_run = motor_run_linear;
-	else
-		motor_run = motor_run_angular;
+	// Default to angular
+	// TODO maybe have a bit more sane way of checking settings.
+	motor_run = motor_run_angular;
 
 	if (run_settings[get_id_by_name("spear.motor.encoder.type")].value.integer == ENCODER_NONE)
 		motor_run = motor_run_ol;
@@ -139,12 +103,17 @@ void motor_init(void)
 		flag_motor_enabled = true;
 }
 
+/// @brief Set desired position based on configured strategy.
+///
+/// @note Sets a desired encoder value, uses configuration to determine
+///       how to obtain that from a float.
 void motor_set(float position)
 {
 		flag_motor_running = true;
         desired_position = encoder_get_position(position);
 }
 
+/// @brief Determine CAN node ID from physical switches.
 uint8_t read_node_id(void)
 {
 	uint8_t node_id = BASE_NODE_ID;
@@ -243,23 +212,19 @@ static THD_FUNCTION(RunMotor, arg)
     }
 }
 
+/// @brief Blinkies and CAN status
 static THD_WORKING_AREA(HeartbeatWorkingArea, 512);
 static THD_FUNCTION(Heartbeat, arg)
 {
 	systime_t time;
 	(void) arg;
-
 	chRegSetThreadName("Heartbeat");
-
 	time = chVTGetSystemTimeX();
 
 	while (true) {
 		time += TIME_MS2I(1000);
 		palToggleLine(LINE_LED);
-		
 		publish_nodeStatus();
-
-
 		chThdSleepUntil(time);
 	}
 }

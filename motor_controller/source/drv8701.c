@@ -79,6 +79,7 @@ void drv8701_init(void)
 	adcStart(&ADCD1, NULL);
 }
 
+/// @brief Set speed, full range is +-10000
 void drv8701_set(int16_t velocity)
 {
 	uint16_t speed = abs(velocity);

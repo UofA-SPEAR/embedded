@@ -248,6 +248,7 @@ static int32_t none_get_position(float position)
 	return position * 10000;
 }
 
+/// @brief Load settings and choose strategy to map position to encoder values.
 void encoder_init(void)
 {
 	int encoder_type =
@@ -282,6 +283,9 @@ void encoder_init(void)
 			pot_init();
 			read_encoder = pot_read;
 			get_position = pot_get_position;
+			if (general.to_radians == 0.0f) {
+				get_position = linear_get_position;
+			}
 			break;
 		case (ENCODER_QUADRATURE):
 			quadrature_init();
@@ -306,11 +310,17 @@ void encoder_init(void)
 	}
 }
 
+/// @brief Wrapper to read encoder value
+///
+/// Should probably just export the function pointer symbol.
 int32_t encoder_read(void)
 {
 	return read_encoder();
 }
 
+/// @brief Wrapper to get position from input signal
+///
+/// Should probably just export the function pointer symbol.
 int32_t encoder_get_position(float in_angle)
 {
 	return get_position(in_angle);
