@@ -161,6 +161,8 @@ static int32_t pot_get_position(float in_angle)
 {
 	int32_t position = in_angle / general.to_radians;
 
+	position += general.encoder_min;
+
 	if (position < general.encoder_min)
 		position = general.encoder_min;
 	else if (position > general.encoder_max)
