@@ -245,7 +245,7 @@ int main(void) {
 	motor_init();
 	drv8701_init();
 	encoder_init();
-	drv8701_set_current(15u);
+	drv8701_set_current(12u);
 	comInit();
 	node_id = read_node_id();
 	canardSetLocalNodeID(&m_canard_instance, node_id);
