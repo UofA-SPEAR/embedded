@@ -56,7 +56,7 @@ static void motor_run_angular(void)
 
 	// Run control loop
 	out = arm_pid_f32(&pid, error);
-	out_int = out * 1000;
+	out_int = out * 10;
 	// Cap at 100% effort
 	// TODO should be done in drv8701_set, but that should probably be don
 	//      with more revamp effort

@@ -161,13 +161,10 @@ static int32_t pot_get_position(float in_angle)
 {
 	int32_t position = in_angle / general.to_radians;
 
-	position += general.encoder_min;
-
-	if (position > general.encoder_max)
+	if (position < general.encoder_min)
+		position = general.encoder_min;
+	else if (position > general.encoder_max)
 		position = general.encoder_max;
-
-	//if (position < general.encoder_min)
-	//	position = general.encoder_min;
 
 	return position;
 }
@@ -188,8 +185,6 @@ static int32_t linear_get_position(float in_angle)
 {
 	float desired_length;
 	int32_t position;
-
-
 	// TODO add an angle offset
 
 	// Comes from cosine law
@@ -218,8 +213,6 @@ static int32_t linear_get_position(float in_angle)
 			general.encoder_min;
 	float linear_range = linear.length_max -
 			linear.length_min;
-
-
 
 	// set position properly
 	position =
