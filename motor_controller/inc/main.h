@@ -12,11 +12,14 @@
 #define ARM_MATH_CM4
 #endif  // ARM_MATH_CM4
 
-#include "arm_math.h"
 #include "ch.h"
 #include "coms.h"
 #include "encoders.h"
 #include "flash_settings.h"
+
+// clang-format off
+#include "arm_math.h"
+// clang-format on
 
 #define ROUND_UP(dividend, divisor) ((dividend + (divisor - 1)) / divisor)
 
