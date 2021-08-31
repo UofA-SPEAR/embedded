@@ -16,13 +16,13 @@
   while (FLASH->SR & FLASH_SR_BSY)
 
 // Settings saved to flash. Points to a specific flash location
-__attribute__((
-    section("._user_settings"))) struct setting saved_settings[NUM_SETTINGS];
+__attribute__((section(
+    "._user_settings"))) struct setting_value_t saved_settings[NUM_SETTINGS];
 
-// Settings in use.
-struct setting current_settings[NUM_SETTINGS];
-// Run settings
-struct setting run_settings[NUM_SETTINGS];
+// Settings changed by CAN configuration
+struct setting_value_t pending_settings[NUM_SETTINGS];
+// Settings in use
+struct setting_value_t current_settings[NUM_SETTINGS];
 
 // If this is the first boot, settings in the flash will be garbage.
 // PID settings should theoretically reflect this
@@ -30,40 +30,50 @@ struct setting run_settings[NUM_SETTINGS];
 static void firstboot_check(void) {
   // Kp should be between -1 and 1, if not it was misconfigured.
   // Start with sane settings.
-  if (saved_settings[get_id_by_name("spear.motor.firstboot")].value.integer ==
-      -1) {
-    current_settings[get_id_by_name("spear.motor.firstboot")].value.integer = 1;
-    current_settings[get_id_by_name("spear.motor.enabled")].value.boolean = 0;
-    current_settings[get_id_by_name("spear.motor.actuator_id")].value.integer =
-        42;
-    current_settings[get_id_by_name("spear.motor.reversed")].value.boolean = 0;
-    current_settings[get_id_by_name("spear.motor.continuous")].value.boolean =
-        0;
+  if (saved_settings[get_setting_index_by_name("spear.motor.firstboot")]
+          .value.integer == -1) {
+    pending_settings[get_setting_index_by_name("spear.motor.firstboot")]
+        .value.integer = 1;
+    pending_settings[get_setting_index_by_name("spear.motor.enabled")]
+        .value.boolean = 0;
+    pending_settings[get_setting_index_by_name("spear.motor.actuator_id")]
+        .value.integer = 42;
+    pending_settings[get_setting_index_by_name("spear.motor.reversed")]
+        .value.boolean = 0;
+    pending_settings[get_setting_index_by_name("spear.motor.continuous")]
+        .value.boolean = 0;
 
-    current_settings[get_id_by_name("spear.motor.pid.Kp")].value.real = 0;
-    current_settings[get_id_by_name("spear.motor.pid.Ki")].value.real = 0;
-    current_settings[get_id_by_name("spear.motor.pid.Kd")].value.real = 0;
-
-    current_settings[get_id_by_name("spear.motor.encoder.type")].value.integer =
-        ENCODER_POTENTIOMETER;
-    current_settings[get_id_by_name("spear.motor.encoder.min")].value.integer =
-        0;
-    current_settings[get_id_by_name("spear.motor.encoder.max")].value.integer =
-        0;
-    current_settings[get_id_by_name("spear.motor.encoder.to_radians")]
+    pending_settings[get_setting_index_by_name("spear.motor.pid.Kp")]
         .value.real = 0;
-    current_settings[get_id_by_name("spear.motor.encoder.endstop_min")]
+    pending_settings[get_setting_index_by_name("spear.motor.pid.Ki")]
+        .value.real = 0;
+    pending_settings[get_setting_index_by_name("spear.motor.pid.Kd")]
+        .value.real = 0;
+
+    pending_settings[get_setting_index_by_name("spear.motor.encoder.type")]
+        .value.integer = ENCODER_POTENTIOMETER;
+    pending_settings[get_setting_index_by_name("spear.motor.encoder.min")]
+        .value.integer = 0;
+    pending_settings[get_setting_index_by_name("spear.motor.encoder.max")]
+        .value.integer = 0;
+    pending_settings[get_setting_index_by_name(
+                         "spear.motor.encoder.to_radians")]
+        .value.real = 0;
+    pending_settings[get_setting_index_by_name(
+                         "spear.motor.encoder.endstop_min")]
         .value.integer = ENDSTOP_DISABLED;
-    current_settings[get_id_by_name("spear.motor.encoder.endstop_max")]
+    pending_settings[get_setting_index_by_name(
+                         "spear.motor.encoder.endstop_max")]
         .value.integer = ENDSTOP_DISABLED;
 
-    current_settings[get_id_by_name("spear.motor.linear.support_length")]
+    pending_settings[get_setting_index_by_name(
+                         "spear.motor.linear.support_length")]
         .value.real = 0;
-    current_settings[get_id_by_name("spear.motor.linear.arm_length")]
+    pending_settings[get_setting_index_by_name("spear.motor.linear.arm_length")]
         .value.real = 0;
-    current_settings[get_id_by_name("spear.motor.linear.length_min")]
+    pending_settings[get_setting_index_by_name("spear.motor.linear.length_min")]
         .value.real = 0;
-    current_settings[get_id_by_name("spear.motor.linear.length_max")]
+    pending_settings[get_setting_index_by_name("spear.motor.linear.length_max")]
         .value.real = 0;
     program_settings();  // Write settings to flash
   }
@@ -74,14 +84,14 @@ void load_settings(void) {
   firstboot_check();
 
   for (int i = 0; i < NUM_SETTINGS; i++) {
-    current_settings[i].value = saved_settings[i].value;
+    pending_settings[i].value = saved_settings[i].value;
   }
 }
 
 void program_settings(void) {
   // Pointer assignments to make things not look like garbage
   uint16_t* p_saved_settings = (uint16_t*)&saved_settings;
-  uint16_t* p_current_settings = (uint16_t*)&current_settings;
+  uint16_t* p_pending_settings = (uint16_t*)&pending_settings;
 
   // Unlock flash
   FLASH->KEYR = 0x45670123;
@@ -110,7 +120,7 @@ void program_settings(void) {
   // Loop through half words (16 bits) of settings
   for (uint32_t i = 0; i < ROUND_UP(sizeof(saved_settings), 2); i++) {
     uint16_t* write_addr = p_saved_settings + i;
-    uint16_t* read_addr = p_current_settings + i;
+    uint16_t* read_addr = p_pending_settings + i;
     FLASH->CR = FLASH_CR_PG;   // select program
     *write_addr = *read_addr;  // write data
     FLASH_WAIT_BUSY();

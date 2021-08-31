@@ -18,7 +18,7 @@
 #define EMS22_DIN PAL_LINE(GPIOA, 6)
 #define EMS22_CS PAL_LINE(GPIOB, 6)
 
-static int32_t (*read_encoder)(void);
+static int32_t (*read_observation)(void);
 
 const ADCConversionGroup adcgrpcfg1 = {
     FALSE,
@@ -42,7 +42,7 @@ static void pot_init(void) {
   adcStart(&ADCD1, NULL);
 }
 
-static int32_t pot_read(void) {
+static int32_t pot_read_observation(void) {
   adcsample_t buf[4];
   adcsample_t res = 0;
   adcConvert(&ADCD1, &adcgrpcfg1, buf, 4);
@@ -76,7 +76,9 @@ static void quadrature_init(void) {
   TIM3->CNT = ENCODER_START_VAL;
 }
 
-static int32_t quadrature_read(void) { return (TIM3->CNT) - ENCODER_START_VAL; }
+static int32_t quadrature_read_observation(void) {
+  return (TIM3->CNT) - ENCODER_START_VAL;
+}
 
 static void ems22_init(void) {
   //	SPIConfig spi_config = {
@@ -103,7 +105,7 @@ static void ems22_init(void) {
   // spiStart(&SPID1, &spi_config);
 }
 
-static int32_t ems22_read(void) {
+static int32_t ems22_read_observation(void) {
   palSetLine(EMS22_CS);
   palClearLine(EMS22_CS);
   uint8_t buff[16] = {0};
@@ -135,7 +137,7 @@ static int32_t ems22_read(void) {
   }
 }
 
-static int32_t (*get_position)(float in_angle);
+static int32_t (*get_target_observation)(float command_angle);
 
 static struct {
   float to_radians;
@@ -143,8 +145,8 @@ static struct {
   int32_t encoder_max;
 } general;
 
-static int32_t pot_get_position(float in_angle) {
-  int32_t position = in_angle / general.to_radians;
+static int32_t pot_get_target_observation(float command_angle) {
+  int32_t position = command_angle / general.to_radians;
 
   position += general.encoder_min;
 
@@ -156,8 +158,8 @@ static int32_t pot_get_position(float in_angle) {
   return position;
 }
 
-static int32_t digital_get_position(float in_angle) {
-  return in_angle / general.to_radians;
+static int32_t digital_get_target_observation(float command_angle) {
+  return command_angle / general.to_radians;
 }
 
 static struct {
@@ -167,16 +169,16 @@ static struct {
   float length_max;
 } linear;
 
-static int32_t linear_get_position(float in_angle) {
+static int32_t linear_get_target_observation(float command_angle) {
   float desired_length;
   int32_t position;
   // TODO add an angle offset
 
   // Comes from cosine law
   // c^2 = a^2 + b^2 - 2ab*cos(C)
-  desired_length =
-      sqrt(pow(linear.support_length, 2) + pow(linear.arm_length, 2) -
-           (2 * (linear.support_length) * (linear.arm_length) * cos(in_angle)));
+  desired_length = sqrt(
+      pow(linear.support_length, 2) + pow(linear.arm_length, 2) -
+      (2 * (linear.support_length) * (linear.arm_length) * cos(command_angle)));
 
   // TODO set nodestatus
   if (desired_length < linear.length_min) {
@@ -205,40 +207,49 @@ static int32_t linear_get_position(float in_angle) {
   return position;
 }
 
-static int32_t none_get_position(float position) {
-  if (position > 1.0)
-    position = 1.0;
-  else if (position < -1.0)
-    position = -1.0;
+static int32_t none_get_target_observation(float command_angle) {
+  if (command_angle > 1.0)
+    command_angle = 1.0;
+  else if (command_angle < -1.0)
+    command_angle = -1.0;
 
-  if (run_settings[get_id_by_name("spear.motor.reversed")].value.boolean) {
-    position *= -1;
+  if (current_settings[get_setting_index_by_name("spear.motor.reversed")]
+          .value.boolean) {
+    command_angle *= -1;
   }
 
-  return position * 10000;
+  return command_angle * 10000;
 }
 
 /// @brief Load settings and choose strategy to map position to encoder values.
 void encoder_init(void) {
   int encoder_type =
-      run_settings[get_id_by_name("spear.motor.encoder.type")].value.integer;
+      current_settings[get_setting_index_by_name("spear.motor.encoder.type")]
+          .value.integer;
 
-  general.to_radians =
-      run_settings[get_id_by_name("spear.motor.encoder.to-radians")].value.real;
+  general.to_radians = current_settings[get_setting_index_by_name(
+                                            "spear.motor.encoder.to-radians")]
+                           .value.real;
   general.encoder_min =
-      run_settings[get_id_by_name("spear.motor.encoder.min")].value.integer;
+      current_settings[get_setting_index_by_name("spear.motor.encoder.min")]
+          .value.integer;
   general.encoder_max =
-      run_settings[get_id_by_name("spear.motor.encoder.max")].value.integer;
+      current_settings[get_setting_index_by_name("spear.motor.encoder.max")]
+          .value.integer;
 
   linear.support_length =
-      run_settings[get_id_by_name("spear.motor.linear.support_length")]
+      current_settings[get_setting_index_by_name(
+                           "spear.motor.linear.support_length")]
           .value.real;
-  linear.arm_length =
-      run_settings[get_id_by_name("spear.motor.linear.arm_length")].value.real;
-  linear.length_min =
-      run_settings[get_id_by_name("spear.motor.linear.length_min")].value.real;
-  linear.length_max =
-      run_settings[get_id_by_name("spear.motor.linear.length_max")].value.real;
+  linear.arm_length = current_settings[get_setting_index_by_name(
+                                           "spear.motor.linear.arm_length")]
+                          .value.real;
+  linear.length_min = current_settings[get_setting_index_by_name(
+                                           "spear.motor.linear.length_min")]
+                          .value.real;
+  linear.length_max = current_settings[get_setting_index_by_name(
+                                           "spear.motor.linear.length_max")]
+                          .value.real;
 
   palSetLineMode(ENCODER_CC, PAL_MODE_OUTPUT_PUSHPULL);
   palSetLineMode(ENCODER_C0, PAL_MODE_OUTPUT_PUSHPULL);
@@ -251,28 +262,28 @@ void encoder_init(void) {
     case (ENCODER_POTENTIOMETER):
       palSetLine(ENCODER_C1);
       pot_init();
-      read_encoder = pot_read;
-      get_position = pot_get_position;
+      read_observation = pot_read_observation;
+      get_target_observation = pot_get_target_observation;
       if (general.to_radians == 0.0f) {
-        get_position = linear_get_position;
+        get_target_observation = linear_get_target_observation;
       }
       break;
     case (ENCODER_QUADRATURE):
       quadrature_init();
       // We need to bodge the pins...
-      read_encoder = quadrature_read;
-      get_position = digital_get_position;
+      read_observation = quadrature_read_observation;
+      get_target_observation = digital_get_target_observation;
       break;
     case (ENCODER_ABSOLUTE_DIGITAL):
       ems22_init();
       palSetLine(ENCODER_CC);
       palSetLine(ENCODER_C0);
-      read_encoder = ems22_read;
-      get_position = digital_get_position;
+      read_observation = ems22_read_observation;
+      get_target_observation = digital_get_target_observation;
       break;
     case (ENCODER_NONE):
-      read_encoder = NULL;
-      get_position = none_get_position;
+      read_observation = NULL;
+      get_target_observation = none_get_target_observation;
       break;
     default:
       // TODO decent error handling
@@ -284,9 +295,11 @@ void encoder_init(void) {
 /// @brief Wrapper to read encoder value
 ///
 /// Should probably just export the function pointer symbol.
-int32_t encoder_read(void) { return read_encoder(); }
+int32_t encoder_read_observation(void) { return read_observation(); }
 
 /// @brief Wrapper to get position from input signal
 ///
 /// Should probably just export the function pointer symbol.
-int32_t encoder_get_position(float in_angle) { return get_position(in_angle); }
+int32_t encoder_get_target_observation(float command_angle) {
+  return get_target_observation(command_angle);
+}

@@ -36,10 +36,10 @@ static uint8_t* p_dynamic_array_buf = dynamic_array_buf;
 
 extern uint8_t inout_transfer_id;
 
-int8_t get_id_by_name(char* name) {
+int8_t get_setting_index_by_name(char* name) {
   for (int8_t i = 0; i < NUM_SETTINGS; i++) {
     // assumes strings are defined constant, thus have null termination
-    if (strcmp(name, parameter_info[i].name) == 0) return i;
+    if (strcmp(name, setting_specs[i].name) == 0) return i;
   }
 
   return -1;
@@ -48,7 +48,7 @@ int8_t get_id_by_name(char* name) {
 /** @brief Reads and writes to settings.
  *
  */
-void handle_getSet(CanardInstance* ins, CanardRxTransfer* transfer) {
+void handle_GetSet(CanardInstance* ins, CanardRxTransfer* transfer) {
   uavcan_protocol_param_GetSetRequest msg;
   uavcan_protocol_param_GetSetResponse resp;
   uint8_t resp_buf[100];
@@ -66,7 +66,7 @@ void handle_getSet(CanardInstance* ins, CanardRxTransfer* transfer) {
   if (msg.name.len > 0) {
     memcpy((void*)name_buf, (void*)msg.name.data, msg.name.len);
     name_buf[msg.name.len] = '\0';
-    setting = get_id_by_name(name_buf);
+    setting = get_setting_index_by_name(name_buf);
   } else {
     setting = msg.index;
   }
@@ -76,33 +76,33 @@ void handle_getSet(CanardInstance* ins, CanardRxTransfer* transfer) {
     resp.name.len = 0;
     resp.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
   } else if (setting >= 0) {
-    resp.name.len = strlen(parameter_info[setting].name);
-    resp.name.data = (uint8_t*)parameter_info[setting].name;
+    resp.name.len = strlen(setting_specs[setting].name);
+    resp.name.data = (uint8_t*)setting_specs[setting].name;
 
-    switch (parameter_info[setting].union_tag) {
+    switch (setting_specs[setting].union_tag) {
       case (SETTING_REAL):
         resp.value.union_tag = SETTING_REAL;
 
         if (msg.value.union_tag != UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY)
-          current_settings[setting].value.real = msg.value.real_value;
+          pending_settings[setting].value.real = msg.value.real_value;
 
-        resp.value.real_value = current_settings[setting].value.real;
+        resp.value.real_value = pending_settings[setting].value.real;
         break;
       case (SETTING_INTEGER):
         resp.value.union_tag = SETTING_INTEGER;
 
         if (msg.value.union_tag != UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY)
-          current_settings[setting].value.integer = msg.value.integer_value;
+          pending_settings[setting].value.integer = msg.value.integer_value;
 
-        resp.value.integer_value = current_settings[setting].value.integer;
+        resp.value.integer_value = pending_settings[setting].value.integer;
         break;
       case (SETTING_BOOLEAN):
         resp.value.union_tag = SETTING_BOOLEAN;
 
         if (msg.value.union_tag != UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY)
-          current_settings[setting].value.boolean = msg.value.boolean_value;
+          pending_settings[setting].value.boolean = msg.value.boolean_value;
 
-        resp.value.boolean_value = current_settings[setting].value.boolean;
+        resp.value.boolean_value = pending_settings[setting].value.boolean;
         break;
       default:
         // TODO better error handling

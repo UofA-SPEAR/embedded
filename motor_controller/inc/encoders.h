@@ -27,7 +27,7 @@ typedef enum {
 } encoder_type_t;
 
 void encoder_init(void);
-int32_t encoder_read(void);
-int32_t encoder_get_position(float in_angle);
+int32_t encoder_read_observation(void);
+int32_t encoder_get_target_observation(float command_angle);
 
 #endif
