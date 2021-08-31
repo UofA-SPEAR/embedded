@@ -5,7 +5,6 @@
  *      Author: isthatme
  */
 
-
 #include "settings.h"
 
 // Strings for all the parameters
