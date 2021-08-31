@@ -8,15 +8,14 @@
 #ifndef FLASH_SETTINGS_H_
 #define FLASH_SETTINGS_H_
 
-#include "main.h"
 #include "encoders.h"
+#include "main.h"
 
 typedef enum {
-	ENDSTOP_DISABLED,
-	ENDSTOP_ENABLED,
-	ENDSTOP_ENABLED_INVERTED,
+  ENDSTOP_DISABLED,
+  ENDSTOP_ENABLED,
+  ENDSTOP_ENABLED_INVERTED,
 } endstop_t;
-
 
 /** @brief Loads in user settings from flash.
  *
