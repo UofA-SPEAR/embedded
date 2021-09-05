@@ -163,11 +163,10 @@ static int32_t pot_get_position(float in_angle)
 
 	position += general.encoder_min;
 
-	if (position > general.encoder_max)
+	if (position < general.encoder_min)
+		position = general.encoder_min;
+	else if (position > general.encoder_max)
 		position = general.encoder_max;
-
-	//if (position < general.encoder_min)
-	//	position = general.encoder_min;
 
 	return position;
 }
@@ -188,6 +187,7 @@ static int32_t linear_get_position(float in_angle)
 {
 	float desired_length;
 	int32_t position;
+	// TODO add an angle offset
 
 	// Comes from cosine law
 	// c^2 = a^2 + b^2 - 2ab*cos(C)
@@ -216,8 +216,6 @@ static int32_t linear_get_position(float in_angle)
 	float linear_range = linear.length_max -
 			linear.length_min;
 
-
-
 	// set position properly
 	position =
 			// fit length into encoder range
@@ -245,6 +243,7 @@ static int32_t none_get_position(float position)
 	return position * 10000;
 }
 
+/// @brief Load settings and choose strategy to map position to encoder values.
 void encoder_init(void)
 {
 	int encoder_type =
@@ -275,9 +274,13 @@ void encoder_init(void)
 
 	switch (encoder_type) {
 		case (ENCODER_POTENTIOMETER):
+			palSetLine(ENCODER_C1);
 			pot_init();
 			read_encoder = pot_read;
 			get_position = pot_get_position;
+			if (general.to_radians == 0.0f) {
+				get_position = linear_get_position;
+			}
 			break;
 		case (ENCODER_QUADRATURE):
 			quadrature_init();
@@ -302,11 +305,17 @@ void encoder_init(void)
 	}
 }
 
+/// @brief Wrapper to read encoder value
+///
+/// Should probably just export the function pointer symbol.
 int32_t encoder_read(void)
 {
 	return read_encoder();
 }
 
+/// @brief Wrapper to get position from input signal
+///
+/// Should probably just export the function pointer symbol.
 int32_t encoder_get_position(float in_angle)
 {
 	return get_position(in_angle);

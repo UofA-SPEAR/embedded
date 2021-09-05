@@ -7,3 +7,6 @@
 [submodule "ChibiOS"]
 	path = ChibiOS
 	url = https://github.com/UofA-SPEAR/ChibiOS
+[submodule "motor_controller/libcanard_v0"]
+	path = motor_controller/libcanard_v0
+	url = git@github.com:UAVCAN/libcanard.git
