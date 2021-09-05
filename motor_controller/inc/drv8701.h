@@ -8,4 +8,4 @@ void drv8701_set(int16_t velocity);
 void drv8701_stop(void);
 void drv8701_set_current(dacsample_t current);
 
-#endif // DRV8701_H_
+#endif  // DRV8701_H_

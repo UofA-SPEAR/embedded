@@ -13,44 +13,43 @@
 #define SETTINGS_H_
 
 #include "canard.h"
-
 #include "uavcan/protocol/param/Value.h"
 
 /** @brief Different data types that our settings can be
  */
 typedef enum {
-    SETTING_REAL = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE,
-    SETTING_INTEGER = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE,
-    SETTING_BOOLEAN = UAVCAN_PROTOCOL_PARAM_VALUE_BOOLEAN_VALUE,
+  SETTING_REAL = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE,
+  SETTING_INTEGER = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE,
+  SETTING_BOOLEAN = UAVCAN_PROTOCOL_PARAM_VALUE_BOOLEAN_VALUE,
 } setting_t;
 
 /** @brief Structure to hold the relevant information for settings
  */
 struct parameter {
-    char* name;
-    setting_t union_tag;
+  char* name;
+  setting_t union_tag;
 };
 
 struct setting {
-    setting_t union_tag;
-    union {
-        double real;
-        int64_t integer;
-        bool boolean;
-    } value;
+  setting_t union_tag;
+  union {
+    double real;
+    int64_t integer;
+    bool boolean;
+  } value;
 };
 
 /** @brief Standard initialisation for a real setting */
 #define CAN_SETTING_REAL(str) \
-    {.name = str, .union_tag = SETTING_REAL}
+  { .name = str, .union_tag = SETTING_REAL }
 
 /** @brief Standard initialisation for an integer setting */
 #define CAN_SETTING_INTEGER(str) \
-    {.name = str, .union_tag = SETTING_INTEGER}
+  { .name = str, .union_tag = SETTING_INTEGER }
 
 /** @brief Standard initialisation for a boolean setting */
 #define CAN_SETTING_BOOLEAN(str) \
-    {.name = str, .union_tag = SETTING_BOOLEAN}
+  { .name = str, .union_tag = SETTING_BOOLEAN }
 
 #define NUM_SETTINGS 18
 
