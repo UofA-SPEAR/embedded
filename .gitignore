@@ -1,7 +1,5 @@
 **/Debug/*
 **/build/*
-<<<<<<< HEAD
-
 **/.dep/*
 *.code-workspace
 **/ipch/*
@@ -12,5 +10,5 @@
 **/.vscode/settings.json
 **/.vscode/cortex*
 *.swp
-
 .vagrant
+**/.vscode/c_cpp_properties.json

@@ -5,7 +5,8 @@
     "version": "0.2.0",
     "configurations": [
         {
-            // Change this for your specific installation
+	    // Change this for your specific installation
+            "armToolchainPath": "/home/david/install/gcc-arm-none-eabi-9-2020-q2-update/bin",
             // Common
             "cwd": "${workspaceRoot}",
             "executable": "./build/ch.elf",
@@ -13,7 +14,7 @@
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "openocd",
-            "device": "STM32F303CC",
+            "device": "STM32F303CB",
             "demangle": true,
             // OpenOCD specific
             "configFiles": ["../common/f3_openocd.cfg"],

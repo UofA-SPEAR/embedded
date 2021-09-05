@@ -13,10 +13,13 @@
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "openocd",
+            "runToMain": true,
             "device": "STM32F303CC",
             "demangle": true,
+            "svdFile": "../common/SVD/STM32F303.svd",
             // OpenOCD specific
             "configFiles": ["../common/f3_openocd.cfg"],
+            "preLaunchTask": "build"
         }
     ]
 }
