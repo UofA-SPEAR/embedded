@@ -3,6 +3,7 @@
 
 #include "ch.h"
 #include "hal.h"
+#include "canard.h"
 
 // ---- Implementation Requirements ---- //
 struct can_msg_handler {
