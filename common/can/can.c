@@ -1,8 +1,7 @@
 #include "canard.h"
 #include "can.h"
 
-#include "ch.h"
-#include "hal.h"
+#include "uavcan/protocol/NodeStatus.h"
 
 #include <stdbool.h>
 
@@ -113,6 +112,26 @@ void can_init(CANConfig *hw_config) {
 }
 
 static bool restart_request;
+static uint8_t node_health;
+static uint8_t node_mode;
+static uint8_t nodestatus_transfer_id;
+
+static void publish_NodeStatus(void) {
+  uavcan_protocol_NodeStatus msg;
+  uint16_t len;
+
+  msg.health = node_health;
+  msg.mode = node_mode;
+  msg.sub_mode = 0;
+  msg.vendor_specific_status_code = 0;
+  msg.uptime_sec = TIME_I2S(chVTGetSystemTime());
+
+  len = uavcan_protocol_NodeStatus_encode(&msg, canard_memory_pool);
+
+  canardBroadcast(&canard_instance, UAVCAN_PROTOCOL_NODESTATUS_SIGNATURE,
+                  UAVCAN_PROTOCOL_NODESTATUS_ID, &nodestatus_transfer_id, 0, canard_memory_pool,
+                  len);
+}
 
 /// @brief Takes control of thread to handle incoming and outgoing messages
 void can_handle_forever(void) {
@@ -121,6 +140,7 @@ void can_handle_forever(void) {
   CANTxFrame txmsg;
   CANRxFrame rxmsg;
 
+  systime_t time = chVTGetSystemTimeX();
   restart_request = false;
 
   while (true) {
@@ -149,10 +169,20 @@ void can_handle_forever(void) {
         ;
       NVIC_SystemReset();
     }
+
+    if (TIME_I2MS(time - chVTGetSystemTimeX()) > 1000) {
+      publish_NodeStatus();
+      time = chVTGetSystemTimeX();
+    }
   }
 }
 
 /// @brief Request a system restart once all messages are flushed.
 void can_request_restart(bool reset) {
   restart_request = reset;
+}
+
+void can_set_node_status(uint8_t health, uint8_t mode) {
+  node_health = health;
+  node_mode = mode;
 }
