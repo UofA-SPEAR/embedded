@@ -13,7 +13,8 @@ struct can_msg_handler {
 
 #define CAN_MSG_HANDLER(topic_id, topic_signature, topic_handler) \
   { .id = topic_id, .signature = topic_signature, .handler = topic_handler }
-#define CAN_MSG_HANDLER_END {.id = 0, .signature = 0, .handler = NULL}
+#define CAN_MSG_HANDLER_END \
+  { .id = 0, .signature = 0, .handler = NULL }
 
 extern struct can_msg_handler can_broadcast_handlers[];
 extern struct can_msg_handler can_request_handlers[];
@@ -21,7 +22,7 @@ extern struct can_msg_handler can_request_handlers[];
 // ---- Usage functions ---- //
 
 // Call this once during initialization
-void can_init(CANConfig *hw_config);
+void can_init(CANConfig* hw_config);
 // Place this in it's own idle thread to run forever
 void can_handle_forever(void);
 void can_request_restart(bool reset);
@@ -53,4 +54,4 @@ void can_set_node_status(uint8_t health, uint8_t mode);
 // TODO check these priorities
 #define CAN_GETSET_PRIORITY 30
 
-#endif // CAN_H_
+#endif  // CAN_H_

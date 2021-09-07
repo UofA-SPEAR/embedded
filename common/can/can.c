@@ -1,15 +1,16 @@
-#include "canard.h"
 #include "can.h"
 
-#include "uavcan/protocol/NodeStatus.h"
-
 #include <stdbool.h>
+
+#include "canard.h"
+#include "uavcan/protocol/NodeStatus.h"
 
 CanardInstance canard_instance;
 static uint8_t canard_memory_pool[LIBCANARD_MEM_POOL_SIZE];
 
 /// @brief Copies received ChibiOS CAN frame into libcanard's required format
-static void receive_canard_frame(CANRxFrame *in_frame, CanardCANFrame *out_frame) {
+static void receive_canard_frame(CANRxFrame *in_frame,
+                                 CanardCANFrame *out_frame) {
   if (in_frame->IDE) {
     out_frame->id = CANARD_CAN_FRAME_EFF | in_frame->EID;
   } else {
@@ -32,11 +33,12 @@ static void send_canard_frame(CanardCANFrame *in_frame, CANTxFrame *out_frame) {
   }
 }
 
-
 // Callbacks used on transfer acceptance.
-static bool should_accept(const CanardInstance *ins, uint64_t *out_data_type_signature,
-                   uint16_t data_type_id, CanardTransferType transfer_type,
-                   uint8_t source_node_id) {
+static bool should_accept(const CanardInstance *ins,
+                          uint64_t *out_data_type_signature,
+                          uint16_t data_type_id,
+                          CanardTransferType transfer_type,
+                          uint8_t source_node_id) {
   (void)source_node_id;
   (void)ins;
   uint16_t i = 0;
@@ -94,7 +96,8 @@ static void on_reception(CanardInstance *ins, CanardRxTransfer *transfer) {
 
 /// @brief Initialize and start CAN device and libcanard instance.
 ///
-/// @param[in] hw_config    Alternative HW configuration, NULL to use default (known working for F303)
+/// @param[in] hw_config    Alternative HW configuration, NULL to use default
+/// (known working for F303)
 void can_init(CANConfig *hw_config) {
   const CANConfig default_config = {
       /*.mcr = */ CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
@@ -107,8 +110,8 @@ void can_init(CANConfig *hw_config) {
     canStart(&CAND1, &default_config);
   }
 
-  canardInit(&canard_instance, &canard_memory_pool,
-             LIBCANARD_MEM_POOL_SIZE, on_reception, should_accept, NULL);
+  canardInit(&canard_instance, &canard_memory_pool, LIBCANARD_MEM_POOL_SIZE,
+             on_reception, should_accept, NULL);
 }
 
 static bool restart_request;
@@ -129,8 +132,8 @@ static void publish_NodeStatus(void) {
   len = uavcan_protocol_NodeStatus_encode(&msg, canard_memory_pool);
 
   canardBroadcast(&canard_instance, UAVCAN_PROTOCOL_NODESTATUS_SIGNATURE,
-                  UAVCAN_PROTOCOL_NODESTATUS_ID, &nodestatus_transfer_id, 0, canard_memory_pool,
-                  len);
+                  UAVCAN_PROTOCOL_NODESTATUS_ID, &nodestatus_transfer_id, 0,
+                  canard_memory_pool, len);
 }
 
 /// @brief Takes control of thread to handle incoming and outgoing messages
@@ -178,9 +181,7 @@ void can_handle_forever(void) {
 }
 
 /// @brief Request a system restart once all messages are flushed.
-void can_request_restart(bool reset) {
-  restart_request = reset;
-}
+void can_request_restart(bool reset) { restart_request = reset; }
 
 void can_set_node_status(uint8_t health, uint8_t mode) {
   node_health = health;

@@ -2,8 +2,8 @@
 
 #include "canard.h"
 //#include "canard_stm32.h"
-#include "coms.h"
 #include "can.h"
+#include "coms.h"
 #include "flash_settings.h"
 #include "main.h"
 #include "settings.h"
@@ -53,7 +53,9 @@ static void run_actuator_command(uavcan_equipment_actuator_Command *cmd) {
 }
 
 void coms_init(void) {
-  actuator_id = current_settings[get_setting_index_by_name("spear.motor.actuator_id")].value.integer;
+  actuator_id =
+      current_settings[get_setting_index_by_name("spear.motor.actuator_id")]
+          .value.integer;
   can_init(NULL);
 }
 
@@ -93,8 +95,7 @@ struct can_msg_handler can_request_handlers[] = {
                     UAVCAN_PROTOCOL_GETNODEINFO_SIGNATURE, handle_GetNodeInfo),
     CAN_MSG_HANDLER(UAVCAN_PROTOCOL_RESTARTNODE_ID,
                     UAVCAN_PROTOCOL_RESTARTNODE_SIGNATURE, handle_RestartNode),
-    CAN_MSG_HANDLER_END
-};
+    CAN_MSG_HANDLER_END};
 
 struct can_msg_handler can_broadcast_handlers[] = {
     CAN_MSG_HANDLER(UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID,
@@ -103,8 +104,7 @@ struct can_msg_handler can_broadcast_handlers[] = {
     // this one shouldn't actually really be sent
     CAN_MSG_HANDLER(2155, UAVCAN_EQUIPMENT_ACTUATOR_COMMAND_SIGNATURE,
                     handle_Actuator_Command),
-    CAN_MSG_HANDLER_END
-};
+    CAN_MSG_HANDLER_END};
 
 static void handle_RestartNode(CanardInstance *ins,
                                CanardRxTransfer *transfer) {
