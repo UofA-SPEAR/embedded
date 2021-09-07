@@ -28,6 +28,7 @@
 
 #include "canard.h"
 #include "coms.h"
+#include "can.h"
 #include "flash_settings.h"
 #include "uavcan/protocol/param/GetSet.h"
 
