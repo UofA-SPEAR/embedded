@@ -15,54 +15,49 @@
 */
 
 #include "main.h"
+
 #include "can.h"
 
-static CanardConfig canprofile;
-CanardRxSubscription heartbeat;
-static THD_WORKING_AREA(waThread1, 128);
-static THD_FUNCTION(Thread1, arg) {
+can_msg_handler can_broadcast_handlers[] = {CAN_MSG_HANDLER_END};
+
+can_msg_handler can_request_handlers[] = {CAN_MSG_HANDLER_END};
+
+static THD_WORKING_AREA(waHeartbeatThread, 128);
+static THD_FUNCTION(HeartbeatThread, arg) {
   (void)arg;
   while (1) {
-    //first thread
+    // first thread
     palToggleLine(LINE_LED);
     chThdSleepMilliseconds(1000);
   }
 }
 
-/**
- * setup function: initialize your stuff here!
- */
-void setup(void) 
-{
-  canprofile.can_cfg = get1MConfig();
-  canprofile.can_driver = &CAND1;
-  canprofile.node_id = 40;
-  canardStart(&canprofile);
-  CanardInstance *ins = canardAcquire();
-  canardRxSubscribe(ins, CanardTransferKindMessage, 32085, 7, 
-                    CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC, &heartbeat);
-  canardRelease(ins);
-}
 /*
  * Application entry point.
  */
 int main(void) {
-
   /*
    * System initializations.
    * - HAL initialization, this also initializes the configured device drivers
    *   and performs the board-specific initializations.
    * - Kernel initialization, the main() function becomes a thread and the
    *   RTOS is active.
+   * - CAN initialization, starts the driver and initializes libcanard
    */
   halInit();
   chSysInit();
-  sdStart(&SD2, NULL); // debug monitor, using PA2 and PA3
-  chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL); 
-  // setup();
-  // main() thread activity
-  while (1) {
-    //This is another thread
-    chThdSleepMilliseconds(1);
-  }
+  can_init(NULL, can_broadcast_handlers, can_request_handlers);
+
+  // Creates a new thread and runs it in it's own little stack space.
+  chThdCreateStatic(waHeartbeatThread, sizeof(waHeartbeatThread), NORMALPRIO,
+                    HeartbeatThread, NULL);
+
+  // This is the main thread, it will continue to run even after we started
+  // the other thread.
+
+  // This function will now keep running until we reset.
+  // NOTE: this function has a forever loop inside, otherwise we would
+  // need to add a while (1) or something here if we wanted to keep this
+  // main thread running.
+  can_handle_forever();
 }
