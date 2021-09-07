@@ -27,9 +27,6 @@
 #define DYNAMIC_ARRAY_BUF_SIZE 1000
 #define RX_FIFO_LEN 10
 
-CanardInstance m_canard_instance;
-static uint8_t libcanard_memory_pool[LIBCANARD_MEM_POOL_SIZE];
-
 // Dynamic array buffer for decoding messages
 uint8_t dynamic_array_buf[DYNAMIC_ARRAY_BUF_SIZE];
 // The below is necessary, otherwise a pointer to dynamic_array_buf resolves to
@@ -57,7 +54,7 @@ static void run_actuator_command(uavcan_equipment_actuator_Command *cmd) {
 
 void coms_init(void) {
   actuator_id = current_settings[get_setting_index_by_name("spear.motor.actuator_id")].value.integer;
-  can_init();
+  can_init(NULL);
 }
 
 /** @brief Handles ActuatorCommand messages
@@ -113,8 +110,6 @@ static void handle_RestartNode(CanardInstance *ins,
                                CanardRxTransfer *transfer) {
   uavcan_protocol_RestartNodeResponse rsp;
   uavcan_protocol_RestartNodeRequest msg;
-  CanardCANFrame *out_frame;
-  CANTxFrame txmsg;
   uint8_t rsp_msg_buf[8];  // doesn't need to be this big
   int32_t len;
   (void)ins;
@@ -128,7 +123,7 @@ static void handle_RestartNode(CanardInstance *ins,
 
     rsp.ok = true;
     len = uavcan_protocol_RestartNodeResponse_encode(&rsp, rsp_msg_buf);
-    canardRequestOrRespond(&m_canard_instance, transfer->source_node_id,
+    canardRequestOrRespond(ins, transfer->source_node_id,
                            UAVCAN_PROTOCOL_RESTARTNODE_SIGNATURE,
                            UAVCAN_PROTOCOL_RESTARTNODE_ID, &inout_transfer_id,
                            0, CanardResponse, (const void *)rsp_msg_buf, len);

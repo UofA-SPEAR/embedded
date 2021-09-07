@@ -1,6 +1,9 @@
 #ifndef CAN_H_
 #define CAN_H_
 
+#include "ch.h"
+#include "hal.h"
+
 // ---- Implementation Requirements ---- //
 struct can_msg_handler {
   uint16_t id;
@@ -18,9 +21,10 @@ extern struct can_msg_handler can_request_handlers[];
 // ---- Usage functions ---- //
 
 // Call this once during initialization
-void can_init(void);
+void can_init(CANConfig *hw_config);
 // Place this in it's own idle thread to run forever
 void can_handle_forever(void);
+void can_request_restart(bool reset);
 
 /* ------------ Error Definitions --------------- */
 

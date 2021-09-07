@@ -10,6 +10,7 @@
 #include "drv8701.h"
 #include "encoders.h"
 #include "hal.h"
+#include "can.h"
 #include "settings.h"
 #include "uavcan/equipment/actuator/Status.h"
 #include "uavcan/protocol/NodeStatus.h"
