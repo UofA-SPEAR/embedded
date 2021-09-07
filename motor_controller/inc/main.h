@@ -42,7 +42,7 @@
 /** Period of motor control loop */
 #define MOTOR_CONTROL_PERIOD 100
 
-extern int32_t desired_positions[2];
+extern int32_t target_observations[2];
 extern arm_pid_instance_f32 pid;
 
 extern bool flag_motor_running;
@@ -50,6 +50,6 @@ extern bool flag_motor_running;
 extern thread_t *RunMotor_thread;
 extern thread_t *Heartbeat_thread;
 
-void motor_set(float position);
+void motor_set(float command_angle);
 
 #endif /* MAIN_H_ */

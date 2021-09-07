@@ -22,14 +22,14 @@
 #define BASE_NODE_ID 30
 
 arm_pid_instance_f32 pid;
-int32_t desired_position;
+int32_t target_observation;
 
 bool flag_motor_running = false;
 
 thread_t *RunMotor_thread;
 thread_t *Heartbeat_thread;
 
-enum motor_reversal {
+enum motor_reversal_t {
   MOTOR_BACKWARDS = -1,
   MOTOR_FORWARDS = 1,
 };
@@ -40,16 +40,16 @@ static bool flag_motor_enabled = false;
 /// @brief Routine to keep motor in an angular position, according to config.
 static void motor_run_angular(void) {
   uavcan_equipment_actuator_Status status;
-  static int32_t current_position = 0;
+  static int32_t current_observation = 0;
   uint8_t status_buf[20];
   float error, out;
   int32_t out_int;
 
-  current_position = encoder_read();
+  current_observation = encoder_read_observation();
   // Actually return as position, not just encoder value maybe?
-  status.position = current_position;
+  status.position = current_observation;
 
-  error = (float)(desired_position - current_position);
+  error = (float)(target_observation - current_observation);
   error *= motor_reversed;
 
   // Run control loop
@@ -75,7 +75,7 @@ static void motor_run_angular(void) {
 
 /// @brief Runs motor without speed or position control, need to send raw
 ///        PWM values.
-static void motor_run_ol(void) { drv8701_set(desired_position); }
+static void motor_run_ol(void) { drv8701_set(target_observation); }
 
 /// Function pointer to swap out motor control strategies.
 static void (*motor_run)(void);
@@ -86,14 +86,16 @@ void motor_init(void) {
   // TODO maybe have a bit more sane way of checking settings.
   motor_run = motor_run_angular;
 
-  if (run_settings[get_id_by_name("spear.motor.encoder.type")].value.integer ==
-      ENCODER_NONE)
+  if (current_settings[get_setting_index_by_name("spear.motor.encoder.type")]
+          .value.integer == ENCODER_NONE)
     motor_run = motor_run_ol;
 
-  if (run_settings[get_id_by_name("spear.motor.reversed")].value.boolean)
+  if (current_settings[get_setting_index_by_name("spear.motor.reversed")]
+          .value.boolean)
     motor_reversed = MOTOR_BACKWARDS;
 
-  if (run_settings[get_id_by_name("spear.motor.enabled")].value.boolean)
+  if (current_settings[get_setting_index_by_name("spear.motor.enabled")]
+          .value.boolean)
     flag_motor_enabled = true;
 }
 
@@ -101,9 +103,9 @@ void motor_init(void) {
 ///
 /// @note Sets a desired encoder value, uses configuration to determine
 ///       how to obtain that from a float.
-void motor_set(float position) {
+void motor_set(float command_angle) {
   flag_motor_running = true;
-  desired_position = encoder_get_position(position);
+  target_observation = encoder_get_target_observation(command_angle);
 }
 
 /// @brief Determine CAN node ID from physical switches.
@@ -212,7 +214,7 @@ static THD_FUNCTION(Heartbeat, arg) {
   while (true) {
     time += TIME_MS2I(1000);
     palToggleLine(LINE_LED);
-    publish_nodeStatus();
+    publish_NodeStatus();
     chThdSleepUntil(time);
   }
 }
@@ -228,21 +230,24 @@ int main(void) {
   node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_INITIALIZATION;
   load_settings();
   for (int i = 0; i < NUM_SETTINGS; i++)
-    run_settings[i].value = saved_settings[i].value;
+    current_settings[i].value = saved_settings[i].value;
   check_settings();
   motor_init();
   drv8701_init();
   encoder_init();
   drv8701_set_current(12u);
-  comInit();
+  coms_init();
   node_id = read_node_id();
   canardSetLocalNodeID(&m_canard_instance, node_id);
 
   // setup PID
   memset(&pid, 0, sizeof(arm_pid_instance_f32));
-  pid.Kp = run_settings[get_id_by_name("spear.motor.pid.Kp")].value.real;
-  pid.Ki = run_settings[get_id_by_name("spear.motor.pid.Ki")].value.real;
-  pid.Kd = run_settings[get_id_by_name("spear.motor.pid.Kd")].value.real;
+  pid.Kp = current_settings[get_setting_index_by_name("spear.motor.pid.Kp")]
+               .value.real;
+  pid.Ki = current_settings[get_setting_index_by_name("spear.motor.pid.Ki")]
+               .value.real;
+  pid.Kd = current_settings[get_setting_index_by_name("spear.motor.pid.Kd")]
+               .value.real;
   arm_pid_init_f32(&pid, 1);
 
   // TODO maybe handle errors here?

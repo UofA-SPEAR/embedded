@@ -2,7 +2,7 @@
 #define COMS_H_
 #include "canard.h"
 
-void comInit(void);
+void coms_init(void);
 void updateComs(void);
 
 /* ------------ Error Definitions --------------- */
@@ -75,6 +75,6 @@ int16_t setup_hardware_can_filters(void);
 
 void coms_handle_forever(void);
 
-void publish_nodeStatus(void);
+void publish_NodeStatus(void);
 
 #endif

@@ -44,8 +44,8 @@ uint8_t inout_transfer_id;
 
 static uint8_t actuator_id;
 
-static void restart_node(CanardInstance *ins, CanardRxTransfer *transfer);
-static void return_node_info(CanardInstance *ins, CanardRxTransfer *transfer);
+static void handle_RestartNode(CanardInstance *ins, CanardRxTransfer *transfer);
+static void handle_GetNodeInfo(CanardInstance *ins, CanardRxTransfer *transfer);
 
 static void chibiosCanardHandler(CanardCANFrame *const rx_frame,
                                  const CanardCANFrame *tx_frame,
@@ -71,9 +71,10 @@ static void chibiosCanardHandler(CanardCANFrame *const rx_frame,
   }
 }
 
-void comInit(void) {
+void coms_init(void) {
   actuator_id =
-      run_settings[get_id_by_name("spear.motor.actuator_id")].value.integer;
+      current_settings[get_setting_index_by_name("spear.motor.actuator_id")]
+          .value.integer;
 
   const CANConfig config = {
       /*.mcr = */ CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
@@ -118,7 +119,7 @@ void coms_handle_forever(void) {
   }
 }
 
-static void actuator_run_command(uavcan_equipment_actuator_Command *cmd) {
+static void run_actuator_command(uavcan_equipment_actuator_Command *cmd) {
   if (cmd->actuator_id == actuator_id) {
     motor_set(cmd->command_value);
   }
@@ -138,7 +139,7 @@ static void handle_Actuator_ArrayCommand(CanardInstance *ins,
                                                 &msg, &p_dynamic_array_buf);
 
   for (int i = 0; i < msg.commands.len; i++) {
-    actuator_run_command(&msg.commands.data[i]);
+    run_actuator_command(&msg.commands.data[i]);
   }
 }
 
@@ -150,16 +151,16 @@ static void handle_Actuator_Command(CanardInstance *ins,
   uavcan_equipment_actuator_Command_decode(transfer, transfer->payload_len,
                                            &cmd, &p_dynamic_array_buf);
 
-  actuator_run_command(&cmd);
+  run_actuator_command(&cmd);
 }
 
 struct can_msg_handler can_request_handlers[] = {
     CAN_MSG_HANDLER(UAVCAN_PROTOCOL_PARAM_GETSET_ID,
-                    UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE, handle_getSet),
+                    UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE, handle_GetSet),
     CAN_MSG_HANDLER(UAVCAN_PROTOCOL_GETNODEINFO_ID,
-                    UAVCAN_PROTOCOL_GETNODEINFO_SIGNATURE, return_node_info),
+                    UAVCAN_PROTOCOL_GETNODEINFO_SIGNATURE, handle_GetNodeInfo),
     CAN_MSG_HANDLER(UAVCAN_PROTOCOL_RESTARTNODE_ID,
-                    UAVCAN_PROTOCOL_RESTARTNODE_SIGNATURE, restart_node)};
+                    UAVCAN_PROTOCOL_RESTARTNODE_SIGNATURE, handle_RestartNode)};
 
 struct can_msg_handler can_broadcast_handlers[] = {
     CAN_MSG_HANDLER(UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID,
@@ -217,7 +218,8 @@ void on_reception(CanardInstance *ins, CanardRxTransfer *transfer) {
   }
 }
 
-static void restart_node(CanardInstance *ins, CanardRxTransfer *transfer) {
+static void handle_RestartNode(CanardInstance *ins,
+                               CanardRxTransfer *transfer) {
   uavcan_protocol_RestartNodeResponse rsp;
   uavcan_protocol_RestartNodeRequest msg;
   CanardCANFrame *out_frame;
@@ -265,7 +267,8 @@ static void restart_node(CanardInstance *ins, CanardRxTransfer *transfer) {
   }
 }
 
-static void return_node_info(CanardInstance *ins, CanardRxTransfer *transfer) {
+static void handle_GetNodeInfo(CanardInstance *ins,
+                               CanardRxTransfer *transfer) {
   uavcan_protocol_GetNodeInfoResponse out_msg;
   char name_device[] = "Arm Controller";
   out_msg.name.len = strlen(name_device);
@@ -292,7 +295,7 @@ static void return_node_info(CanardInstance *ins, CanardRxTransfer *transfer) {
                          CanardResponse, out_buf, len);
 }
 
-void publish_nodeStatus(void) {
+void publish_NodeStatus(void) {
   uavcan_protocol_NodeStatus msg;
   uint16_t len;
 

@@ -21,17 +21,17 @@ typedef enum {
   SETTING_REAL = UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE,
   SETTING_INTEGER = UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE,
   SETTING_BOOLEAN = UAVCAN_PROTOCOL_PARAM_VALUE_BOOLEAN_VALUE,
-} setting_t;
+} setting_type_t;
 
 /** @brief Structure to hold the relevant information for settings
  */
-struct parameter {
+struct setting_spec_t {
   char* name;
-  setting_t union_tag;
+  setting_type_t union_tag;
 };
 
-struct setting {
-  setting_t union_tag;
+struct setting_value_t {
+  setting_type_t union_tag;
   union {
     double real;
     int64_t integer;
@@ -53,12 +53,12 @@ struct setting {
 
 #define NUM_SETTINGS 18
 
-extern const struct parameter parameter_info[NUM_SETTINGS];
-extern struct setting saved_settings[NUM_SETTINGS];
-extern struct setting current_settings[NUM_SETTINGS];
-extern struct setting run_settings[NUM_SETTINGS];
+extern const struct setting_spec_t setting_specs[NUM_SETTINGS];
+extern struct setting_value_t saved_settings[NUM_SETTINGS];
+extern struct setting_value_t pending_settings[NUM_SETTINGS];
+extern struct setting_value_t current_settings[NUM_SETTINGS];
 
-int8_t get_id_by_name(char* name);
-void handle_getSet(CanardInstance* ins, CanardRxTransfer* transfer);
+int8_t get_setting_index_by_name(char* name);
+void handle_GetSet(CanardInstance* ins, CanardRxTransfer* transfer);
 
 #endif /* SETTINGS_H_ */
