@@ -1,5 +1,4 @@
 #include "canard.h"
-#include "main.h"
 #include "can.h"
 
 #include "ch.h"
@@ -95,15 +94,21 @@ static void on_reception(CanardInstance *ins, CanardRxTransfer *transfer) {
 }
 
 /// @brief Initialize and start CAN device and libcanard instance.
-void can_init(void) {
-// TODO this needs to be device-specific
-  const CANConfig config = {
+///
+/// @param[in] hw_config    Alternative HW configuration, NULL to use default (known working for F303)
+void can_init(CANConfig *hw_config) {
+  const CANConfig default_config = {
       /*.mcr = */ CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
       /*.btr = */ CAN_BTR_SJW(1) | CAN_BTR_TS2(4) | CAN_BTR_TS1(5) |
           CAN_BTR_BRP(5)};
-  canStart(&CAND1, &config);
 
-  canardInit(&m_canard_instance, &canard_memory_pool,
+  if (hw_config != NULL) {
+    canStart(&CAND1, hw_config);
+  } else {
+    canStart(&CAND1, &default_config);
+  }
+
+  canardInit(&canard_instance, &canard_memory_pool,
              LIBCANARD_MEM_POOL_SIZE, on_reception, should_accept, NULL);
 }
 
@@ -122,17 +127,17 @@ void can_handle_forever(void) {
     if (canReceiveTimeout(&CAND1, CAN_ANY_MAILBOX, &rxmsg, TIME_IMMEDIATE) ==
         MSG_OK) {
       receive_canard_frame(&rxmsg, &in_frame);
-      canardHandleRxFrame(&m_canard_instance, &in_frame,
+      canardHandleRxFrame(&canard_instance, &in_frame,
                           TIME_I2MS(chVTGetSystemTimeX()));
     }
 
-    out_frame = canardPeekTxQueue(&m_canard_instance);
+    out_frame = canardPeekTxQueue(&canard_instance);
 
     if (out_frame != NULL) {  // If there are any frames to transmit
       send_canard_frame(out_frame, &txmsg);
       if (canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_IMMEDIATE) ==
           MSG_OK) {  // If transmit is successful
-        canardPopTxQueue(&m_canard_instance);
+        canardPopTxQueue(&canard_instance);
       }
     } else if (restart_request) {
       // We can restart now that we have sent all of our frames
