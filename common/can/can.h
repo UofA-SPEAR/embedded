@@ -25,6 +25,7 @@ void can_init(CANConfig *hw_config);
 // Place this in it's own idle thread to run forever
 void can_handle_forever(void);
 void can_request_restart(bool reset);
+void can_set_node_status(uint8_t health, uint8_t mode);
 
 /* ------------ Error Definitions --------------- */
 
