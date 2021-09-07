@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "coms.h"
 #include "can.h"
+#include "coms.h"
 #include "hal.h"
 #include "settings.h"
 #include "uavcan/protocol/NodeStatus.h"
@@ -183,13 +183,16 @@ static int32_t linear_get_target_observation(float command_angle) {
 
   // TODO set nodestatus
   if (desired_length < linear.length_min) {
-    can_set_node_status(UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING, UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL);
+    can_set_node_status(UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING,
+                        UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL);
     desired_length = linear.length_min;
   } else if (desired_length > linear.length_max) {
-    can_set_node_status(UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING, UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL);
+    can_set_node_status(UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING,
+                        UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL);
     desired_length = linear.length_max;
   } else {
-    can_set_node_status(UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK, UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL);
+    can_set_node_status(UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK,
+                        UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL);
   }
 
   // These are checked to be positive in check_settings()

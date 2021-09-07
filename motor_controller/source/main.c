@@ -5,12 +5,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "can.h"
 #include "ch.h"
 #include "core_cm4.h"
 #include "drv8701.h"
 #include "encoders.h"
 #include "hal.h"
-#include "can.h"
 #include "settings.h"
 #include "uavcan/equipment/actuator/Status.h"
 #include "uavcan/protocol/NodeStatus.h"
@@ -71,8 +71,7 @@ static void motor_run_angular(void) {
 
   // Send status info
   int len = uavcan_equipment_actuator_Status_encode(&status, &status_buf);
-  canardBroadcast(&canard_instance,
-                  UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
+  canardBroadcast(&canard_instance, UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
                   UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID, &inout_transfer_id, 5,
                   &status_buf, len);
 }

@@ -5,7 +5,6 @@
 void coms_init(void);
 void updateComs(void);
 
-
 // Should this go here or in another file?
 // Paramater indexes to use
 typedef enum {
