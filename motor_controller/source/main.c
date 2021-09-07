@@ -260,7 +260,7 @@ int main(void) {
                         NORMALPRIO, Heartbeat, NULL);
 
   chThdSetPriority(LOWPRIO);
-  coms_handle_forever();
+  can_handle_forever();
 }
 
 // Simply needs to be defined somewhere
