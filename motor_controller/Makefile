@@ -115,6 +115,7 @@ include $(CHIBIOS)/test/rt/rt_test.mk
 include $(CHIBIOS)/test/oslib/oslib_test.mk
 
 # UAVCAN Stuff
+include $(COMMON)/can/can.mk
 include $(COMMON)/libcanard.mk
 include $(COMMON)/uavcan_msgs.mk
 
