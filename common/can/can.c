@@ -101,7 +101,8 @@ static void on_reception(CanardInstance *ins, CanardRxTransfer *transfer) {
 ///
 /// @param[in] hw_config    Alternative HW configuration, NULL to use default
 /// (known working for F303)
-void can_init(CANConfig *hw_config, can_msg_handler broadcast_handlers[], can_msg_handler request_handlers[]) {
+void can_init(CANConfig *hw_config, can_msg_handler broadcast_handlers[],
+              can_msg_handler request_handlers[]) {
   const CANConfig default_config = {
       /*.mcr = */ CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
       /*.btr = */ CAN_BTR_SJW(1) | CAN_BTR_TS2(4) | CAN_BTR_TS1(5) |

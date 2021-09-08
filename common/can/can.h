@@ -1,9 +1,9 @@
 #ifndef CAN_H_
 #define CAN_H_
 
+#include "canard.h"
 #include "ch.h"
 #include "hal.h"
-#include "canard.h"
 
 // ---- Implementation Requirements ---- //
 typedef struct {
@@ -20,7 +20,8 @@ typedef struct {
 // ---- Usage functions ---- //
 
 // Call this once during initialization
-void can_init(CANConfig* hw_config, can_msg_handler broadcast_handlers[], can_msg_handler request_handlers[]);
+void can_init(CANConfig* hw_config, can_msg_handler broadcast_handlers[],
+              can_msg_handler request_handlers[]);
 // Place this in it's own idle thread to run forever
 void can_handle_forever(void);
 void can_request_restart(bool reset);
