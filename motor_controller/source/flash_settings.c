@@ -63,7 +63,7 @@ void load_settings(void) {
     pending_settings[i] = saved_settings[i];
   }
   for (int i = 0; i < NUM_SETTINGS; i++) {
-    current_settings[i].value = saved_settings[i].value;
+    current_settings[i] = saved_settings[i];
   }
 }
 
