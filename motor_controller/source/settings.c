@@ -36,13 +36,33 @@ static uint8_t* p_dynamic_array_buf = dynamic_array_buf;
 
 extern uint8_t inout_transfer_id;
 
-int8_t get_setting_index_by_name(char* name) {
+static int8_t get_setting_index_by_name(char* name) {
   for (int8_t i = 0; i < NUM_SETTINGS; i++) {
     // assumes strings are defined constant, thus have null termination
     if (strcmp(name, setting_specs[i].name) == 0) return i;
   }
 
   return -1;
+}
+
+struct setting_value_t* setting_by_name(struct setting_value_t* settings,
+                                        char* name) {
+  int8_t index = get_setting_index_by_name(name);
+  if (index == -1) {
+    while (1)
+      ;
+  }
+  return &settings[index];
+}
+
+int64_t get_setting_int(char* name) {
+  return setting_by_name(current_settings, name)->value.integer;
+}
+double get_setting_real(char* name) {
+  return setting_by_name(current_settings, name)->value.real;
+}
+bool get_setting_bool(char* name) {
+  return setting_by_name(current_settings, name)->value.boolean;
 }
 
 /** @brief Reads and writes to settings.

@@ -58,7 +58,15 @@ extern struct setting_value_t saved_settings[NUM_SETTINGS];
 extern struct setting_value_t pending_settings[NUM_SETTINGS];
 extern struct setting_value_t current_settings[NUM_SETTINGS];
 
-int8_t get_setting_index_by_name(char* name);
 void handle_GetSet(CanardInstance* ins, CanardRxTransfer* transfer);
+
+struct setting_value_t* setting_by_name(struct setting_value_t* settings,
+                                        char* name);
+
+/* Convenience methods for accessing current settings */
+
+int64_t get_setting_int(char* name);
+double get_setting_real(char* name);
+bool get_setting_bool(char* name);
 
 #endif /* SETTINGS_H_ */

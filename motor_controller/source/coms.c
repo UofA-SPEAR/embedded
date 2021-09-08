@@ -72,9 +72,7 @@ static void chibiosCanardHandler(CanardCANFrame *const rx_frame,
 }
 
 void coms_init(void) {
-  actuator_id =
-      current_settings[get_setting_index_by_name("spear.motor.actuator_id")]
-          .value.integer;
+  actuator_id = get_setting_int("spear.motor.actuator_id");
 
   const CANConfig config = {
       /*.mcr = */ CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
