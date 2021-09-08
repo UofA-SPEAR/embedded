@@ -40,15 +40,15 @@ struct setting_value_t {
 };
 
 /** @brief Standard initialisation for a real setting */
-#define CAN_SETTING_REAL(str) \
+#define SETTING_SPEC_REAL(str) \
   { .name = str, .union_tag = SETTING_REAL }
 
 /** @brief Standard initialisation for an integer setting */
-#define CAN_SETTING_INTEGER(str) \
+#define SETTING_SPEC_INT(str) \
   { .name = str, .union_tag = SETTING_INTEGER }
 
 /** @brief Standard initialisation for a boolean setting */
-#define CAN_SETTING_BOOLEAN(str) \
+#define SETTING_SPEC_BOOL(str) \
   { .name = str, .union_tag = SETTING_BOOLEAN }
 
 #define NUM_SETTINGS 18
