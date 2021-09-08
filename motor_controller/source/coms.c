@@ -40,11 +40,14 @@ uint8_t out_buf[100];
 
 uint8_t inout_transfer_id;
 
-// TODO need to set this somewhere other than coms_init
 static uint8_t actuator_id;
 
 static void handle_RestartNode(CanardInstance *ins, CanardRxTransfer *transfer);
 static void handle_GetNodeInfo(CanardInstance *ins, CanardRxTransfer *transfer);
+static void handle_Actuator_ArrayCommand(CanardInstance *ins,
+                                         CanardRxTransfer *transfer);
+static void handle_Actuator_Command(CanardInstance *ins,
+                                    CanardRxTransfer *transfer);
 
 static void run_actuator_command(uavcan_equipment_actuator_Command *cmd) {
   if (cmd->actuator_id == actuator_id) {
@@ -52,11 +55,29 @@ static void run_actuator_command(uavcan_equipment_actuator_Command *cmd) {
   }
 }
 
+can_msg_handler can_request_handlers[] = {
+    CAN_MSG_HANDLER(UAVCAN_PROTOCOL_PARAM_GETSET_ID,
+                    UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE, handle_GetSet),
+    CAN_MSG_HANDLER(UAVCAN_PROTOCOL_GETNODEINFO_ID,
+                    UAVCAN_PROTOCOL_GETNODEINFO_SIGNATURE, handle_GetNodeInfo),
+    CAN_MSG_HANDLER(UAVCAN_PROTOCOL_RESTARTNODE_ID,
+                    UAVCAN_PROTOCOL_RESTARTNODE_SIGNATURE, handle_RestartNode),
+    CAN_MSG_HANDLER_END};
+
+can_msg_handler can_broadcast_handlers[] = {
+    CAN_MSG_HANDLER(UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID,
+                    UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_SIGNATURE,
+                    handle_Actuator_ArrayCommand),
+    // this one shouldn't actually really be sent
+    CAN_MSG_HANDLER(2155, UAVCAN_EQUIPMENT_ACTUATOR_COMMAND_SIGNATURE,
+                    handle_Actuator_Command),
+    CAN_MSG_HANDLER_END};
+
 void coms_init(void) {
   actuator_id =
       current_settings[get_setting_index_by_name("spear.motor.actuator_id")]
           .value.integer;
-  can_init(NULL);
+  can_init(NULL, can_broadcast_handlers, can_request_handlers);
 }
 
 /** @brief Handles ActuatorCommand messages
@@ -87,24 +108,6 @@ static void handle_Actuator_Command(CanardInstance *ins,
 
   run_actuator_command(&cmd);
 }
-
-struct can_msg_handler can_request_handlers[] = {
-    CAN_MSG_HANDLER(UAVCAN_PROTOCOL_PARAM_GETSET_ID,
-                    UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE, handle_GetSet),
-    CAN_MSG_HANDLER(UAVCAN_PROTOCOL_GETNODEINFO_ID,
-                    UAVCAN_PROTOCOL_GETNODEINFO_SIGNATURE, handle_GetNodeInfo),
-    CAN_MSG_HANDLER(UAVCAN_PROTOCOL_RESTARTNODE_ID,
-                    UAVCAN_PROTOCOL_RESTARTNODE_SIGNATURE, handle_RestartNode),
-    CAN_MSG_HANDLER_END};
-
-struct can_msg_handler can_broadcast_handlers[] = {
-    CAN_MSG_HANDLER(UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID,
-                    UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_SIGNATURE,
-                    handle_Actuator_ArrayCommand),
-    // this one shouldn't actually really be sent
-    CAN_MSG_HANDLER(2155, UAVCAN_EQUIPMENT_ACTUATOR_COMMAND_SIGNATURE,
-                    handle_Actuator_Command),
-    CAN_MSG_HANDLER_END};
 
 static void handle_RestartNode(CanardInstance *ins,
                                CanardRxTransfer *transfer) {
