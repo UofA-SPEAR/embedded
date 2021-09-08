@@ -8,6 +8,9 @@
 CanardInstance canard_instance;
 static uint8_t canard_memory_pool[LIBCANARD_MEM_POOL_SIZE];
 
+static can_msg_handler *can_broadcast_handlers;
+static can_msg_handler *can_request_handlers;
+
 /// @brief Copies received ChibiOS CAN frame into libcanard's required format
 static void receive_canard_frame(CANRxFrame *in_frame,
                                  CanardCANFrame *out_frame) {
@@ -98,7 +101,7 @@ static void on_reception(CanardInstance *ins, CanardRxTransfer *transfer) {
 ///
 /// @param[in] hw_config    Alternative HW configuration, NULL to use default
 /// (known working for F303)
-void can_init(CANConfig *hw_config) {
+void can_init(CANConfig *hw_config, can_msg_handler broadcast_handlers[], can_msg_handler request_handlers[]) {
   const CANConfig default_config = {
       /*.mcr = */ CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
       /*.btr = */ CAN_BTR_SJW(1) | CAN_BTR_TS2(4) | CAN_BTR_TS1(5) |
@@ -109,6 +112,12 @@ void can_init(CANConfig *hw_config) {
   } else {
     canStart(&CAND1, &default_config);
   }
+
+  if (broadcast_handlers == NULL || request_handlers == NULL) {
+    chSysHalt("Misconfigured subscriptions!");
+  }
+  can_broadcast_handlers = broadcast_handlers;
+  can_request_handlers = request_handlers;
 
   canardInit(&canard_instance, &canard_memory_pool, LIBCANARD_MEM_POOL_SIZE,
              on_reception, should_accept, NULL);
