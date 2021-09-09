@@ -1,0 +1,13 @@
+name: Build Jobs
+on: [pull_request]
+jobs:
+  build-motor-controller:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - uses: fiam/arm-none-eabi-gcc@v1
+        with:
+          release: '9-2020-q2'
+      - run: cd motor_controller && make
