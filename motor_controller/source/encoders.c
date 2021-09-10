@@ -213,8 +213,7 @@ static int32_t none_get_target_observation(float command_angle) {
   else if (command_angle < -1.0)
     command_angle = -1.0;
 
-  if (current_settings[get_setting_index_by_name("spear.motor.reversed")]
-          .value.boolean) {
+  if (get_setting_bool("spear.motor.reversed")) {
     command_angle *= -1;
   }
 
@@ -223,33 +222,16 @@ static int32_t none_get_target_observation(float command_angle) {
 
 /// @brief Load settings and choose strategy to map position to encoder values.
 void encoder_init(void) {
-  int encoder_type =
-      current_settings[get_setting_index_by_name("spear.motor.encoder.type")]
-          .value.integer;
+  int encoder_type = get_setting_int("spear.motor.encoder.type");
 
-  general.to_radians = current_settings[get_setting_index_by_name(
-                                            "spear.motor.encoder.to-radians")]
-                           .value.real;
-  general.encoder_min =
-      current_settings[get_setting_index_by_name("spear.motor.encoder.min")]
-          .value.integer;
-  general.encoder_max =
-      current_settings[get_setting_index_by_name("spear.motor.encoder.max")]
-          .value.integer;
+  general.to_radians = get_setting_real("spear.motor.encoder.to-radians");
+  general.encoder_min = get_setting_int("spear.motor.encoder.min");
+  general.encoder_max = get_setting_int("spear.motor.encoder.max");
 
-  linear.support_length =
-      current_settings[get_setting_index_by_name(
-                           "spear.motor.linear.support_length")]
-          .value.real;
-  linear.arm_length = current_settings[get_setting_index_by_name(
-                                           "spear.motor.linear.arm_length")]
-                          .value.real;
-  linear.length_min = current_settings[get_setting_index_by_name(
-                                           "spear.motor.linear.length_min")]
-                          .value.real;
-  linear.length_max = current_settings[get_setting_index_by_name(
-                                           "spear.motor.linear.length_max")]
-                          .value.real;
+  linear.support_length = get_setting_real("spear.motor.linear.support_length");
+  linear.arm_length = get_setting_real("spear.motor.linear.arm_length");
+  linear.length_min = get_setting_real("spear.motor.linear.length_min");
+  linear.length_max = get_setting_real("spear.motor.linear.length_max");
 
   palSetLineMode(ENCODER_CC, PAL_MODE_OUTPUT_PUSHPULL);
   palSetLineMode(ENCODER_C0, PAL_MODE_OUTPUT_PUSHPULL);

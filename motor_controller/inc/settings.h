@@ -40,15 +40,15 @@ struct setting_value_t {
 };
 
 /** @brief Standard initialisation for a real setting */
-#define CAN_SETTING_REAL(str) \
+#define SETTING_SPEC_REAL(str) \
   { .name = str, .union_tag = SETTING_REAL }
 
 /** @brief Standard initialisation for an integer setting */
-#define CAN_SETTING_INTEGER(str) \
+#define SETTING_SPEC_INT(str) \
   { .name = str, .union_tag = SETTING_INTEGER }
 
 /** @brief Standard initialisation for a boolean setting */
-#define CAN_SETTING_BOOLEAN(str) \
+#define SETTING_SPEC_BOOL(str) \
   { .name = str, .union_tag = SETTING_BOOLEAN }
 
 #define NUM_SETTINGS 18
@@ -58,7 +58,15 @@ extern struct setting_value_t saved_settings[NUM_SETTINGS];
 extern struct setting_value_t pending_settings[NUM_SETTINGS];
 extern struct setting_value_t current_settings[NUM_SETTINGS];
 
-int8_t get_setting_index_by_name(char* name);
 void handle_GetSet(CanardInstance* ins, CanardRxTransfer* transfer);
+
+struct setting_value_t* setting_by_name(struct setting_value_t* settings,
+                                        char* name);
+
+/* Convenience methods for accessing current settings */
+
+int64_t get_setting_int(char* name);
+double get_setting_real(char* name);
+bool get_setting_bool(char* name);
 
 #endif /* SETTINGS_H_ */
