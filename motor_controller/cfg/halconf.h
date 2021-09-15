@@ -29,7 +29,7 @@
 #define HALCONF_H
 
 #define _CHIBIOS_HAL_CONF_
-#define _CHIBIOS_HAL_CONF_VER_7_0_
+#define _CHIBIOS_HAL_CONF_VER_7_1_
 
 #include "mcuconf.h"
 
@@ -66,6 +66,13 @@
  */
 #if !defined(HAL_USE_DAC) || defined(__DOXYGEN__)
 #define HAL_USE_DAC                         TRUE
+#endif
+
+/**
+ * @brief   Enables the EFlash subsystem.
+ */
+#if !defined(HAL_USE_EFL) || defined(__DOXYGEN__)
+#define HAL_USE_EFL                         FALSE
 #endif
 
 /**
@@ -135,7 +142,7 @@
  * @brief   Enables the SERIAL subsystem.
  */
 #if !defined(HAL_USE_SERIAL) || defined(__DOXYGEN__)
-#define HAL_USE_SERIAL                      FALSE
+#define HAL_USE_SERIAL                      TRUE
 #endif
 
 /**
@@ -156,7 +163,7 @@
  * @brief   Enables the SPI subsystem.
  */
 #if !defined(HAL_USE_SPI) || defined(__DOXYGEN__)
-#define HAL_USE_SPI                         TRUE
+#define HAL_USE_SPI                         FALSE
 #endif
 
 /**
@@ -170,7 +177,7 @@
  * @brief   Enables the UART subsystem.
  */
 #if !defined(HAL_USE_UART) || defined(__DOXYGEN__)
-#define HAL_USE_UART                        TRUE
+#define HAL_USE_UART                        FALSE
 #endif
 
 /**
@@ -192,6 +199,14 @@
  */
 #if !defined(HAL_USE_WSPI) || defined(__DOXYGEN__)
 #define HAL_USE_WSPI                        FALSE
+#endif
+
+#if !defined(HAL_USE_COMMUNITY) || defined(__DOXYGEN__)
+#define HAL_USE_COMMUNITY                   FALSE
+#endif
+
+#if !defined(HAL_USE_QEI) || defined(__DOXYGEN__)
+#define HAL_USE_QEI                         FALSE
 #endif
 
 /*===========================================================================*/
@@ -313,7 +328,7 @@
  * @brief   Enables the zero-copy API.
  */
 #if !defined(MAC_USE_ZERO_COPY) || defined(__DOXYGEN__)
-#define MAC_USE_ZERO_COPY                   TRUE
+#define MAC_USE_ZERO_COPY                   FALSE
 #endif
 
 /**
@@ -357,7 +372,7 @@
  *          at @p FALSE.
  */
 #if !defined(SDC_MMC_SUPPORT) || defined(__DOXYGEN__)
-#define SDC_MMC_SUPPORT                     TRUE
+#define SDC_MMC_SUPPORT                     FALSE
 #endif
 
 /**
@@ -451,7 +466,6 @@
 #define SPI_USE_CIRCULAR                    FALSE
 #endif
 
-
 /**
  * @brief   Enables the @p spiAcquireBus() and @p spiReleaseBus() APIs.
  * @note    Disabling this option saves both code and data space.
@@ -477,7 +491,7 @@
  * @note    Disabling this option saves both code and data space.
  */
 #if !defined(UART_USE_WAIT) || defined(__DOXYGEN__)
-#define UART_USE_WAIT                       TRUE
+#define UART_USE_WAIT                       FALSE
 #endif
 
 /**
@@ -485,7 +499,7 @@
  * @note    Disabling this option saves both code and data space.
  */
 #if !defined(UART_USE_MUTUAL_EXCLUSION) || defined(__DOXYGEN__)
-#define UART_USE_MUTUAL_EXCLUSION           TRUE
+#define UART_USE_MUTUAL_EXCLUSION           FALSE
 #endif
 
 /*===========================================================================*/
@@ -497,7 +511,7 @@
  * @note    Disabling this option saves both code and data space.
  */
 #if !defined(USB_USE_WAIT) || defined(__DOXYGEN__)
-#define USB_USE_WAIT                        TRUE
+#define USB_USE_WAIT                        FALSE
 #endif
 
 /*===========================================================================*/
