@@ -25,6 +25,7 @@ can_msg_handler can_request_handlers[] = {CAN_MSG_HANDLER_END};
 static THD_WORKING_AREA(waHeartbeatThread, 128);
 static THD_FUNCTION(HeartbeatThread, arg) {
   (void)arg;
+  chRegSetThreadName("Heartbeat");
   while (1) {
     // first thread
     palToggleLine(LINE_LED);
@@ -54,6 +55,9 @@ int main(void) {
 
   // This is the main thread, it will continue to run even after we started
   // the other thread.
+  // We need to set the priority lower than the heartbeat thread, as this thread does not
+  // relinquish priority by default, and thus the heartbeat thread will never run.
+  chThdSetPriority(LOWPRIO);
 
   // This function will now keep running until we reset.
   // NOTE: this function has a forever loop inside, otherwise we would

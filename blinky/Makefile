@@ -199,7 +199,7 @@ include $(RULESPATH)/rules.mk
 include ../rules.mk
 
 flash: build/ch.elf
-	openocd -f ../common/st_nucleo_f3.cfg \
+	openocd -f ../common/f3_openocd.cfg \
 		-c "program build/ch.elf verify reset exit" \
 
 
