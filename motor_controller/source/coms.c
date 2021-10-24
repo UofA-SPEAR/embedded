@@ -74,9 +74,7 @@ can_msg_handler can_broadcast_handlers[] = {
     CAN_MSG_HANDLER_END};
 
 void coms_init(void) {
-  actuator_id =
-      current_settings[get_setting_index_by_name("spear.motor.actuator_id")]
-          .value.integer;
+  actuator_id = get_setting_int("spear.motor.actuator_id");
   can_init(NULL, can_broadcast_handlers, can_request_handlers);
 }
 
