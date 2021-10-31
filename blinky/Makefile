@@ -114,9 +114,9 @@ include $(CHIBIOS)/test/lib/test.mk
 # include $(CHIBIOS)/test/rt/rt_test.mk
 include $(CHIBIOS)/test/oslib/oslib_test.mk
 # UAVCAN Stuff uncomment these if you are using
-include ./lib/lib.mk
-#include $(COMMON)/libcanard.mk
-#include $(COMMON)/uavcan_msgs.mk
+include $(COMMON)/can/can.mk
+include $(COMMON)/libcanard.mk
+include $(COMMON)/uavcan_msgs.mk
 
 # Flashing
 #include $(COMMON)/flash.mk
@@ -194,6 +194,14 @@ include $(RULESPATH)/rules.mk
 ##############################################################################
 # Custom rules
 #
+
+# clang-format
+include ../rules.mk
+
+flash: build/ch.elf
+	openocd -f ../common/f3_openocd.cfg \
+		-c "program build/ch.elf verify reset exit" \
+
 
 #
 # Custom rules
