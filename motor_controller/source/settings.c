@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "can.h"
 #include "canard.h"
 #include "coms.h"
 #include "flash_settings.h"
