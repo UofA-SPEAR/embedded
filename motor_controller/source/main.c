@@ -89,17 +89,13 @@ void motor_init(void) {
   // TODO maybe have a bit more sane way of checking settings.
   motor_run = motor_run_angular;
 
-  if (current_settings[get_setting_index_by_name("spear.motor.encoder.type")]
-          .value.integer == ENCODER_NONE)
+  if (get_setting_int("spear.motor.encoder.type") == ENCODER_NONE)
     motor_run = motor_run_ol;
 
-  if (current_settings[get_setting_index_by_name("spear.motor.reversed")]
-          .value.boolean)
+  if (get_setting_bool("spear.motor.reversed"))
     motor_reversed = MOTOR_BACKWARDS;
 
-  if (current_settings[get_setting_index_by_name("spear.motor.enabled")]
-          .value.boolean)
-    flag_motor_enabled = true;
+  if (get_setting_bool("spear.motor.enabled")) flag_motor_enabled = true;
 }
 
 /// @brief Set desired position based on configured strategy.
@@ -231,8 +227,6 @@ int main(void) {
   node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
   node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_INITIALIZATION;
   load_settings();
-  for (int i = 0; i < NUM_SETTINGS; i++)
-    current_settings[i].value = saved_settings[i].value;
   check_settings();
   motor_init();
   drv8701_init();
@@ -244,12 +238,9 @@ int main(void) {
 
   // setup PID
   memset(&pid, 0, sizeof(arm_pid_instance_f32));
-  pid.Kp = current_settings[get_setting_index_by_name("spear.motor.pid.Kp")]
-               .value.real;
-  pid.Ki = current_settings[get_setting_index_by_name("spear.motor.pid.Ki")]
-               .value.real;
-  pid.Kd = current_settings[get_setting_index_by_name("spear.motor.pid.Kd")]
-               .value.real;
+  pid.Kp = get_setting_real("spear.motor.pid.Kp");
+  pid.Ki = get_setting_real("spear.motor.pid.Ki");
+  pid.Kd = get_setting_real("spear.motor.pid.Kd");
   arm_pid_init_f32(&pid, 1);
 
   // TODO maybe handle errors here?
