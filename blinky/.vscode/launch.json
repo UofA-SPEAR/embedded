@@ -1,0 +1,25 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Change this for your specific installation
+            // Common
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/ch.elf",
+            "name": "Debug Microcontroller",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "runToMain": true,
+            "device": "STM32F303CC",
+            "demangle": true,
+            "svdFile": "../common/SVD/STM32F303.svd",
+            // OpenOCD specific
+            "configFiles": ["../common/f3_openocd.cfg"],
+            "preLaunchTask": "build"
+        }
+    ]
+}

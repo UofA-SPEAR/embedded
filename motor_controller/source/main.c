@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "can.h"
 #include "ch.h"
 #include "core_cm4.h"
 #include "drv8701.h"
@@ -28,6 +29,9 @@ bool flag_motor_running = false;
 
 thread_t *RunMotor_thread;
 thread_t *Heartbeat_thread;
+
+// Not ideal, this gets linked from can.c
+extern CanardInstance canard_instance;
 
 enum motor_reversal_t {
   MOTOR_BACKWARDS = -1,
@@ -67,8 +71,7 @@ static void motor_run_angular(void) {
 
   // Send status info
   int len = uavcan_equipment_actuator_Status_encode(&status, &status_buf);
-  canardBroadcast(&m_canard_instance,
-                  UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
+  canardBroadcast(&canard_instance, UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
                   UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID, &inout_transfer_id, 5,
                   &status_buf, len);
 }
@@ -210,7 +213,6 @@ static THD_FUNCTION(Heartbeat, arg) {
   while (true) {
     time += TIME_MS2I(1000);
     palToggleLine(LINE_LED);
-    publish_NodeStatus();
     chThdSleepUntil(time);
   }
 }
@@ -232,7 +234,7 @@ int main(void) {
   drv8701_set_current(12u);
   coms_init();
   node_id = read_node_id();
-  canardSetLocalNodeID(&m_canard_instance, node_id);
+  canardSetLocalNodeID(&canard_instance, node_id);
 
   // setup PID
   memset(&pid, 0, sizeof(arm_pid_instance_f32));
@@ -251,7 +253,7 @@ int main(void) {
                         NORMALPRIO, Heartbeat, NULL);
 
   chThdSetPriority(LOWPRIO);
-  coms_handle_forever();
+  can_handle_forever();
 }
 
 // Simply needs to be defined somewhere
