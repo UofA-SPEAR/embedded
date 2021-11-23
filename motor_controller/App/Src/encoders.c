@@ -27,20 +27,26 @@ const ADCConversionGroup adcgrpcfg1 = {
     NULL,
     NULL,
     ADC_CFGR_CONT,   /* CFGR    */
-    ADC_TR(0, 4095), /* TR1     */
-    {                /* SMPR[2] */
-     ADC_SMPR1_SMP_AN0(ADC_SMPR_SMP_61P5), 0},
-    {/* SQR[4]  */
-     ADC_SQR1_SQ1_N(ADC_CHANNEL_IN1), 0, 0, 0}};
+    .smpr         = {
+    ADC_SMPR1_SMP_AN0(ADC_SMPR_SMP_61P5),
+    0
+    },
+    .sqr          = {
+      ADC_SQR1_SQ1_N(ADC_CHANNEL_IN1),
+      0,
+      0,
+      0
+    }
+};
 
 static void pot_init(void) {
   // Select inputs
   palSetLine(ENCODER_C1);
   palSetLine(ENCODER_C0);
-
+  // set PA0 to input analog
   palSetPadMode(GPIOA, 0, PAL_MODE_INPUT_ANALOG);
   // do stuff
-  adcStart(&ADCD1, NULL);
+  // adcStart(&ADCD1, NULL);
 }
 
 static int32_t pot_read_observation(void) {

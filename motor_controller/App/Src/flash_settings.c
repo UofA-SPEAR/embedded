@@ -14,7 +14,7 @@
 #include "settings.h"
 
 #define FLASH_WAIT_BUSY() \
-  asm("nop");             \
+  __asm__("nop");             \
   while (FLASH->SR & FLASH_SR_BSY)
 
 // Settings saved to flash. Points to a specific flash location

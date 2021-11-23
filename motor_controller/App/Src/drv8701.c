@@ -70,7 +70,7 @@ void drv8701_init(void) {
   /*
    * Activates the ADC1 driver and the temperature sensor.
    */
-  adcStart(&ADCD1, NULL);
+  // adcStart(&ADCD1, NULL);
 }
 
 /// @brief Set speed, full range is +-10000
