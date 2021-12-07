@@ -1,12 +1,10 @@
 [submodule "common/libcanard"]
 	path = common/libcanard
 	url = https://github.com/UAVCAN/libcanard.git
-[submodule "common/uavcan_dsdl"]
-	path = common/uavcan_dsdl
-	url = https://github.com/UofA-SPEAR/uavcan_dsdl.git
 [submodule "ChibiOS"]
 	path = ChibiOS
 	url = https://github.com/ChibiOS/ChibiOS
-[submodule "motor_controller/libcanard_v0"]
-	path = motor_controller/libcanard_v0
-	url = git@github.com:UAVCAN/libcanard.git
+	branch = ver20.3.4
+[submodule "common/uavcan_dsdl"]
+	path = common/uavcan_dsdl
+	url = https://github.com/UofA-SPEAR/uavcan_dsdl.git
