@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.12.0)
 
 project(blinky)
 
-# execute_process(COMMAND fmpp -C boardCfg/cfg/board.fmpp)
-
 enable_language(C ASM CXX)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
@@ -65,7 +63,7 @@ App/Src/*.cpp
 ${COMMON}/SPEAR_SPEEDY_F3/*.c
 ${COMMON}/can/can.c
 # libcanard_v0/drivers/stm32/canard_stm32.c
-libcanard_v0/canard.c
+${COMMON}/libcanard/canard.c
 )
 # We will fetch all of the existing *.c in the libcanard 
 FILE(GLOB_RECURSE DSDL_SRC
@@ -86,7 +84,7 @@ App/cfg
 App/Inc
 ${CHIBIOS}/os/hal/lib/streams
 ${COMMON}/SPEAR_SPEEDY_F3
-libcanard_v0
+${COMMON}/libcanard
 ${COMMON}/CMSIS/core
 ${COMMON}/can
 ${COMMON}/uavcan_dsdl/libcanard_dsdlc_generated
