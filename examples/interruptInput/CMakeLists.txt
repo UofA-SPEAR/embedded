@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12.0)
 
-project(blinky)
+project(irqInput)
 
 enable_language(C ASM CXX)
 set(CMAKE_C_STANDARD 11)
