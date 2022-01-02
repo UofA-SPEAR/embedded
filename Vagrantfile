@@ -71,8 +71,9 @@ Vagrant.configure("2") do |config|
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
 	sudo apt-get update
-	sudo apt-get install -y python3-pip libtool build-essential autotools-dev autoconf pkg-config libusb-1.0-0 libusb-1.0-0-dev libftdi1 libftdi-dev git libc6 libncurses5 libstdc++6 minicom clang-format-12
+	sudo apt-get install -y cmake ninja-build python3-pip libtool build-essential autotools-dev autoconf pkg-config libusb-1.0-0 libusb-1.0-0-dev libftdi1 libftdi-dev git libc6 libncurses5 libstdc++6 minicom clang-format-12
 	cd /home/vagrant/
+  git config --global http.sslverify false
 	mkdir spear-embedded
 	cd spear-embedded
 	git clone https://github.com/ntfreak/openocd

@@ -26,7 +26,7 @@ static void receive_canard_frame(CANRxFrame *in_frame,
 }
 
 /// @brief Copies Canard style frame into Chibios format
-static void send_canard_frame(CanardCANFrame *in_frame, CANTxFrame *out_frame) {
+static void send_canard_frame(const CanardCANFrame *in_frame, CANTxFrame *out_frame) {
   out_frame->IDE = CAN_IDE_EXT;
   out_frame->EID = in_frame->id & CANARD_CAN_EXT_ID_MASK;
   out_frame->RTR = CAN_RTR_DATA;

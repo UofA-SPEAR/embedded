@@ -1,21 +1,17 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-
             "cwd": "${workspaceRoot}",
-            "executable": "./build/ch.elf",
+            "executable": "${command:cmake.launchTargetPath}",
             "name": "Debug Microcontroller",
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "openocd",
-            "device": "STM32F303CC",
-            "configFiles": [
-                "../common/f3_openocd.cfg"
-            ]
+            "configFiles": ["${workspaceFolder}/../common/f3_openocd.cfg"],
+            "svdFile": "${workspaceFolder}/../common/SVD/STM32F303.svd",
+            "demangle": true,
+            "runToMain": true
         }
     ]
 }
