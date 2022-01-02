@@ -262,5 +262,5 @@ bool mmc_lld_is_write_protected(MMCDriver *mmcp) {
  * @note    You can add your board-specific code here.
  */
 void boardInit(void) {
-
+  __late_init();
 }
