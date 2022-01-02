@@ -29,7 +29,7 @@
 #define CHCONF_H
 
 #define _CHIBIOS_RT_CONF_
-#define _CHIBIOS_RT_CONF_VER_6_0_
+#define _CHIBIOS_RT_CONF_VER_6_1_
 
 /*===========================================================================*/
 /**
@@ -40,7 +40,7 @@
 
 /**
  * @brief   System time counter resolution.
- * @note    Allowed values are 16 or 32 bits.
+ * @note    Allowed values are 16, 32 or 64 bits.
  */
 #if !defined(CH_CFG_ST_RESOLUTION)
 #define CH_CFG_ST_RESOLUTION                32
@@ -109,21 +109,6 @@
 #endif
 
 /**
- * @brief   Managed RAM size.
- * @details Size of the RAM area to be managed by the OS. If set to zero
- *          then the whole available RAM is used. The core memory is made
- *          available to the heap allocator and/or can be used directly through
- *          the simplified core memory allocator.
- *
- * @note    In order to let the OS manage the whole RAM the linker script must
- *          provide the @p __heap_base__ and @p __heap_end__ symbols.
- * @note    Requires @p CH_CFG_USE_MEMCORE.
- */
-#if !defined(CH_CFG_MEMCORE_SIZE)
-#define CH_CFG_MEMCORE_SIZE                 0
-#endif
-
-/**
  * @brief   Idle thread automatic spawn suppression.
  * @details When this option is activated the function @p chSysInit()
  *          does not spawn the idle thread. The application @p main()
@@ -149,10 +134,10 @@
  *          is used when two possible implementations exist.
  *
  * @note    This is not related to the compiler optimization options.
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_OPTIMIZE_SPEED)
-#define CH_CFG_OPTIMIZE_SPEED               FALSE
+#define CH_CFG_OPTIMIZE_SPEED               TRUE
 #endif
 
 /** @} */
@@ -169,7 +154,7 @@
  * @details If enabled then the time measurement APIs are included in
  *          the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_TM)
 #define CH_CFG_USE_TM                       TRUE
@@ -179,10 +164,10 @@
  * @brief   Threads registry APIs.
  * @details If enabled then the registry APIs are included in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_REGISTRY)
-#define CH_CFG_USE_REGISTRY                 FALSE
+#define CH_CFG_USE_REGISTRY                 TRUE
 #endif
 
 /**
@@ -190,7 +175,7 @@
  * @details If enabled then the @p chThdWait() function is included in
  *          the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_WAITEXIT)
 #define CH_CFG_USE_WAITEXIT                 TRUE
@@ -200,7 +185,7 @@
  * @brief   Semaphores APIs.
  * @details If enabled then the Semaphores APIs are included in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_SEMAPHORES)
 #define CH_CFG_USE_SEMAPHORES               TRUE
@@ -223,10 +208,10 @@
  * @brief   Mutexes APIs.
  * @details If enabled then the mutexes APIs are included in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_MUTEXES)
-#define CH_CFG_USE_MUTEXES                  FALSE
+#define CH_CFG_USE_MUTEXES                  TRUE
 #endif
 
 /**
@@ -246,11 +231,11 @@
  * @details If enabled then the conditional variables APIs are included
  *          in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  * @note    Requires @p CH_CFG_USE_MUTEXES.
  */
 #if !defined(CH_CFG_USE_CONDVARS)
-#define CH_CFG_USE_CONDVARS                 FALSE
+#define CH_CFG_USE_CONDVARS                 TRUE
 #endif
 
 /**
@@ -258,21 +243,21 @@
  * @details If enabled then the conditional variables APIs with timeout
  *          specification are included in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  * @note    Requires @p CH_CFG_USE_CONDVARS.
  */
 #if !defined(CH_CFG_USE_CONDVARS_TIMEOUT)
-#define CH_CFG_USE_CONDVARS_TIMEOUT         FALSE
+#define CH_CFG_USE_CONDVARS_TIMEOUT         TRUE
 #endif
 
 /**
  * @brief   Events Flags APIs.
  * @details If enabled then the event flags APIs are included in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_EVENTS)
-#define CH_CFG_USE_EVENTS                   FALSE
+#define CH_CFG_USE_EVENTS                   TRUE
 #endif
 
 /**
@@ -280,11 +265,11 @@
  * @details If enabled then the events APIs with timeout specification
  *          are included in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  * @note    Requires @p CH_CFG_USE_EVENTS.
  */
 #if !defined(CH_CFG_USE_EVENTS_TIMEOUT)
-#define CH_CFG_USE_EVENTS_TIMEOUT           FALSE
+#define CH_CFG_USE_EVENTS_TIMEOUT           TRUE
 #endif
 
 /**
@@ -292,10 +277,10 @@
  * @details If enabled then the synchronous messages APIs are included
  *          in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_MESSAGES)
-#define CH_CFG_USE_MESSAGES                 FALSE
+#define CH_CFG_USE_MESSAGES                 TRUE
 #endif
 
 /**
@@ -312,15 +297,37 @@
 #endif
 
 /**
+ * @brief   Dynamic Threads APIs.
+ * @details If enabled then the dynamic threads creation APIs are included
+ *          in the kernel.
+ *
+ * @note    The default is @p TRUE.
+ * @note    Requires @p CH_CFG_USE_WAITEXIT.
+ * @note    Requires @p CH_CFG_USE_HEAP and/or @p CH_CFG_USE_MEMPOOLS.
+ */
+#if !defined(CH_CFG_USE_DYNAMIC)
+#define CH_CFG_USE_DYNAMIC                  TRUE
+#endif
+
+/** @} */
+
+/*===========================================================================*/
+/**
+ * @name OSLIB options
+ * @{
+ */
+/*===========================================================================*/
+
+/**
  * @brief   Mailboxes APIs.
  * @details If enabled then the asynchronous messages (mailboxes) APIs are
  *          included in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  * @note    Requires @p CH_CFG_USE_SEMAPHORES.
  */
 #if !defined(CH_CFG_USE_MAILBOXES)
-#define CH_CFG_USE_MAILBOXES                TRUE 
+#define CH_CFG_USE_MAILBOXES                TRUE
 #endif
 
 /**
@@ -328,10 +335,25 @@
  * @details If enabled then the core memory manager APIs are included
  *          in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_MEMCORE)
 #define CH_CFG_USE_MEMCORE                  TRUE
+#endif
+
+/**
+ * @brief   Managed RAM size.
+ * @details Size of the RAM area to be managed by the OS. If set to zero
+ *          then the whole available RAM is used. The core memory is made
+ *          available to the heap allocator and/or can be used directly through
+ *          the simplified core memory allocator.
+ *
+ * @note    In order to let the OS manage the whole RAM the linker script must
+ *          provide the @p __heap_base__ and @p __heap_end__ symbols.
+ * @note    Requires @p CH_CFG_USE_MEMCORE.
+ */
+#if !defined(CH_CFG_MEMCORE_SIZE)
+#define CH_CFG_MEMCORE_SIZE                 0
 #endif
 
 /**
@@ -339,13 +361,13 @@
  * @details If enabled then the memory heap allocator APIs are included
  *          in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  * @note    Requires @p CH_CFG_USE_MEMCORE and either @p CH_CFG_USE_MUTEXES or
  *          @p CH_CFG_USE_SEMAPHORES.
  * @note    Mutexes are recommended.
  */
 #if !defined(CH_CFG_USE_HEAP)
-#define CH_CFG_USE_HEAP                     FALSE
+#define CH_CFG_USE_HEAP                     TRUE
 #endif
 
 /**
@@ -353,7 +375,7 @@
  * @details If enabled then the memory pools allocator APIs are included
  *          in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_MEMPOOLS)
 #define CH_CFG_USE_MEMPOOLS                 TRUE
@@ -364,7 +386,7 @@
  * @details If enabled then the objects FIFOs APIs are included
  *          in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_OBJ_FIFOS)
 #define CH_CFG_USE_OBJ_FIFOS                TRUE
@@ -375,23 +397,43 @@
  * @details If enabled then the pipes APIs are included
  *          in the kernel.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p TRUE.
  */
 #if !defined(CH_CFG_USE_PIPES)
-#define CH_CFG_USE_PIPES                    FALSE
+#define CH_CFG_USE_PIPES                    TRUE
 #endif
 
 /**
- * @brief   Dynamic Threads APIs.
- * @details If enabled then the dynamic threads creation APIs are included
+ * @brief   Objects Caches APIs.
+ * @details If enabled then the objects caches APIs are included
  *          in the kernel.
  *
- * @note    The default is @p FALSE.
- * @note    Requires @p CH_CFG_USE_WAITEXIT.
- * @note    Requires @p CH_CFG_USE_HEAP and/or @p CH_CFG_USE_MEMPOOLS.
+ * @note    The default is @p TRUE.
  */
-#if !defined(CH_CFG_USE_DYNAMIC)
-#define CH_CFG_USE_DYNAMIC                  FALSE
+#if !defined(CH_CFG_USE_OBJ_CACHES)
+#define CH_CFG_USE_OBJ_CACHES               TRUE
+#endif
+
+/**
+ * @brief   Delegate threads APIs.
+ * @details If enabled then the delegate threads APIs are included
+ *          in the kernel.
+ *
+ * @note    The default is @p TRUE.
+ */
+#if !defined(CH_CFG_USE_DELEGATES)
+#define CH_CFG_USE_DELEGATES                TRUE
+#endif
+
+/**
+ * @brief   Jobs Queues APIs.
+ * @details If enabled then the jobs queues APIs are included
+ *          in the kernel.
+ *
+ * @note    The default is @p TRUE.
+ */
+#if !defined(CH_CFG_USE_JOBS)
+#define CH_CFG_USE_JOBS                     TRUE
 #endif
 
 /** @} */
@@ -411,7 +453,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_CFG_USE_FACTORY)
-#define CH_CFG_USE_FACTORY                  FALSE
+#define CH_CFG_USE_FACTORY                  TRUE
 #endif
 
 /**
@@ -427,42 +469,42 @@
  * @brief   Enables the registry of generic objects.
  */
 #if !defined(CH_CFG_FACTORY_OBJECTS_REGISTRY)
-#define CH_CFG_FACTORY_OBJECTS_REGISTRY     FALSE
+#define CH_CFG_FACTORY_OBJECTS_REGISTRY     TRUE
 #endif
 
 /**
  * @brief   Enables factory for generic buffers.
  */
 #if !defined(CH_CFG_FACTORY_GENERIC_BUFFERS)
-#define CH_CFG_FACTORY_GENERIC_BUFFERS      FALSE
+#define CH_CFG_FACTORY_GENERIC_BUFFERS      TRUE
 #endif
 
 /**
  * @brief   Enables factory for semaphores.
  */
 #if !defined(CH_CFG_FACTORY_SEMAPHORES)
-#define CH_CFG_FACTORY_SEMAPHORES           FALSE
+#define CH_CFG_FACTORY_SEMAPHORES           TRUE
 #endif
 
 /**
  * @brief   Enables factory for mailboxes.
  */
 #if !defined(CH_CFG_FACTORY_MAILBOXES)
-#define CH_CFG_FACTORY_MAILBOXES            FALSE
+#define CH_CFG_FACTORY_MAILBOXES            TRUE
 #endif
 
 /**
  * @brief   Enables factory for objects FIFOs.
  */
 #if !defined(CH_CFG_FACTORY_OBJ_FIFOS)
-#define CH_CFG_FACTORY_OBJ_FIFOS            FALSE
+#define CH_CFG_FACTORY_OBJ_FIFOS            TRUE
 #endif
 
 /**
  * @brief   Enables factory for Pipes.
  */
 #if !defined(CH_CFG_FACTORY_PIPES) || defined(__DOXYGEN__)
-#define CH_CFG_FACTORY_PIPES                FALSE
+#define CH_CFG_FACTORY_PIPES                TRUE
 #endif
 
 /** @} */
@@ -514,7 +556,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_DBG_ENABLE_ASSERTS)
-#define CH_DBG_ENABLE_ASSERTS               FALSE
+#define CH_DBG_ENABLE_ASSERTS               TRUE
 #endif
 
 /**

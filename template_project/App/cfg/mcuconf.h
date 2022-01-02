@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2020 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@
 #define STM32_NO_INIT                       FALSE
 #define STM32_PVD_ENABLE                    FALSE
 #define STM32_PLS                           STM32_PLS_LEV0
-#define STM32_HSI_ENABLED                   TRUE
+#define STM32_HSI_ENABLED                   FALSE
 #define STM32_LSI_ENABLED                   TRUE
 #define STM32_HSE_ENABLED                   TRUE
 #define STM32_LSE_ENABLED                   FALSE
@@ -95,7 +95,7 @@
  */
 #define STM32_ADC_DUAL_MODE                 FALSE
 #define STM32_ADC_COMPACT_SAMPLES           FALSE
-#define STM32_ADC_USE_ADC1                  FALSE
+#define STM32_ADC_USE_ADC1                  TRUE
 #define STM32_ADC_USE_ADC2                  FALSE
 #define STM32_ADC_USE_ADC3                  FALSE
 #define STM32_ADC_USE_ADC4                  FALSE
@@ -169,6 +169,19 @@
 #define STM32_I2C_DMA_ERROR_HOOK(i2cp)      osalSysHalt("DMA failure")
 
 /*
+ * I2S driver system settings.
+ */
+#define STM32_I2S_USE_SPI2                  FALSE
+#define STM32_I2S_USE_SPI3                  FALSE
+#define STM32_I2S_SPI2_MODE                 (STM32_I2S_MODE_MASTER | STM32_I2S_MODE_RX)
+#define STM32_I2S_SPI3_MODE                 (STM32_I2S_MODE_MASTER | STM32_I2S_MODE_RX)
+#define STM32_I2S_SPI2_IRQ_PRIORITY         10
+#define STM32_I2S_SPI3_IRQ_PRIORITY         10
+#define STM32_I2S_SPI2_DMA_PRIORITY         1
+#define STM32_I2S_SPI3_DMA_PRIORITY         1
+#define STM32_I2S_DMA_ERROR_HOOK(i2sp)      osalSysHalt("DMA failure")
+
+/*
  * ICU driver system settings.
  */
 #define STM32_ICU_USE_TIM1                  FALSE
@@ -186,11 +199,10 @@
 /*
  * PWM driver system settings.
  */
-#define STM32_PWM_USE_ADVANCED              FALSE
 #define STM32_PWM_USE_TIM1                  FALSE
 #define STM32_PWM_USE_TIM2                  FALSE
 #define STM32_PWM_USE_TIM3                  FALSE
-#define STM32_PWM_USE_TIM4                  FALSE
+#define STM32_PWM_USE_TIM4                  TRUE
 #define STM32_PWM_USE_TIM8                  FALSE
 #define STM32_PWM_USE_TIM15                 FALSE
 #define STM32_PWM_USE_TIM16                 FALSE
@@ -269,5 +281,7 @@
  * WDG driver system settings.
  */
 #define STM32_WDG_USE_IWDG                  FALSE
+
+#define STM32_QEI_USE_TIM3            TRUE
 
 #endif /* MCUCONF_H */
