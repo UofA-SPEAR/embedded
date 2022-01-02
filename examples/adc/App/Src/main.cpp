@@ -2,12 +2,14 @@
 SPEAR SPEEDY such as polling input **/
 
 
-// This is a DAC Demo, Hook your oscilloscope to the pin A4 to see the Sine Wave
+// This is for showing the dac with the adc, hookup pin A0 and pin A4 of the speedy together to see the effect
+// For 2 input ADC sampling, make sure that #define ADC_SINGLEINPUT is commented out connect A1 to A0 as well
 
 #include "ch.h"
 #include "hal.h"
 #include "chprintf.h"
 
+#define ADC_SINGLEINPUT 
 
 // Sine wave lookup table
 dacsample_t sineWave[] = {
@@ -140,6 +142,55 @@ dacsample_t sineWave[] = {
 0x744,0x750,0x75d,0x769,0x776,0x782,0x78f,0x79b,
 0x7a8,0x7b5,0x7c1,0x7ce,0x7da,0x7e7,0x7f3,0x800,
 };
+#ifdef ADC_SINGLEINPUT
+static const ADCConversionGroup adcCfg = {
+  .circular     = false,
+  .num_channels = 1,
+  .end_cb       = NULL,
+  .error_cb     = NULL,
+  .cfgr         = ADC_CFGR_CONT,
+  .tr1          = ADC_TR_DISABLED,
+  .tr2          = ADC_TR_DISABLED,
+  .tr3          = ADC_TR_DISABLED,
+  .awd2cr       = 0U,
+  .awd3cr       = 0U,
+  .smpr         = {
+    ADC_SMPR1_SMP_AN0(ADC_SMPR_SMP_19P5),
+    0
+  },
+  .sqr          = {
+    ADC_SQR1_SQ1_N(ADC_CHANNEL_IN0),
+    0,
+    0,
+    0
+  }
+};
+#else
+static const ADCConversionGroup adcCfg = {
+  .circular     = false,
+  .num_channels = 2,
+  .end_cb       = NULL,
+  .error_cb     = NULL,
+  .cfgr         = ADC_CFGR_CONT,
+  .tr1          = ADC_TR_DISABLED,
+  .tr2          = ADC_TR_DISABLED,
+  .tr3          = ADC_TR_DISABLED,
+  .awd2cr       = 0U,
+  .awd3cr       = 0U,
+  .smpr         = {
+    ADC_SMPR1_SMP_AN0(ADC_SMPR_SMP_19P5) | // Configure ADC1 Channel 0 to have 32 cycles conversion time
+	 ADC_SMPR1_SMP_AN1(ADC_SMPR_SMP_19P5),
+    0
+  },
+  .sqr          = {
+    ADC_SQR1_SQ1_N(ADC_CHANNEL_IN0) | ADC_SQR1_SQ1_N(ADC_CHANNEL_IN1), // In this config, our buffer will be like [IN0, IN1, IN0,..]
+    0,
+    0,
+    0
+  }
+};
+#endif
+
 
 DACConversionGroup dacCfg = {
   .num_channels = 1,
@@ -148,19 +199,39 @@ DACConversionGroup dacCfg = {
   .trigger = DAC_TRG(0)
 };
 
+void readADC(void)
+{
+	adcsample_t buffer[2];
+	msg_t status = adcConvert(&ADCD1, &adcCfg, buffer, 2);
+	if(status == MSG_OK) {
+		#ifdef ADC_SINGLEINPUT
+		chprintf((BaseSequentialStream*)&SD2, "ADC 0 is %d \r\n", buffer[0]);
+		#else
+		chprintf((BaseSequentialStream*)&SD2, "ADC 0 is %d | ADC 1 is %d |", buffer[0], buffer[1]);
+		#endif
+	}
+}
+
+
 int main(void)
 {
 	// These are mandatory for the project
 	chSysInit();
 	halInit();
-
+	sdStart(&SD2, NULL);
 	// Start DAC1 for DAC Peripheral
-	dacStart(&DACD1, NULL);
 
 	// Configure A4 as Input Analog Mode
 	palSetPadMode(GPIOA, GPIOA_PIN4, PAL_MODE_INPUT_ANALOG);
+	// Configure A0 as Input Analog Mode
+	palSetPadMode(GPIOA, GPIOA_PIN0, PAL_MODE_INPUT_ANALOG);
+	// Configure A1 as Input Analog Mode
+	palSetPadMode(GPIOA, GPIOA_PIN1, PAL_MODE_INPUT_ANALOG);
+	dacStart(&DACD1, NULL);
 	while(1) {
 		dacConvert(&DACD1, &dacCfg, sineWave, sizeof(sineWave)/sizeof(dacsample_t));
+		readADC();
+		chThdSleepMilliseconds(1);
 	}
 }
 
