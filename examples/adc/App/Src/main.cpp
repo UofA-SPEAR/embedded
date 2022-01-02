@@ -3,7 +3,7 @@ SPEAR SPEEDY such as polling input **/
 
 
 // This is for showing the dac with the adc, hookup pin A0 and pin A4 of the speedy together to see the effect
-// For 2 input ADC sampling, make sure that #define ADC_SINGLEINPUT is commented out
+// For 2 input ADC sampling, make sure that #define ADC_SINGLEINPUT is commented out connect A1 to A0 as well
 
 #include "ch.h"
 #include "hal.h"
