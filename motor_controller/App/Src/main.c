@@ -229,18 +229,18 @@ int main(void) {
 
   halInit();
   chSysInit();
-  adcStart(&ADCD1, NULL);
   node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
   node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_INITIALIZATION;
   load_settings();
   check_settings();
+  adcStart(&ADCD1, NULL);
   motor_init();
   drv8701_init();
   encoder_init();
   drv8701_set_current(12u);
-  coms_init();
+  // coms_init();
   node_id = read_node_id();
-  canardSetLocalNodeID(&canard_instance, node_id);
+  // canardSetLocalNodeID(&canard_instance, node_id);
 
   // setup PID
   memset(&pid, 0, sizeof(arm_pid_instance_f32));
