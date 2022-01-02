@@ -8,8 +8,8 @@
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "openocd",
-            "configFiles": ["${workspaceFolder}/../common/f3_openocd.cfg"],
-            "svdFile": "${workspaceFolder}/../common/SVD/STM32F303.svd",
+            "configFiles": ["${workspaceFolder}/../../common/f3_openocd.cfg"],
+            "svdFile": "${workspaceFolder}/../../common/SVD/STM32F303.svd",
             "demangle": true,
             "runToMain": true
         }
