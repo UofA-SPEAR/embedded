@@ -159,8 +159,15 @@ int main(void)
 
 	// Configure A4 as Input Analog Mode
 	palSetPadMode(GPIOA, GPIOA_PIN4, PAL_MODE_INPUT_ANALOG);
+  	unsigned int i = 0;
 	while(1) {
-		dacConvert(&DACD1, &dacCfg, sineWave, sizeof(sineWave)/sizeof(dacsample_t));
+		// dac
+		dacPutChannelX(&DACD1, 0, sineWave[i]);
+		i++;
+		if(i >= sizeof(sineWave)/sizeof(dacsample_t)) {
+		i = 0;
+		}
+		chThdSleepMilliseconds(1);
 	}
 }
 
