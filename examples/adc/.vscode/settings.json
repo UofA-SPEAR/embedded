@@ -3,5 +3,9 @@
     "cmake.configureSettings": {
         "CMAKE_TOOLCHAIN_FILE" : "${workspaceFolder}/cmake/arm-none-eabi-gcc.cmake",
     },
-    "cmake.parallelJobs": 12
+    "cmake.parallelJobs": 12,
+    "files.associations": {
+        "stat.h": "c",
+        "types.h": "c"
+    }
 }

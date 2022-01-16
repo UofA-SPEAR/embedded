@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-
 set(COMMON ../../common)
 #################################################################################################################
 
@@ -50,7 +49,7 @@ set(ULIBS )
 set(EXECUTABLE ${PROJECT_NAME}.elf)
 
 # ChibiOS source directory
-set(CHIBIOS ${CMAKE_SOURCE_DIR}/../../ChibiOS)
+set(CHIBIOS ${CMAKE_CURRENT_SOURCE_DIR}/../../ChibiOS)
 set(CHIBIOS_CONTRIB ${CMAKE_SOURCE_DIR}/../ChibiOS-Contrib)
 
 # Every MCU has its own linkerscript
@@ -72,6 +71,7 @@ App/Inc
 ${CHIBIOS}/os/hal/lib/streams
 ${COMMON}/SPEAR_SPEEDY_F3
 ${COMMON}/CMSIS/core
+C:/tiarmclang/include
 )
 
 #################################################################################################################

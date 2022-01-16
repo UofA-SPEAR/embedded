@@ -11,7 +11,7 @@ SPEAR SPEEDY such as polling input **/
 
 #define ADC_SINGLEINPUT 
 
-// Sine wave lookup table
+// Sine wave lookup table for DAC usage
 dacsample_t sineWave[] = {
 0x800,0x80d,0x819,0x826,0x832,0x83f,0x84b,0x858,
 0x865,0x871,0x87e,0x88a,0x897,0x8a3,0x8b0,0x8bc,
@@ -155,11 +155,11 @@ static const ADCConversionGroup adcCfg = {
   .awd2cr       = 0U,
   .awd3cr       = 0U,
   .smpr         = {
-    ADC_SMPR1_SMP_AN0(ADC_SMPR_SMP_19P5),
+    ADC_SMPR1_SMP_AN1(ADC_SMPR_SMP_19P5),
     0
   },
   .sqr          = {
-    ADC_SQR1_SQ1_N(ADC_CHANNEL_IN0),
+    ADC_SQR1_SQ1_N(ADC_CHANNEL_IN1),
     0,
     0,
     0
@@ -211,6 +211,31 @@ void readADC(void)
 		#endif
 	}
 }
+static THD_WORKING_AREA(adcReadWorkingArea, 1024);
+static THD_FUNCTION(adcTestFn, arg) {
+  (void)arg;
+  while (1)
+  {
+    readADC();
+    chThdSleepMilliseconds(1);
+  }
+}
+const DACConfig dac1cfg1 = {.init = 4047U, .datamode = DAC_DHRM_12BIT_RIGHT};
+static THD_WORKING_AREA(dacTestWorkingArea, 1024);
+static THD_FUNCTION(dacTestFn, arg) {
+  (void)arg;
+  unsigned int i = 0;
+	while(1) {
+    // dac
+		dacPutChannelX(&DACD1, 0, sineWave[i]);
+    i++;
+    if(i >= sizeof(sineWave)/sizeof(dacsample_t)) {
+      i = 0;
+    }
+    chThdSleepMilliseconds(1);
+  }
+
+}
 
 
 int main(void)
@@ -220,17 +245,19 @@ int main(void)
 	halInit();
 	sdStart(&SD2, NULL);
 	// Start DAC1 for DAC Peripheral
-
 	// Configure A4 as Input Analog Mode
 	palSetPadMode(GPIOA, GPIOA_PIN4, PAL_MODE_INPUT_ANALOG);
 	// Configure A0 as Input Analog Mode
 	palSetPadMode(GPIOA, GPIOA_PIN0, PAL_MODE_INPUT_ANALOG);
 	// Configure A1 as Input Analog Mode
 	palSetPadMode(GPIOA, GPIOA_PIN1, PAL_MODE_INPUT_ANALOG);
-	dacStart(&DACD1, NULL);
+  adcStart(&ADCD1, NULL);
+	dacStart(&DACD1, &dac1cfg1);
+  (void) chThdCreateStatic(adcReadWorkingArea, sizeof(adcReadWorkingArea),
+                          NORMALPRIO, adcTestFn, NULL);
+  (void) chThdCreateStatic(dacTestWorkingArea, sizeof(dacTestWorkingArea),
+                        NORMALPRIO + 1, dacTestFn, NULL);
 	while(1) {
-		dacConvert(&DACD1, &dacCfg, sineWave, sizeof(sineWave)/sizeof(dacsample_t));
-		readADC();
 		chThdSleepMilliseconds(1);
 	}
 }
