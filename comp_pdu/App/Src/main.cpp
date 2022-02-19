@@ -6,9 +6,9 @@
 
 #define MV_PER_A 100.0
 
-#define MAX_RAW_VALUE 4095.0
+#define MAX_RAW_VALUE 3723.0
 
-#define MAX_VOLTAGE 5000.0
+#define MAX_VOLTAGE 3000.0
 
 
 static const ADCConversionGroup adcCfg = {
@@ -38,14 +38,16 @@ static const ADCConversionGroup adcCfg = {
 void read(adcsample_t test_val){
 
   //adcsample_t buff[2];
-  msg_t status = adcConvert(&ADCD2, &adcCfg, &test_val, 2);
+  //msg_t status = adcConvert(&ADCD2, &adcCfg, &test_val, 2);
 
 
-  float mv = (float)test_val*(MAX_VOLTAGE / MAX_RAW_VALUE);
+  float mv = (float)test_val*(MAX_VOLTAGE / MAX_RAW_VALUE) * 5.0/3.0;
+  msg_t status = MSG_OK;
+
 
   float amps;
   if (status == MSG_OK){
-    amps = mv/MV_PER_A;
+    amps = (mv - 2500.0)/MV_PER_A;
   } 
   else{
     amps = -1.0;
@@ -78,6 +80,8 @@ void read(adcsample_t test_val){
 // }
 
 
+
+
 int main(void)
 {
 	chSysInit();
@@ -87,15 +91,15 @@ int main(void)
   palSetPadMode(GPIOA, GPIOA_PIN4, PAL_MODE_INPUT_ANALOG);
 
   //(void) chThdCreateStatic(adcArea, sizeof(adcArea), NORMALPRIO, readFunc, NULL);
-  int count = 0;
+  int count = 1862;
 
   while(1){
 
     read(count);
     count++;
 
-    if (count == 4095){
-      count = 0;
+    if (count == 3723){
+      count = 1862;
     }
     chThdSleepMilliseconds(1);
 
