@@ -9,6 +9,7 @@ target_include_directories(${EXECUTABLE} PRIVATE
   ${LIBUAVCAN}/libuavcan/include
   ${LIBUAVCAN}/libuavcan_drivers/stm32/driver/include
   ${COMMON}/uavcan_dsdl/libuavcan_dsdlc_generated
+  ${COMMON}/libuavcan_driver
 )
 
 FILE(GLOB LIBUAVCAN_SRC
@@ -19,6 +20,7 @@ FILE(GLOB LIBUAVCAN_SRC
   ${LIBUAVCAN}/libuavcan/src/protocol/*.cpp
   ${LIBUAVCAN}/libuavcan/src/transport/*.cpp
   ${LIBUAVCAN}/libuavcan_drivers/stm32/driver/src/*.cpp
+  ${COMMON}/libuavcan_driver/*.cpp
 )
 
 target_sources(${EXECUTABLE} PRIVATE
