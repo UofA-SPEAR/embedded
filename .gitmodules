@@ -11,3 +11,6 @@
 [submodule "common/etl"]
 	path = common/etl
 	url = https://github.com/ETLCPP/etl
+[submodule "ChibiOS-Contrib"]
+	path = ChibiOS-Contrib
+	url = https://github.com/ChibiOS/ChibiOS-Contrib

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12.0)
 
-project(blinky)
+project(template)
 
 enable_language(C ASM CXX)
 set(CMAKE_C_STANDARD 11)
@@ -9,7 +9,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 
-set(COMMON ../../common)
+set(COMMON ../common)
 #################################################################################################################
 
 # C specific options here (added to USE_OPT).
@@ -50,7 +50,7 @@ set(ULIBS )
 set(EXECUTABLE ${PROJECT_NAME}.elf)
 
 # ChibiOS source directory
-set(CHIBIOS ${CMAKE_SOURCE_DIR}/../../ChibiOS)
+set(CHIBIOS ${CMAKE_SOURCE_DIR}/../ChibiOS)
 set(CHIBIOS_CONTRIB ${CMAKE_SOURCE_DIR}/../ChibiOS-Contrib)
 
 # Every MCU has its own linkerscript
@@ -80,4 +80,4 @@ include(cmake/ChibiOS20RT.cmake)
 include(cmake/ChibiOS20HAL.cmake)
 # include(cmake/ChibiOS20ContribF3.cmake)
 include(cmake/stm32f3xx.cmake)
-include(cmake/linkarm.cmake)
+include(cmake/link.cmake)

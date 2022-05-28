@@ -8,7 +8,7 @@ target_compile_definitions(${EXECUTABLE} PRIVATE
 target_include_directories(${EXECUTABLE} PRIVATE
   ${LIBUAVCAN}/libuavcan/include
   ${LIBUAVCAN}/libuavcan_drivers/stm32/driver/include
-  ${COMMON}/uavcan_dsdl/libuavcan_dsdlc_generated
+  ${COMMON}/uavcan_dsdl/libuavcan_dsdlc_generated/dsdlc_generated
   ${COMMON}/libuavcan_driver
 )
 
@@ -20,7 +20,9 @@ FILE(GLOB LIBUAVCAN_SRC
   ${LIBUAVCAN}/libuavcan/src/protocol/*.cpp
   ${LIBUAVCAN}/libuavcan/src/transport/*.cpp
   ${LIBUAVCAN}/libuavcan_drivers/stm32/driver/src/*.cpp
-  ${COMMON}/libuavcan_driver/*.cpp
+  ${COMMON}/libuavcan_driver/coms.cpp
+  ${COMMON}/libuavcan_driver/paramServer.cpp
+  
 )
 
 target_sources(${EXECUTABLE} PRIVATE

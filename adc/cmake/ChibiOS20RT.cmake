@@ -11,7 +11,7 @@ FILE(GLOB CHIBIOS_RT_SRC
 ${CHIBIOS}/os/hal/osal/rt-nil/osal.c
 ${CHIBIOS}/os/rt/src/*.c
 ${CHIBIOS}/os/various/cpp_wrappers/*.c
-# ${CHIBIOS}/os/various/syscalls.c
+${CHIBIOS}/os/various/syscalls.c
 ${CHIBIOS}/os/oslib/src/*.c
 )
 
