@@ -14,3 +14,6 @@
 [submodule "ChibiOS-Contrib"]
 	path = ChibiOS-Contrib
 	url = https://github.com/ChibiOS/ChibiOS-Contrib
+[submodule "motorControllerV1/lib/etl"]
+	path = motorControllerV1/lib/etl
+	url = https://github.com/ETLCPP/etl
