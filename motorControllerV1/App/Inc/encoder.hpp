@@ -52,8 +52,8 @@ class Quadrature : public Encoder {
         void enable();
         void set(uint16_t curr, sysinterval_t interval);
         float readAngular();
-        long long getPos() {return pos;}
-        float readSpeed() {return speed;}
+        long long getPos() {return pos/anglePerRev;}
+        float readSpeed() {return speed/anglePerRev;}
 
 };
 

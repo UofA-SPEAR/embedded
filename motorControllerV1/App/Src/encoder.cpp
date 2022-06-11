@@ -32,7 +32,7 @@ float Potentiometer::readAngular(uint16_t adcValue)
 
 void Quadrature::set(uint16_t curr, sysinterval_t interval)
 {
-    pos += (long long)curr - prev;
+    pos += (long long)(curr - prev);
     speed = static_cast<float>(curr - prev)/static_cast<float>(interval);
     prev = curr;
 }

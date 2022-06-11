@@ -93,9 +93,10 @@ App/Inc
 set(Micro STM32F3)
 include(cmake/rt.cmake)
 
-add_subdirectory(lib/etl)
-target_link_libraries(${EXECUTABLE} PRIVATE etl)
+# add_subdirectory(lib/etl)
 include(../common/libuavcan.cmake)
+# target_link_libraries(${EXECUTABLE} PRIVATE etl)
+
 
 
 #################################################################################################################

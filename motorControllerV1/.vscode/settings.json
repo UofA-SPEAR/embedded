@@ -67,6 +67,6 @@
     "cmake.configureSettings": {
         "CMAKE_TOOLCHAIN_FILE" : "${workspaceFolder}/cmake/arm-none-eabi-gcc.cmake",
     },
-    "cmake.generator": "MinGW Makefiles",
+    // "cmake.generator": "MinGW Makefiles",
     "cmake.parallelJobs": 12
 }
