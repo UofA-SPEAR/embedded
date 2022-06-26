@@ -25,7 +25,7 @@ class Encoder {
 };
 
 class AS5600 : public Encoder {
-
+// TODO: Insert AS5600 code here
 };
 
 class Potentiometer : public Encoder {

@@ -45,7 +45,10 @@ static objects_fifo_t servoStatus;
 static uavcan::equipment::actuator::Status servoStatusBuff[5];
 static msg_t servoStatusMsgBuff[5];
 
+float getAngle();
+float getSpeed();
 
+// Working Thread
 static THD_WORKING_AREA(servoTestWorkingArea, 2048);
 static THD_FUNCTION(servoTestFn, arg) {
     uavcan::equipment::actuator::Command *cmd;
@@ -98,7 +101,8 @@ static THD_FUNCTION(servoTestFn, arg) {
                 data.unlock();
             }
         }
-        if(isEnabledCurr && !isTimeout) {
+        // Timeout for this only occured with no type and speed type sensor
+        if(!isTimeout) {
             if(data.get_setting_int("encoder.type") == 0) {
                 short result = cmdStorage.command_value * 1000;
                 if(data.get_setting_bool("reversed")) result *= -1;
@@ -106,54 +110,57 @@ static THD_FUNCTION(servoTestFn, arg) {
                 drv8701_set(result, &gpiover1_0);
             }
             else {
-                switch (data.get_setting_int("encoder.type")) {
-                    float target, speed, angle;
-                    case 1:
-                        switch(cmdStorage.command_type) {
-                            case uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION:
-                                angle = qeiEnc.readAngular();
-                                target = arm_pid_f32(&pidHolder, cmdStorage.command_value - angle);
-                                drv8701_set((short)target, &gpiover1_0);
-                                break;
-                            case uavcan::equipment::actuator::Command::COMMAND_TYPE_SPEED:
-                                speed = qeiEnc.readSpeed();
-                                target = arm_pid_f32(&pidHolder, cmdStorage.command_value - speed);
-                                drv8701_set((short)target, &gpiover1_0);
-                                break;
-                            default:
-                                break;
-                        }
-                        break;
-                    case 2:
-                        switch(cmdStorage.command_type) {
-                            case uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION:
-                                adcConvert(&ADCD1, &adcCfg, sample, 2);
-                                angle = potEnc.readAngular(sample[1]);
-                                target = arm_pid_f32(&pidHolder, cmdStorage.command_value - angle);
-                                drv8701_set((short)target, &gpiover1_0);
-                                break;
-                            default:
-                                break;
-                        }
-                        break;
-                    case 3:
-                        break;
-                    default:
-                        break;
+                if (cmdStorage.command_type == uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
+                    float speed = getSpeed();
+                    float target = arm_pid_f32(&pidHolder, cmdStorage.command_value - speed);
+                    drv8701_set((short)target, &gpiover1_0); 
                 }
             }
         }
-        else {
+
+        else if(cmdStorage.command_type != uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
             drv8701_stop();
-            drv8701_set_current(data.get_setting_real("current"));
-            pidHolder.Kd = data.get_setting_real("pid.Kd");
-            pidHolder.Ki = data.get_setting_real("pid.Ki");
-            pidHolder.Kp = data.get_setting_real("pid.Kp");
-            arm_pid_init_f32(&pidHolder, 1);
+        }
+
+        if(cmdStorage.command_type == uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
+            float angle = getAngle();
+            float target = arm_pid_f32(&pidHolder, cmdStorage.command_value - angle);
+            drv8701_set((short)target, &gpiover1_0);                
         }
         counter = TIME_I2MS(chVTGetSystemTime());
     }
 }
+
+float getAngle()
+{
+    float angle = 0;
+    switch (data.get_setting_int("encoder.type")) {
+        case 1:
+            angle = qeiEnc.readAngular();
+            break;
+        case 2:
+            adcConvert(&ADCD1, &adcCfg, sample, 2);
+            angle = potEnc.readAngular(sample[1]);
+            break;
+        default:
+            break;
+    }
+    return angle;
+}
+
+float getSpeed()
+{
+    float speed = 0;
+    switch (data.get_setting_int("encoder.type")) {
+        case 1:
+            speed = qeiEnc.readSpeed();
+            break;
+        default:
+            break;
+    }
+    return speed;
+}
+
 uavcan::Subscriber<uavcan::equipment::actuator::ArrayCommand> *actuatorSub;
 uavcan::Publisher<uavcan::equipment::actuator::Status> *actuatorStatPub;
 
@@ -191,8 +198,7 @@ void motorInit(void)
                 if(msgT != NULL) {
                     memcpy(msgT, &i, sizeof(uavcan::equipment::actuator::Command));
                     chFifoSendObject(&servoMsg, msgT);
-                }
-                
+                }   
             }
         }
     });
