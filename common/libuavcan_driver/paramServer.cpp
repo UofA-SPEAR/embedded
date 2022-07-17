@@ -22,11 +22,11 @@ int dataCfg::init(const cfgArray_t *defaultConfig)
   mfs_error_t err = mfsReadRecord(&mfs1, 1, &fileSize, (uint8_t*)_setting.data());
   if(err) {
     err = mfsEraseRecord(&mfs1, 1);
-    if(!err) return err;
+    if(err != MFS_NO_ERROR && err != MFS_ERR_NOT_FOUND) return err;
     err = mfsWriteRecord(&mfs1, 1, sizeof(cfgArray_t), (uint8_t*)_defaultSetting);
-    if(!err) return err;
+    if(err) return err;
     err = mfsReadRecord(&mfs1, 1, &fileSize, (uint8_t*)_setting.data());
-    if(!err) return err;
+    if(err) return err;
   }
 }
 
