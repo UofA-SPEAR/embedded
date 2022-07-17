@@ -119,6 +119,7 @@ static THD_FUNCTION(servoTestFn, arg) {
         }
 
         else if(cmdStorage.command_type != uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
+            cmdStorage.command_value = 0;
             drv8701_stop();
         }
 
