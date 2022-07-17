@@ -12,7 +12,7 @@ target_compile_definitions(${EXECUTABLE} PRIVATE
 target_include_directories(${EXECUTABLE} PRIVATE
   ${LIBUAVCAN}/libuavcan/include
   ${LIBUAVCAN}/libuavcan_drivers/stm32/driver/include
-  ${COMMON}/uavcan_dsdl/libuavcan_dsdlc_generated/dsdlc_generated
+  ${COMMON}/uavcan_dsdl/libuavcan_dsdlc_generated
   ${COMMON}/libuavcan_driver
   ${COMMON}/etl/include
 )

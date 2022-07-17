@@ -37,6 +37,7 @@ class Potentiometer : public Encoder {
         void init();
         float readSpeed() {
             chDbgAssert(false, "Potentiometer cannot read speed");
+            return 0.0;
         }
         float readAngular(uint16_t adcValue);
         
