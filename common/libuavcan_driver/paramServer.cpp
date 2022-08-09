@@ -3,7 +3,7 @@
 #include "hal.h"
 #include "hal_mfs.h"
 static MFSDriver mfs1;
-
+dataCfg data;
 static const MFSConfig mfscfg1 = {
   .flashp           = (BaseFlash *)&EFLD1,
   .erased           = 0xFFFFFFFFU,
@@ -14,28 +14,48 @@ static const MFSConfig mfscfg1 = {
   .bank1_sectors    = 2U
 };
 
-void dataCfg::init(const cfgArray_t *defaultConfig)
+int dataCfg::init(const cfgArray_t *defaultConfig)
 {
   _defaultSetting = defaultConfig;
   chMtxObjectInit(&_mtx);
-  size_t fileSize;
-  int err = mfsReadRecord(&mfs1, 1, &fileSize, (uint8_t*)_setting.data());
-  if(fileSize != sizeof(cfgArray_t) || err) {
+  size_t fileSize = _setting.size() * sizeof(setting_value_t);
+  mfs_error_t err = mfsReadRecord(&mfs1, 1, &fileSize, (uint8_t*)_setting.data());
+  if(err) {
     err = mfsEraseRecord(&mfs1, 1);
+    if(err != MFS_NO_ERROR && err != MFS_ERR_NOT_FOUND) return err;
     err = mfsWriteRecord(&mfs1, 1, sizeof(cfgArray_t), (uint8_t*)_defaultSetting);
+    if(err) return err;
     err = mfsReadRecord(&mfs1, 1, &fileSize, (uint8_t*)_setting.data());
+    if(err) return err;
+  }
+}
+
+void dataCfg::readParamValue(const Name& name, Value& out_value) const 
+{
+  const stringName _name = stringName(name.c_str());
+  size_t index = get_setting_index_by_name(_name);
+  switch(_setting[index].union_tag.tag) {
+    case uavcan::protocol::param::Value::Tag::Type::boolean_value:
+      out_value.to<uavcan::protocol::param::Value::Tag::Type::boolean_value>() = _setting[index].value.boolean;
+      break;
+    case uavcan::protocol::param::Value::Tag::Type::integer_value:
+      out_value.to<uavcan::protocol::param::Value::Tag::Type::integer_value>() = _setting[index].value.integer;
+      break;
+    case uavcan::protocol::param::Value::Tag::Type::real_value:
+      out_value.to<uavcan::protocol::param::Value::Tag::Type::real_value>() = _setting[index].value.real;
+      break;
+    default:
+      break;
   }
 }
 
 void dataCfg::assignParamValue(const Name& name, const Value& value)
 {
-  bool isEnableVar = false;
   size_t index = get_setting_index_by_name(name.c_str());
   if(index != get_setting_index_by_name("enabled")) {
     if(!chMtxTryLock(&_mtx)) {
       return;
     }
-    isEnableVar = true;
   }
   switch(_setting[index].union_tag.tag) {
     case uavcan::protocol::param::Value::Tag::Type::boolean_value:
@@ -50,7 +70,7 @@ void dataCfg::assignParamValue(const Name& name, const Value& value)
     default:
       break;
   }
-  if(isEnableVar) chMtxUnlock(&_mtx);
+  chMtxUnlock(&_mtx);
 }
 
 int dataCfg::saveAllParams()
@@ -92,9 +112,6 @@ void dataCfg::unlock()
 {
   chMtxUnlock(&_mtx);
 }
-uavcan::ParamServer *server;
-dataCfg data;
-// uavcan::ParamServer *server;
 int paramServerInit()
 {
   eflStart(&EFLD1, NULL);
@@ -105,8 +122,5 @@ int paramServerInit()
     mfsStop(&mfs1);
     mfsStart(&mfs1, &mfscfg1);
   }
-  server = new uavcan::ParamServer(getNode());
-  data.init(&defaultCfg);
-  int res = server->start(&data);
-  return res;
+  return 0;
 }

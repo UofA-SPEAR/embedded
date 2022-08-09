@@ -1,7 +1,8 @@
 
 {
     "cmake.configureSettings": {
-        "CMAKE_TOOLCHAIN_FILE" : "${workspaceFolder}/cmake/arm-none-eabi-gcc.cmake",
+        // "CMAKE_TOOLCHAIN_FILE" : "${workspaceFolder}/cmake/arm-none-eabi-gcc.cmake",
+        "CMAKE_TOOLCHAIN_FILE" : "${workspaceFolder}/cmake/armclang.cmake",
     },
     "cmake.parallelJobs": 12
 }

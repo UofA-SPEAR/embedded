@@ -11,6 +11,12 @@ set(MCU
 -mfpu=fpv4-sp-d16
 -mfloat-abi=${FPU_CFG}
 )
+set(MCUASM
+--cpu=cortex-m4
+--thumb
+--fpu=FPv4-SP
+--cpreproc --cpreproc_opts=--target=arm-arm-none-eabi,-D,CORTEX_USE_FPU=${IS_FPU}
+)
 set(PORT_FILE cmake/ChibiOS20PORTv7.cmake)
 include(${PORT_FILE})
 target_include_directories(${EXECUTABLE} PRIVATE
@@ -32,12 +38,12 @@ ${CHIBIOS}/os/hal/ports/STM32/LLD/USBv1
 ${CHIBIOS}/os/hal/ports/STM32/LLD/xWDGv1
 ${CHIBIOS}/os/common/portability/GCC
 
-${CHIBIOS}/os/common/startup/ARMCMx/compilers/GCC
 ${CHIBIOS}/os/common/startup/ARMCMx/devices/STM32F3xx
 ${CHIBIOS}/os/common/ext/ARM/CMSIS/Core/Include
 ${CHIBIOS}/os/common/ext/ST/STM32F3xx
 
-${CHIBIOS}/os/common/portability/GCC
+# ${CHIBIOS}/os/common/startup/ARMCMx/compilers/GCC
+# ${CHIBIOS}/os/common/portability/GCC
 ${CHIBIOS}/os/common/ports/ARM-common
 ${CHIBIOS}/os/common/ports/ARMv7-M
 
@@ -62,13 +68,19 @@ ${CHIBIOS}/os/hal/ports/STM32/LLD/USARTv2/*.c
 ${CHIBIOS}/os/hal/ports/STM32/LLD/USBv1/*.c
 ${CHIBIOS}/os/hal/ports/STM32/LLD/xWDGv1/*.c
 
-${CHIBIOS}/os/common/startup/ARMCMx/compilers/GCC/crt0_v7m.S
-${CHIBIOS}/os/common/startup/ARMCMx/compilers/GCC/vectors.S
-${CHIBIOS}/os/common/startup/ARMCMx/compilers/GCC/crt1.c
+# ${CHIBIOS}/os/common/startup/ARMCMx/compilers/GCC/crt0_v7m.S
+# ${CHIBIOS}/os/common/startup/ARMCMx/compilers/GCC/vectors.S
+# ${CHIBIOS}/os/common/startup/ARMCMx/compilers/GCC/crt1.c
+${CHIBIOS}/os/common/startup/ARMCMx/compilers/RVCT/cstartup.s
+${CHIBIOS}/os/common/startup/ARMCMx/compilers/RVCT/vectors.s
 )
 
 target_compile_definitions(${EXECUTABLE} PRIVATE
 CORTEX_USE_FPU=${IS_FPU}
+-D__heap_base__=Image$$0x20000000$$ZI$$$$Limit 
+-D__heap_end__=Image$$0x2000A000$$Base
+# __heap_base__=\(0x20000000\)
+# __heap_end__=\(0x2000A000\)
 )
 
 target_sources(${EXECUTABLE} PRIVATE

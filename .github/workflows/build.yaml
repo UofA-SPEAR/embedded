@@ -10,6 +10,7 @@ jobs:
       - uses: fiam/arm-none-eabi-gcc@v1
         with:
           release: '9-2020-q2'
+      - run: cd motorControllerV1 && cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-none-eabi-gcc.cmake -DCMAKE_BUILD_TYPE=Debug . && cmake --build . -- -j 4
       - run: cd motor_controller && cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-none-eabi-gcc.cmake -DCMAKE_BUILD_TYPE=Debug . && cmake --build . -- -j 4
       - run: cd examples/adc && cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-none-eabi-gcc.cmake -DCMAKE_BUILD_TYPE=Debug . && cmake --build . -- -j 4
       - run: cd examples/dac && cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-none-eabi-gcc.cmake -DCMAKE_BUILD_TYPE=Debug . && cmake --build . -- -j 4
@@ -17,3 +18,4 @@ jobs:
       - run: cd examples/pwm && cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-none-eabi-gcc.cmake -DCMAKE_BUILD_TYPE=Debug . && cmake --build . -- -j 4
       - run: cd examples/pollingInput && cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-none-eabi-gcc.cmake -DCMAKE_BUILD_TYPE=Debug . && cmake --build . -- -j 4
       - run: cd examples/interruptInput && cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-none-eabi-gcc.cmake -DCMAKE_BUILD_TYPE=Debug . && cmake --build . -- -j 4
+      

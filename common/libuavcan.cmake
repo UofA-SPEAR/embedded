@@ -1,6 +1,6 @@
 set(GIT_DIR_LOOKUP_POLICY ALLOW_LOOKING_ABOVE_CMAKE_SOURCE_DIR)
-add_subdirectory(${COMMON}/etl)
-target_link_libraries(${EXECUTABLE} PRIVATE ${COMMON}/etl)
+add_subdirectory(lib/etl)
+target_link_libraries(${EXECUTABLE} PRIVATE etl)
 
 set(LIBUAVCAN ${COMMON}/uavcan_dsdl/libuavcan)
 target_compile_definitions(${EXECUTABLE} PRIVATE
@@ -25,7 +25,9 @@ FILE(GLOB LIBUAVCAN_SRC
   ${LIBUAVCAN}/libuavcan/src/protocol/*.cpp
   ${LIBUAVCAN}/libuavcan/src/transport/*.cpp
   ${LIBUAVCAN}/libuavcan_drivers/stm32/driver/src/*.cpp
-  ${COMMON}/libuavcan_driver/*.cpp
+  ${COMMON}/libuavcan_driver/coms.cpp
+  ${COMMON}/libuavcan_driver/paramServer.cpp
+  
 )
 
 target_sources(${EXECUTABLE} PRIVATE

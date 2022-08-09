@@ -75,24 +75,7 @@ class dataCfg : public uavcan::IParamManager
 
   void assignParamValue(const Name& name, const Value& value) override;
 
-  void readParamValue(const Name& name, Value& out_value) const override
-  {
-    const stringName _name = stringName(name.c_str());
-    size_t index = get_setting_index_by_name(_name);
-    switch(_setting[index].union_tag.tag) {
-      case uavcan::protocol::param::Value::Tag::Type::boolean_value:
-        out_value.to<uavcan::protocol::param::Value::Tag::Type::boolean_value>() = _setting[index].value.boolean;
-        break;
-      case uavcan::protocol::param::Value::Tag::Type::integer_value:
-        out_value.to<uavcan::protocol::param::Value::Tag::Type::integer_value>() = _setting[index].value.integer;
-        break;
-      case uavcan::protocol::param::Value::Tag::Type::real_value:
-        out_value.to<uavcan::protocol::param::Value::Tag::Type::real_value>() = _setting[index].value.real;
-        break;
-      default:
-        break;
-    }
-  }
+
   int saveAllParams() override;
 
   int eraseAllParams() override;
@@ -120,11 +103,11 @@ class dataCfg : public uavcan::IParamManager
         break;
     }
   }
-
+  void readParamValue(const Name& name, Value& out_value) const override;
 
   public:
     dataCfg(){}
-    void init(const cfgArray_t *defaultConfig);
+    int init(const cfgArray_t *defaultConfig);
     // In order to avoid writing to flash while the MCU is doing something critical
     void lock();
     // Unlock after finished using

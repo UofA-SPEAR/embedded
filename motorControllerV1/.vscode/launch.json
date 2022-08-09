@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "cwd": "${workspaceRoot}",
+            "executable": "${command:cmake.launchTargetPath}",
+            "name": "Debug Microcontroller",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "configFiles": ["${workspaceFolder}/boardCfg/speedy_f3.cfg"],
+            "svdFile": "${workspaceFolder}/stm32f303.svd",
+            "demangle": true,
+            // "showDevDebugOutput": "parsed"
+            "runToMain": true
+        }
+    ]
+}

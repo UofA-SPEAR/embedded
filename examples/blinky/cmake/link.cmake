@@ -1,8 +1,11 @@
 set(LINKER_SRC ${CHIBIOS}/os/common/startup/ARMCMx/compilers/GCC/ld)
 
 target_compile_options(${EXECUTABLE} PRIVATE
-${MCU}
 
+# --target=arm-arm-none-eabi
+$<$<COMPILE_LANGUAGE:CXX>:${MCU} --target=arm-arm-none-eabi> 
+$<$<COMPILE_LANGUAGE:C>:${MCU} --target=arm-arm-none-eabi>
+$<$<COMPILE_LANGUAGE:ASM>:${MCUASM}>
 -fdata-sections
 -ffunction-sections
 -fno-common
@@ -37,6 +40,7 @@ ${MCU}
 -Wl,--print-memory-usage
 )
 
+
 target_link_directories(${EXECUTABLE} PRIVATE ${ULIBDIR})
 target_link_libraries(${EXECUTABLE} ${ULIBS})
 
@@ -46,12 +50,12 @@ target_link_libraries(${EXECUTABLE} ${ULIBS})
 # )
 # add_dependencies(${EXECUTABLE} SPEEDY_TEMPLATE)
 
-add_custom_command(TARGET ${EXECUTABLE}
-        POST_BUILD
-        COMMAND arm-none-eabi-size ${EXECUTABLE})
+# add_custom_command(TARGET ${EXECUTABLE}
+#         POST_BUILD
+#         COMMAND arm-none-eabi-size ${EXECUTABLE})
 
 # Create hex file
-add_custom_command(TARGET ${EXECUTABLE}
-        POST_BUILD
-        COMMAND arm-none-eabi-objcopy -O ihex ${EXECUTABLE} ${PROJECT_NAME}.hex
-        COMMAND arm-none-eabi-objcopy -O binary ${EXECUTABLE} ${PROJECT_NAME}.bin)
+# add_custom_command(TARGET ${EXECUTABLE}
+#         POST_BUILD
+#         COMMAND arm-none-eabi-objcopy -O ihex ${EXECUTABLE} ${PROJECT_NAME}.hex
+#         COMMAND arm-none-eabi-objcopy -O binary ${EXECUTABLE} ${PROJECT_NAME}.bin)
