@@ -48,6 +48,22 @@ static msg_t servoStatusMsgBuff[5];
 float getAngle();
 float getSpeed();
 
+static void set_mot(short target, short current, uint8_t ms_per_step) 
+{
+    while(target != current) {
+        if(current > target) {
+            current--;
+        }
+        else if(current < target) {
+            current++;
+        }
+        drv8701_set(current, &gpiover1_0);
+        chThdSleepMilliseconds(ms_per_step);
+    }
+    if(current == 0) {
+        drv8701_stop();
+    }
+}
 // Working Thread
 static THD_WORKING_AREA(servoTestWorkingArea, 2048);
 static THD_FUNCTION(servoTestFn, arg) {
@@ -55,6 +71,7 @@ static THD_FUNCTION(servoTestFn, arg) {
     uavcan::equipment::actuator::Command cmdStorage;
 	systime_t counter;
     uavcan::equipment::actuator::Status statusMsg;
+    short current_pos = 0; // for non-sensor
     (void)arg;
     pidHolder.Kd = data.get_setting_real("pid.Kd");
     pidHolder.Ki = data.get_setting_real("pid.Ki");
@@ -107,7 +124,10 @@ static THD_FUNCTION(servoTestFn, arg) {
                 short result = cmdStorage.command_value * 1000;
                 if(data.get_setting_bool("reversed")) result *= -1;
                 chprintf((BaseSequentialStream*)&SD2, "Received Command is %d running at %d\r\n", cmdStorage.command_type, result);
-                drv8701_set(result, &gpiover1_0);
+                if(result != current_pos) {
+                    set_mot(result, current_pos, 1);
+                    current_pos = result;
+                }
             }
             else {
                 if (cmdStorage.command_type == uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
@@ -120,7 +140,11 @@ static THD_FUNCTION(servoTestFn, arg) {
 
         else if(cmdStorage.command_type != uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
             cmdStorage.command_value = 0;
-            drv8701_stop();
+            short result = 0;
+            if(result != current_pos) {
+                set_mot(result, current_pos, 1);
+                current_pos = result;
+            }
         }
 
         if(cmdStorage.command_type == uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
