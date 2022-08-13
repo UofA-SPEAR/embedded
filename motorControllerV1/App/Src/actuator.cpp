@@ -64,6 +64,12 @@ static void set_mot(short target, short current, uint8_t ms_per_step)
         drv8701_stop();
     }
 }
+
+constexpr uint32_t LOOP_FREQ = 100; // Update at 10Hz
+constexpr uint32_t LOOP_PERIOD = 1000/LOOP_FREQ; // Loop period (ms)
+constexpr uint32_t RESPONSE_TIME = 100; // Response time (in ms)
+constexpr uint32_t DIFF_PER_PERIOD = 10000 / (RESPONSE_TIME / LOOP_PERIOD);
+
 // Working Thread
 static THD_WORKING_AREA(servoTestWorkingArea, 2048);
 static THD_FUNCTION(servoTestFn, arg) {
@@ -86,73 +92,104 @@ static THD_FUNCTION(servoTestFn, arg) {
     bool isTimeout = false;
     drv8701_init(&gpiover1_0);
     drv8701_set_current(data.get_setting_real("current"));
+
+    systime_t next_loop = chVTGetSystemTime();
+    int32_t current_effort = 0;
+    int32_t target_effort = 0;
+
     while (true) {
-        msg_t status = chFifoReceiveObjectTimeout(&servoMsg, (void**)&cmd, TIME_MS2I(10));
+        msg_t status = chFifoReceiveObjectTimeout(&servoMsg, (void**)&cmd, TIME_US2I(100));
+
+        // TODO timeout
         if(status == MSG_OK) {
+            // Received command, update target
             memcpy(&cmdStorage, cmd, sizeof(uavcan::equipment::actuator::Command));
             chFifoReturnObject(&servoMsg, cmd);
-            countdown = TIME_I2MS(chVTGetSystemTime()) + 500;
-            isTimeout = false;
-        }
-        else {
-            if(TIME_I2MS(chVTGetSystemTime()) >= countdown) {
-                isTimeout = true;
+            target_effort = cmdStorage.command_value;
+        } else {
+            // Skip if it isn't time to update
+            if (chVTGetSystemTime() < next_loop) {
+                continue;
             }
-        }
-        statusMsg.actuator_id = data.get_setting_int("actuator_id");
-        if(counter >= dest) {
-            dest = counter + 1000;
-            void *msg = chFifoTakeObjectTimeout(&servoStatus, TIME_MS2I(500));
-            if(msg != nullptr) {
-                memcpy(msg, &statusMsg, sizeof(uavcan::equipment::actuator::Status));
-                chFifoSendObject(&servoStatus, msg);
+
+            // Set time for next update
+            next_loop = next_loop + TIME_MS2I(LOOP_PERIOD);
+
+            // TODO not hacky shit
+            short diff = target_effort - current_effort;
+            if (diff > 0) {
+                current_effort += ((diff < DIFF_PER_PERIOD) ? diff : DIFF_PER_PERIOD);
+            } else if (diff < 0) {
+                current_effort += ((abs(diff) < DIFF_PER_PERIOD) ? diff : -DIFF_PER_PERIOD);
             }
-        }
-        bool isEnabledCurr = data.get_setting_bool("enabled");
-        if(isEnabledBefore != isEnabledCurr) {
-            isEnabledBefore = isEnabledCurr;
-            if(isEnabledCurr) {
-                data.lock();
-            }
-            else {
-                data.unlock();
-            }
-        }
-        // Timeout for this only occured with no type and speed type sensor
-        if(!isTimeout) {
-            if(data.get_setting_int("encoder.type") == 0) {
-                short result = cmdStorage.command_value * 1000;
-                if(data.get_setting_bool("reversed")) result *= -1;
-                chprintf((BaseSequentialStream*)&SD2, "Received Command is %d running at %d\r\n", cmdStorage.command_type, result);
-                if(result != current_pos) {
-                    set_mot(result, current_pos, 1);
-                    current_pos = result;
-                }
-            }
-            else {
-                if (cmdStorage.command_type == uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
-                    float speed = getSpeed();
-                    float target = arm_pid_f32(&pidHolder, cmdStorage.command_value - speed);
-                    drv8701_set((short)target, &gpiover1_0); 
-                }
-            }
+
+            drv8701_set(current_effort, &gpiover1_0);
         }
 
-        else if(cmdStorage.command_type != uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
-            cmdStorage.command_value = 0;
-            short result = 0;
-            if(result != current_pos) {
-                set_mot(result, current_pos, 1);
-                current_pos = result;
-            }
-        }
+        //if(status == MSG_OK) {
+        //    memcpy(&cmdStorage, cmd, sizeof(uavcan::equipment::actuator::Command));
+        //    chFifoReturnObject(&servoMsg, cmd);
+        //    isTimeout = false;
+        //}
+        //else {
+        //    if(TIME_I2MS(chVTGetSystemTime()) >= countdown) {
+        //        isTimeout = true;
+        //    }
+        //}
+        //statusMsg.actuator_id = data.get_setting_int("actuator_id");
+        //if(counter >= dest) {
+        //    dest = counter + 1000;
+        //    void *msg = chFifoTakeObjectTimeout(&servoStatus, TIME_MS2I(500));
+        //    if(msg != nullptr) {
+        //        memcpy(msg, &statusMsg, sizeof(uavcan::equipment::actuator::Status));
+        //        chFifoSendObject(&servoStatus, msg);
+        //    }
+        //}
+        //bool isEnabledCurr = data.get_setting_bool("enabled");
+        //if(isEnabledBefore != isEnabledCurr) {
+        //    isEnabledBefore = isEnabledCurr;
+        //    if(isEnabledCurr) {
+        //        data.lock();
+        //    }
+        //    else {
+        //        data.unlock();
+        //    }
+        //}
+        //// Timeout for this only occured with no type and speed type sensor
+        //if(!isTimeout) {
+        //    if(data.get_setting_int("encoder.type") == 0) {
+        //        short result = cmdStorage.command_value * 1000;
+        //        if(data.get_setting_bool("reversed")) result *= -1;
+        //        chprintf((BaseSequentialStream*)&SD2, "Received Command is %d running at %d\r\n", cmdStorage.command_type, result);
+        //        if(result != current_pos) {
+        //            set_mot(result, current_pos, 1);
+        //            current_pos = result;
+        //        }
+        //    }
+        //    else {
+        //        if (cmdStorage.command_type == uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
+        //            float speed = getSpeed();
+        //            float target = arm_pid_f32(&pidHolder, cmdStorage.command_value - speed);
+        //            drv8701_set((short)target, &gpiover1_0); 
+        //        }
+        //    }
+        //}
 
-        if(cmdStorage.command_type == uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
-            float angle = getAngle();
-            float target = arm_pid_f32(&pidHolder, cmdStorage.command_value - angle);
-            drv8701_set((short)target, &gpiover1_0);                
-        }
-        counter = TIME_I2MS(chVTGetSystemTime());
+        //else if(cmdStorage.command_type != uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
+        //    cmdStorage.command_value = 0;
+        //    short result = 0;
+        //    if(result != current_pos) {
+        //        set_mot(result, current_pos, 1);
+        //        current_pos = result;
+        //    }
+        //}
+
+        //if(cmdStorage.command_type == uavcan::equipment::actuator::Command::COMMAND_TYPE_POSITION) {
+        //    float angle = getAngle();
+        //    float target = arm_pid_f32(&pidHolder, cmdStorage.command_value - angle);
+        //    drv8701_set((short)target, &gpiover1_0);                
+        //}
+        //counter = TIME_I2MS(chVTGetSystemTime());
     }
 }
 
