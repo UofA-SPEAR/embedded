@@ -8,9 +8,9 @@ static const MFSConfig mfscfg1 = {
   .flashp           = (BaseFlash *)&EFLD1,
   .erased           = 0xFFFFFFFFU,
   .bank_size        = 4096U,
-  .bank0_start      = 122U,
+  .bank0_start      = 61U,
   .bank0_sectors    = 2U,
-  .bank1_start      = 124U,
+  .bank1_start      = 63U,
   .bank1_sectors    = 2U
 };
 
