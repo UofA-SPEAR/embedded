@@ -105,7 +105,9 @@ static THD_FUNCTION(servoTestFn, arg) {
             // Received command, update target
             memcpy(&cmdStorage, cmd, sizeof(uavcan::equipment::actuator::Command));
             chFifoReturnObject(&servoMsg, cmd);
-            target_effort = cmdStorage.command_value;
+            if (cmdStorage.actuator_id == data.get_setting_int("actuator_id")) {
+                target_effort = cmdStorage.command_value * 1000;
+            }
         } else {
             // Skip if it isn't time to update
             if (chVTGetSystemTime() < next_loop) {

@@ -13,5 +13,5 @@ const cfgArray_t defaultCfg = {{
     SETTING_SPEC_INT("quadrature.gear", 0, 150, 5000),
     SETTING_SPEC_INT("encoder.endstop_min", 0, -1000, 1000),
     SETTING_SPEC_INT("encoder.endstop_max", 0, -1000, 1000),
-    SETTING_SPEC_REAL("current", 5.0, 0, 20.0),
+    SETTING_SPEC_REAL("current", 15, 0, 20.0),
 }};

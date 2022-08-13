@@ -33,6 +33,10 @@ void drv8701_init(const drv8701eControl_t *cfg) {
     0,
     0
   };
+
+  // Start with driver sleeping to avoid jumps at boot.
+  palClearPad(DRV8701_nSLEEP_PORT, DRV8701_nSLEEP_PIN);
+
   pwmcfg.channels[cfg->channel] = cfg->channelCfg;
   palSetPadMode(DRV8701_VREF_PORT, DRV8701_VREF_PIN, DRV8701_VREF_MODE);
   palSetPadMode(cfg->gpioStruct.ph_pin.port, cfg->gpioStruct.ph_pin.pin, DRV8701_PH_MODE);
