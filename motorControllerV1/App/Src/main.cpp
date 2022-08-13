@@ -21,6 +21,22 @@
 #include "coms.hpp"
 #include "actuator.hpp"
 __attribute__((weak)) void *__dso_handle;
+
+#define BASE_NODE_ID 30
+
+uint8_t read_node_id(void) {
+  uint8_t node_id = BASE_NODE_ID;
+  uint8_t tmp = 0;
+
+  tmp = palReadPad(GPIOB, 15) << 3;
+  tmp |= palReadPad(GPIOA, 8) << 2;
+  tmp |= palReadPad(GPIOA, 9) << 1;
+  tmp |= palReadPad(GPIOA, 10);
+
+  node_id += tmp;
+  return node_id;
+}
+
 // uint32_t __heap_base = 
 /*
  * Application entry point.
@@ -29,7 +45,7 @@ int main(void) {
   halInit();
   chSysInit();
   sdStart(&SD2, NULL);
-  comsInit("spear.actuator", 16, 1000000);
+  comsInit("spear.actuator", read_node_id(), 1000000);
   paramServerInit();
   uavcan::ParamServer server(getNode());
   data.init(&defaultCfg);
