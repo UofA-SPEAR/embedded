@@ -70,6 +70,8 @@ constexpr uint32_t LOOP_PERIOD = 1000/LOOP_FREQ; // Loop period (ms)
 constexpr uint32_t RESPONSE_TIME = 100; // Response time (in ms)
 constexpr uint32_t DIFF_PER_PERIOD = 10000 / (RESPONSE_TIME / LOOP_PERIOD);
 
+constexpr uint32_t TIMEOUT_MS = 5000;
+
 // Working Thread
 static THD_WORKING_AREA(servoTestWorkingArea, 2048);
 static THD_FUNCTION(servoTestFn, arg) {
@@ -97,6 +99,8 @@ static THD_FUNCTION(servoTestFn, arg) {
     int32_t current_effort = 0;
     int32_t target_effort = 0;
 
+    systime_t timeout = chVTGetSystemTime() + TIME_MS2I(TIMEOUT_MS);
+
     while (true) {
         msg_t status = chFifoReceiveObjectTimeout(&servoMsg, (void**)&cmd, TIME_US2I(100));
 
@@ -107,8 +111,14 @@ static THD_FUNCTION(servoTestFn, arg) {
             chFifoReturnObject(&servoMsg, cmd);
             if (cmdStorage.actuator_id == data.get_setting_int("actuator_id")) {
                 target_effort = cmdStorage.command_value * 1000;
+                timeout = chVTGetSystemTime() + TIME_MS2I(TIMEOUT_MS);
             }
         } else {
+            systime_t now = chVTGetSystemTime();
+            if (now > timeout) {
+                target_effort = 0;
+            }
+
             // Skip if it isn't time to update
             if (chVTGetSystemTime() < next_loop) {
                 continue;
