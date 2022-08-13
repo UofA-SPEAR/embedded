@@ -1,7 +1,7 @@
 #include "paramServer.hpp"
 const cfgArray_t defaultCfg = {{
     SETTING_SPEC_BOOL("enabled", false),
-    SETTING_SPEC_INT("actuator_id", 5, 0, 15),
+    SETTING_SPEC_INT("actuator_id", 41, 0, 255),
     SETTING_SPEC_BOOL("reversed", false),
     SETTING_SPEC_BOOL("continuous", false),
     SETTING_SPEC_REAL("pid.Kp", 0.0, -1.0, 1.0),
