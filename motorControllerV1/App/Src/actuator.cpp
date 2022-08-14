@@ -77,11 +77,11 @@ static uint32_t get_linear_target_position(float command_angle) {
   int32_t position;
   // TODO add an angle offset
 
-  constexpr float support_length = 2;
-  constexpr float arm_length = 2;
+  constexpr float support_length = 11.375;
+  constexpr float arm_length = 2.813
 
-  constexpr float length_min = 0;
-  constexpr float length_max = 2;
+  constexpr float length_min = 9.875;
+  constexpr float length_max = 12.94;
   
   constexpr uint32_t encoder_min = 0;
   constexpr uint32_t encoder_max = 4096;
