@@ -28,6 +28,8 @@ int dataCfg::init(const cfgArray_t *defaultConfig)
     err = mfsReadRecord(&mfs1, 1, &fileSize, (uint8_t*)_setting.data());
     if(err) return err;
   }
+
+  return 0;
 }
 
 void dataCfg::readParamValue(const Name& name, Value& out_value) const 

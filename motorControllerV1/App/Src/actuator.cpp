@@ -72,6 +72,85 @@ constexpr uint32_t DIFF_PER_PERIOD = 10000 / (RESPONSE_TIME / LOOP_PERIOD);
 
 constexpr uint32_t TIMEOUT_MS = 5000;
 
+static uint32_t get_linear_target_position(float command_angle) {
+  float desired_length;
+  int32_t position;
+  // TODO add an angle offset
+
+  constexpr float support_length = 2;
+  constexpr float arm_length = 2;
+
+  constexpr float length_min = 0;
+  constexpr float length_max = 2;
+  
+  constexpr uint32_t encoder_min = 0;
+  constexpr uint32_t encoder_max = 4096;
+
+  // Comes from cosine law
+  // c^2 = a^2 + b^2 - 2ab*cos(C)
+  desired_length = sqrt(
+      pow(support_length, 2) + pow(arm_length, 2) -
+      (2 * (support_length) * (arm_length) * cos(command_angle)));
+
+  // TODO set nodestatus
+  if (desired_length < length_min) {
+    //can_set_node_status(UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING,
+    //                    UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL);
+    desired_length = length_min;
+  } else if (desired_length > length_max) {
+    //can_set_node_status(UAVCAN_PROTOCOL_NODESTATUS_HEALTH_WARNING,
+    //                    UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL);
+    desired_length = length_max;
+  } else {
+    //can_set_node_status(UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK,
+    //                    UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL);
+  }
+
+  // These are checked to be positive in check_settings()
+  uint32_t encoder_range = encoder_max - encoder_min;
+  float linear_range = length_max - length_min;
+
+  // set position properly
+  position =
+      // fit length into encoder range
+      (desired_length - length_min) *
+          // Convert from length range into the encoder range
+          (encoder_range / linear_range) +
+      // Add the minimum encoder value
+      encoder_min;
+
+  return position;
+}
+
+const ADCConversionGroup adcgrpcfg1 = {
+    FALSE,
+    1,
+    NULL,
+    NULL,
+    ADC_CFGR_CONT,   /* CFGR    */
+    .smpr         = {
+    ADC_SMPR1_SMP_AN0(ADC_SMPR_SMP_61P5),
+    0
+    },
+    .sqr          = {
+      ADC_SQR1_SQ1_N(ADC_CHANNEL_IN1),
+      0,
+      0,
+      0
+    }
+};
+
+static int32_t pot_read(void) {
+  adcsample_t buf[4];
+  adcsample_t res = 0;
+  adcConvert(&ADCD1, &adcgrpcfg1, buf, 4);
+  for (int i = 0; i < 4; i++) {
+    res += buf[i];
+  }
+  res /= 4;
+  return res;
+}
+
 // Working Thread
 static THD_WORKING_AREA(servoTestWorkingArea, 2048);
 static THD_FUNCTION(servoTestFn, arg) {
@@ -101,6 +180,15 @@ static THD_FUNCTION(servoTestFn, arg) {
 
     systime_t timeout = chVTGetSystemTime() + TIME_MS2I(TIMEOUT_MS);
 
+    // TODO correct default target
+    uint32_t target_position = 0; // Target *encoder* position, we translate provided angle into encoder value
+
+    // Set up ADC
+    palSetPad(GPIOB, 1);
+    palSetPad(GPIOB, 0);
+    palSetPadMode(GPIOA, 0, PAL_MODE_INPUT_ANALOG);
+    adcStart(&ADCD1, NULL);
+
     while (true) {
         msg_t status = chFifoReceiveObjectTimeout(&servoMsg, (void**)&cmd, TIME_US2I(100));
 
@@ -110,8 +198,12 @@ static THD_FUNCTION(servoTestFn, arg) {
             memcpy(&cmdStorage, cmd, sizeof(uavcan::equipment::actuator::Command));
             chFifoReturnObject(&servoMsg, cmd);
             if (cmdStorage.actuator_id == data.get_setting_int("actuator_id")) {
-                target_effort = cmdStorage.command_value * 1000;
-                timeout = chVTGetSystemTime() + TIME_MS2I(TIMEOUT_MS);
+                if (data.get_setting_int("encoder_type") == 0 && cmdStorage.command_type == cmdStorage.COMMAND_TYPE_SPEED) {
+                    target_effort = cmdStorage.command_value * 1000;
+                    timeout = chVTGetSystemTime() + TIME_MS2I(TIMEOUT_MS);
+                } else if (data.get_setting_int("encoder_type") == 1 && cmdStorage.command_type == cmdStorage.COMMAND_TYPE_POSITION) {
+                    target_position = get_linear_target_position(cmdStorage.command_value);
+                }
             }
         } else {
             systime_t now = chVTGetSystemTime();
@@ -127,15 +219,22 @@ static THD_FUNCTION(servoTestFn, arg) {
             // Set time for next update
             next_loop = next_loop + TIME_MS2I(LOOP_PERIOD);
 
-            // TODO not hacky shit
-            short diff = target_effort - current_effort;
-            if (diff > 0) {
-                current_effort += ((diff < DIFF_PER_PERIOD) ? diff : DIFF_PER_PERIOD);
-            } else if (diff < 0) {
-                current_effort += ((abs(diff) < DIFF_PER_PERIOD) ? diff : -DIFF_PER_PERIOD);
-            }
+            if (data.get_setting_int("encoder_type") == 0) {
+                // TODO not hacky shit
+                short diff = target_effort - current_effort;
+                if (diff > 0) {
+                    current_effort += ((diff < DIFF_PER_PERIOD) ? diff : DIFF_PER_PERIOD);
+                } else if (diff < 0) {
+                    current_effort += ((abs(diff) < DIFF_PER_PERIOD) ? diff : -DIFF_PER_PERIOD);
+                }
 
-            drv8701_set(current_effort, &gpiover1_0);
+                drv8701_set(current_effort, &gpiover1_0);
+            } else if (data.get_setting_int("encoder_type") == 1) {
+                int32_t error = target_position - pot_read();
+
+                float effort = arm_pid_f32(&pidHolder, (float) error / 4096.0);
+                drv8701_set(effort * 10000, &gpiover1_0);
+            }
         }
 
         //if(status == MSG_OK) {
