@@ -1,3 +1,14 @@
+/**
+ * @file slcan_shell.c
+ * @author your name (you@domain.com)
+ * @brief 
+ * @version 0.1
+ * @date 2022-10-07
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include "hal.h"
 #include "slcan_shell.h"
 #include "utils.h"
@@ -15,18 +26,19 @@ typedef enum slcan_command_t{
   SLCAN_RTR_SID = 'r'
 } slcan_command_t;
 
+typedef enum slcan_state {
+  CLOSE,
+  OPEN
+} slcan_state_t;
+
 static CANTxFrame txframebuff[CAN_BUFF];
 static msg_t txmsgbuff[CAN_BUFF];
 static CANRxFrame rxframebuff[CAN_BUFF];
 static msg_t rxmsgbuff[CAN_BUFF];
 
-
 objects_fifo_t txfifo, rxfifo;
 
 static mutex_t canmtx;
-
-// event_source_t txstatus;
-// event_listener_t txlistener;
 
 // Obtained from http://www.bittiming.can-wiki.info/#STMicro
 const uint32_t btr_lookup[] =
@@ -37,12 +49,13 @@ const uint32_t btr_lookup[] =
   0x011e0013,
   0x011e000f,
   0x011e0007,
-  0x011e0003,
-  0x011b0002,
+  0x001e4003,
+  0x001b4002,
   0x011e0001
 };
 
-uint8_t serialbuff[9 + 8 * 2 + 1];
+// Serial Buffer fits for MAX one line CAN232
+static uint8_t serialbuff[9 + 8 * 2 + 1];
 
 static CANConfig cancfg = {
   .mcr = CAN_MCR_ABOM | CAN_MCR_AWUM,
@@ -175,6 +188,13 @@ static bool transmit_eid_assemble(objects_fifo_t *out_fifo, uint8_t *serialbuff)
   return true;
 }
 
+
+/**
+ * @brief 
+ * 
+ * @param stream 
+ * @param rxframe 
+ */
 static void transmit_received_frame(BaseChannel *stream, CANRxFrame *rxframe)
 {
   uint8_t buff[9 + 8 * 2 + 1];
@@ -238,18 +258,30 @@ static void transmit_received_frame(BaseChannel *stream, CANRxFrame *rxframe)
   chDbgAssert(size == index, "Error Happens");
 }
 
-void sendError(BaseChannel *stream)
+/**
+ * @brief Send NACK
+ * 
+ * @param stream 
+ */
+static inline void sendError(BaseChannel *stream)
 {
   chnPutTimeout(stream, '\a', TIME_INFINITE);
 }
 
-void sendSuccess(BaseChannel *stream)
+static inline void sendSuccess(BaseChannel *stream)
 {
   chnPutTimeout(stream, '\r', TIME_INFINITE);
 }
 
+/**
+ * @brief CAN Full RX Callback
+ * 
+ * @param canp CAN Pointer
+ * @param flags Unused
+ */
 static void can_rx_cb(CANDriver *canp, uint32_t flags)
 {
+  (void)flags;
   CANRxFrame frame;
   chSysLockFromISR();
   bool isg = canTryReceiveI(canp, CAN_ANY_MAILBOX, &frame);
@@ -264,6 +296,10 @@ static void can_rx_cb(CANDriver *canp, uint32_t flags)
   chSysUnlockFromISR();
 }
 
+/**
+ * @brief CAN Thread, this is to check for CAN frame on both TX and RX
+ * 
+ */
 static THD_WORKING_AREA(waCanThread, 128);
 static THD_FUNCTION(CanFunc, arg) {
   (void)arg;
@@ -295,10 +331,6 @@ static THD_FUNCTION(CanFunc, arg) {
   }
 }
 
-typedef enum slcan_state {
-  CLOSE,
-  OPEN
-} slcan_state_t;
 
 static THD_WORKING_AREA(waCanShellThread, 1024);
 static THD_FUNCTION(CanShellFunc, arg) {
@@ -343,7 +375,7 @@ static THD_FUNCTION(CanShellFunc, arg) {
           }
           break;
         default:
-          // sendError(stream);
+          sendError(stream);
           break;
       }
     }
@@ -393,8 +425,8 @@ static THD_FUNCTION(CanShellFunc, arg) {
           }
           break;
         default:
-            sendError(stream);
-            break;
+          sendError(stream);
+          break;
       }
     }
     if(chara == '\r') {
@@ -405,7 +437,6 @@ static THD_FUNCTION(CanShellFunc, arg) {
 
 void canShellInit(void)
 {
-  // chEvtRegisterMaskWithFlags(&txstatus, &txlistener, EVENT_MASK(0), SLCAN_TX_ERROR | SLCAN_TX_OK);
   chMtxObjectInit(&canmtx);
   CAND1.rxfull_cb = can_rx_cb;
   chFifoObjectInit(&txfifo, sizeof(CANTxFrame), CAN_BUFF, txframebuff, txmsgbuff);
