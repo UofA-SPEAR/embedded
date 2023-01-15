@@ -1,0 +1,1 @@
+This is the firmware to repurpose the SPEEDY to become a USB to CAN via SLCAN. The baudrate that this firmware is running is 921600

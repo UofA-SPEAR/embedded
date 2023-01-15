@@ -17,3 +17,4 @@ jobs:
       - run: cd examples/pwm && cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-none-eabi-gcc.cmake -DCMAKE_BUILD_TYPE=Debug . && cmake --build . -- -j 4
       - run: cd examples/pollingInput && cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-none-eabi-gcc.cmake -DCMAKE_BUILD_TYPE=Debug . && cmake --build . -- -j 4
       - run: cd examples/interruptInput && cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-none-eabi-gcc.cmake -DCMAKE_BUILD_TYPE=Debug . && cmake --build . -- -j 4
+      - run: cd slcan_speedy && cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-none-eabi-gcc.cmake -DCMAKE_BUILD_TYPE=Debug . && cmake --build . -- -j
