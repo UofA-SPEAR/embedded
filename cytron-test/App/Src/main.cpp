@@ -1,6 +1,17 @@
 #include "ch.h"
 #include "hal.h"
 #include <stdlib.h>
+#include <stdint.h>
+
+#define FRAME_ID_VELOCITY 0x10
+
+#define ACTUATOR1_ID 0x1
+#define ACTUATOR2_ID 0x2
+
+struct can_velocity {
+	uint8_t actuator_id;
+	float velocity;
+};
 
 PWMConfig pwmcfg = {
         1000000,  // 1MHz Timer Frequency
@@ -56,6 +67,7 @@ static const CANConfig cancfg {
 
 /*
  * Transmitter thread.
+ * Derived from ChibiOS/ChibiOS/testhal/STM32/STM32F3xx/CAN/main.c
  */
 static THD_WORKING_AREA(can_tx_wa, 256);
 static THD_FUNCTION(can_tx, arg)
@@ -75,6 +87,56 @@ static THD_FUNCTION(can_tx, arg)
 		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
 		chThdSleepMilliseconds(500);
 	}
+}
+
+void process_can_frame(CANRxFrame *rxmsg)
+{
+	float *cmdObj;
+	// TODO: Refactor
+	if (rxmsg->IDE == CAN_IDE_EXT) {
+		switch ((rxmsg->EID >> 8) & 0xffff) {
+		case FRAME_ID_VELOCITY:
+			struct can_velocity *recv_cmd = (struct can_velocity*)rxmsg->data8;
+			switch (recv_cmd->actuator_id) {
+			case ACTUATOR1_ID:
+				cmdObj = (float *)chFifoTakeObjectTimeout(&actuator1_cmds, TIME_US2I(100));
+				if (cmdObj != NULL) {
+					*cmdObj = recv_cmd->velocity;
+					chFifoSendObject(&actuator1_cmds, (void *)cmdObj);
+				}
+				break;
+			case ACTUATOR2_ID:
+				cmdObj = (float *)chFifoTakeObjectTimeout(&actuator2_cmds, TIME_US2I(100));
+				if (cmdObj != NULL) {
+					*cmdObj = recv_cmd->velocity;
+					chFifoSendObject(&actuator1_cmds, (void *)cmdObj);
+				}
+				break;
+			}
+		}
+	}
+}
+
+/*
+ * Receiver thread.
+ * Derived from ChibiOS/ChibiOS/testhal/STM32/STM32F3xx/CAN/main.c
+ */
+static THD_WORKING_AREA(can_rx_wa, 256);
+static THD_FUNCTION(can_rx, p) {
+	event_listener_t el;
+	CANRxFrame rxmsg;
+
+	(void)p;
+	chRegSetThreadName("receiver");
+	chEvtRegister(&CAND1.rxfull_event, &el, 0);
+	while (true) {
+		if (chEvtWaitAnyTimeout(ALL_EVENTS, TIME_MS2I(100)) == 0)
+			continue;
+		while (canReceive(&CAND1, CAN_ANY_MAILBOX, &rxmsg, TIME_IMMEDIATE) == MSG_OK) {
+			process_can_frame(&rxmsg);
+		}
+	}
+	chEvtUnregister(&CAND1.rxfull_event, &el);
 }
 
 static THD_WORKING_AREA(actuator_wa, 256);
@@ -120,20 +182,9 @@ int main(void)
 	chFifoObjectInit(&actuator2_cmds, sizeof(float), 10, (void *)actuator2_cmd_buffer, actuator2_msg_buffer);
 	
 	chThdCreateStatic(can_tx_wa, sizeof(can_tx_wa), NORMALPRIO + 7, can_tx, NULL);
+	chThdCreateStatic(can_rx_wa, sizeof(can_rx_wa), NORMALPRIO + 7, can_rx, NULL);
 	chThdCreateStatic(actuator_wa, sizeof(actuator_wa), NORMALPRIO + 7, actuator, (void *)&motor_left_cfg);
-	float i = 0.0;
-	float dir = 0.01;
-	float *cmdObj;
 	while(1) {
-		cmdObj = (float *)chFifoTakeObjectTimeout(&actuator1_cmds, TIME_US2I(100));
-		if (cmdObj != NULL) {
-			*cmdObj = i;
-			chFifoSendObject(&actuator1_cmds, (void *)cmdObj);
-		}
-		if (i <= -1.0 || i >= 1.0) {
-			dir *= -1;
-		}
-		i += dir;
 		chThdSleepMilliseconds(50);
 	}
 	return 0;
