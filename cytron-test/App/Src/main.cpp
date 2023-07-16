@@ -25,11 +25,11 @@ struct dc_motor_cfg {
 
 static objects_fifo_t actuator1_cmds;
 static msg_t actuator1_msg_buffer[10];
-static int actuator1_cmd_buffer[10];
+static float actuator1_cmd_buffer[10];
 
 static objects_fifo_t actuator2_cmds;
 static msg_t actuator2_msg_buffer[10];
-static int actuator2_cmd_buffer[10];
+static float actuator2_cmd_buffer[10];
 
 
 struct dc_motor_cfg motor_left_cfg = {
@@ -81,13 +81,13 @@ static THD_WORKING_AREA(actuator_wa, 256);
 static THD_FUNCTION(actuator, arg)
 {
 	struct dc_motor_cfg *cfg = (struct dc_motor_cfg*)arg;
-	int *recv_actuator_cmd;
+	float *recv_actuator_cmd;
 	int curr_actuator_cmd;
 	palSetPadMode(cfg->dir_gpio_port, cfg->dir_gpio_pad, PAL_MODE_OUTPUT_PUSHPULL);
 	while (true) {
 		msg_t status = chFifoReceiveObjectTimeout(cfg->fifo, (void**)&recv_actuator_cmd, TIME_US2I(100));
 		if (status == MSG_OK) {
-			curr_actuator_cmd = *recv_actuator_cmd;
+			curr_actuator_cmd = (int)(10000*(*recv_actuator_cmd));
 			if (curr_actuator_cmd >= 0) {
 				palSetPad(cfg->dir_gpio_port, cfg->dir_gpio_pad);
 			} else {
@@ -96,6 +96,7 @@ static THD_FUNCTION(actuator, arg)
 			pwmEnableChannel(&PWMD2, cfg->PWM_channel, PWM_PERCENTAGE_TO_WIDTH(&PWMD2, abs(curr_actuator_cmd)));
 			chFifoReturnObject(cfg->fifo, recv_actuator_cmd);
 		}
+		chThdSleepMilliseconds(1);
 	}
 }
 
@@ -115,21 +116,21 @@ int main(void)
 	// Start PWM driver on Timer 3
 	pwmStart(&PWMD2, &pwmcfg);
 
-	chFifoObjectInit(&actuator1_cmds, sizeof(int), 10, (void *)actuator1_cmd_buffer, actuator1_msg_buffer);
-	chFifoObjectInit(&actuator2_cmds, sizeof(int), 10, (void *)actuator2_cmd_buffer, actuator2_msg_buffer);
+	chFifoObjectInit(&actuator1_cmds, sizeof(float), 10, (void *)actuator1_cmd_buffer, actuator1_msg_buffer);
+	chFifoObjectInit(&actuator2_cmds, sizeof(float), 10, (void *)actuator2_cmd_buffer, actuator2_msg_buffer);
 	
 	chThdCreateStatic(can_tx_wa, sizeof(can_tx_wa), NORMALPRIO + 7, can_tx, NULL);
 	chThdCreateStatic(actuator_wa, sizeof(actuator_wa), NORMALPRIO + 7, actuator, (void *)&motor_left_cfg);
-	int i = 0;
-	int dir = -100;
-	int *cmdObj;
+	float i = 0.0;
+	float dir = 0.01;
+	float *cmdObj;
 	while(1) {
-		cmdObj = (int *)chFifoTakeObjectTimeout(&actuator1_cmds, TIME_US2I(100));
+		cmdObj = (float *)chFifoTakeObjectTimeout(&actuator1_cmds, TIME_US2I(100));
 		if (cmdObj != NULL) {
 			*cmdObj = i;
 			chFifoSendObject(&actuator1_cmds, (void *)cmdObj);
 		}
-		if (i <= -10000 || i >= 10000) {
+		if (i <= -1.0 || i >= 1.0) {
 			dir *= -1;
 		}
 		i += dir;
