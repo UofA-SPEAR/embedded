@@ -109,7 +109,7 @@ void process_can_frame(CANRxFrame *rxmsg)
 				cmdObj = (float *)chFifoTakeObjectTimeout(&actuator2_cmds, TIME_US2I(100));
 				if (cmdObj != NULL) {
 					*cmdObj = recv_cmd->velocity;
-					chFifoSendObject(&actuator1_cmds, (void *)cmdObj);
+					chFifoSendObject(&actuator2_cmds, (void *)cmdObj);
 				}
 				break;
 			}
@@ -139,7 +139,8 @@ static THD_FUNCTION(can_rx, p) {
 	chEvtUnregister(&CAND1.rxfull_event, &el);
 }
 
-static THD_WORKING_AREA(actuator_wa, 256);
+static THD_WORKING_AREA(actuator1_wa, 256);
+static THD_WORKING_AREA(actuator2_wa, 256);
 static THD_FUNCTION(actuator, arg)
 {
 	struct dc_motor_cfg *cfg = (struct dc_motor_cfg*)arg;
@@ -183,7 +184,8 @@ int main(void)
 	
 	chThdCreateStatic(can_tx_wa, sizeof(can_tx_wa), NORMALPRIO + 7, can_tx, NULL);
 	chThdCreateStatic(can_rx_wa, sizeof(can_rx_wa), NORMALPRIO + 7, can_rx, NULL);
-	chThdCreateStatic(actuator_wa, sizeof(actuator_wa), NORMALPRIO + 7, actuator, (void *)&motor_left_cfg);
+	chThdCreateStatic(actuator1_wa, sizeof(actuator1_wa), NORMALPRIO + 7, actuator, (void *)&motor_left_cfg);
+	chThdCreateStatic(actuator2_wa, sizeof(actuator2_wa), NORMALPRIO + 7, actuator, (void *)&motor_right_cfg);
 	while(1) {
 		chThdSleepMilliseconds(50);
 	}
