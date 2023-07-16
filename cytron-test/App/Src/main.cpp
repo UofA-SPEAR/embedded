@@ -1,5 +1,6 @@
 #include "ch.h"
 #include "hal.h"
+#include <stdlib.h>
 
 PWMConfig pwmcfg = {
         1000000,  // 1MHz Timer Frequency
@@ -87,8 +88,12 @@ static THD_FUNCTION(actuator, arg)
 		msg_t status = chFifoReceiveObjectTimeout(cfg->fifo, (void**)&recv_actuator_cmd, TIME_US2I(100));
 		if (status == MSG_OK) {
 			curr_actuator_cmd = *recv_actuator_cmd;
-			palSetPad(cfg->dir_gpio_port, cfg->dir_gpio_pad);
-			pwmEnableChannel(&PWMD2, cfg->PWM_channel, PWM_PERCENTAGE_TO_WIDTH(&PWMD2, curr_actuator_cmd));
+			if (curr_actuator_cmd >= 0) {
+				palSetPad(cfg->dir_gpio_port, cfg->dir_gpio_pad);
+			} else {
+				palClearPad(cfg->dir_gpio_port, cfg->dir_gpio_pad);
+			}
+			pwmEnableChannel(&PWMD2, cfg->PWM_channel, PWM_PERCENTAGE_TO_WIDTH(&PWMD2, abs(curr_actuator_cmd)));
 			chFifoReturnObject(cfg->fifo, recv_actuator_cmd);
 		}
 	}
@@ -124,7 +129,7 @@ int main(void)
 			*cmdObj = i;
 			chFifoSendObject(&actuator1_cmds, (void *)cmdObj);
 		}
-		if (i <= 0 || i >= 10000) {
+		if (i <= -10000 || i >= 10000) {
 			dir *= -1;
 		}
 		i += dir;
