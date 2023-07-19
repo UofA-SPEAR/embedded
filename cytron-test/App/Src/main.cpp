@@ -26,6 +26,18 @@ PWMConfig pwmcfg = {
         0,
         0
 };
+QEIConfig qeicfg = {
+	.mode = QEI_MODE_QUADRATURE,
+	.resolution = QEI_BOTH_EDGES,
+	.dirinv = QEI_DIRINV_FALSE,
+	.overflow = QEI_OVERFLOW_WRAP,
+	.min = 0,
+	.max = 32767,
+	.notify_cb = NULL,
+	.overflow_cb = NULL
+};
+
+
 
 struct dc_motor_cfg {
 	int PWM_channel;
@@ -46,14 +58,14 @@ static float actuator2_cmd_buffer[10];
 struct dc_motor_cfg motor_left_cfg = {
 	.PWM_channel = 1,
 	.dir_gpio_port = GPIOA,
-	.dir_gpio_pad = GPIOA_PIN0,
+	.dir_gpio_pad = 0,
 	.fifo = &actuator1_cmds
 };
 
 struct dc_motor_cfg motor_right_cfg = {
 	.PWM_channel = 3,
 	.dir_gpio_port = GPIOA,
-	.dir_gpio_pad = GPIOA_USART2_TX,
+	.dir_gpio_pad = 2,
 	.fifo = &actuator2_cmds
 };
 
@@ -79,11 +91,10 @@ static THD_FUNCTION(can_tx, arg)
 	txmsg.IDE = CAN_IDE_EXT;
 	txmsg.EID = 0x01234567;
 	txmsg.RTR = CAN_RTR_DATA;
-	txmsg.DLC = 8;
-	txmsg.data32[0] = 0x55AA55AA;
-	txmsg.data32[1] = 0x00FF00FF;
+	txmsg.DLC = 2;
 	
 	while (true) {
+		txmsg.data16[0] = qeiGetCountI(&QEID3);
 		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
 		chThdSleepMilliseconds(500);
 	}
@@ -169,15 +180,19 @@ int main(void)
 	chSysInit();
 	halInit();
 
-	sdStart(&SD2, NULL);
 	canStart(&CAND1, &cancfg);
 	
 	// set A1 to PWM
-	palSetPadMode(GPIOA, GPIOA_PIN1, PAL_MODE_ALTERNATE(1));
+	palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(1));
 	// set A3 to PWM
-	palSetPadMode(GPIOA, GPIOA_USART2_RX, PAL_MODE_ALTERNATE(1));
+	palSetPadMode(GPIOA, 3, PAL_MODE_ALTERNATE(1));
 	// Start PWM driver on Timer 3
 	pwmStart(&PWMD2, &pwmcfg);
+
+	palSetPadMode(GPIOB, GPIOB_PIN4, PAL_MODE_ALTERNATE(2));
+	palSetPadMode(GPIOB, GPIOB_PIN5, PAL_MODE_ALTERNATE(2));
+	qeiStart(&QEID3, &qeicfg);
+	qeiEnable(&QEID3);
 
 	chFifoObjectInit(&actuator1_cmds, sizeof(float), 10, (void *)actuator1_cmd_buffer, actuator1_msg_buffer);
 	chFifoObjectInit(&actuator2_cmds, sizeof(float), 10, (void *)actuator2_cmd_buffer, actuator2_msg_buffer);

@@ -142,7 +142,7 @@
  * @brief   Enables the SERIAL subsystem.
  */
 #if !defined(HAL_USE_SERIAL) || defined(__DOXYGEN__)
-#define HAL_USE_SERIAL                      TRUE
+#define HAL_USE_SERIAL                      FALSE
 #endif
 
 /**
@@ -202,11 +202,11 @@
 #endif
 
 #if !defined(HAL_USE_COMMUNITY) || defined(__DOXYGEN__)
-#define HAL_USE_COMMUNITY                   FALSE
+#define HAL_USE_COMMUNITY                   TRUE
 #endif
 
 #if !defined(HAL_USE_QEI) || defined(__DOXYGEN__)
-#define HAL_USE_QEI                         FALSE
+#define HAL_USE_QEI                         TRUE
 #endif
 
 /*===========================================================================*/
@@ -533,6 +533,25 @@
 #if !defined(WSPI_USE_MUTUAL_EXCLUSION) || defined(__DOXYGEN__)
 #define WSPI_USE_MUTUAL_EXCLUSION           TRUE
 #endif
+
+/*===========================================================================*/
+/* QEI driver related settings.                                              */
+/*===========================================================================*/
+
+/**
+ * @brief   Enables discard of overlow
+ */
+#if !defined(QEI_USE_OVERFLOW_DISCARD) || defined(__DOXYGEN__)
+#define QEI_USE_OVERFLOW_DISCARD    FALSE
+#endif
+
+/**
+ * @brief   Enables min max of overlow
+ */
+#if !defined(QEI_USE_OVERFLOW_MINMAX) || defined(__DOXYGEN__)
+#define QEI_USE_OVERFLOW_MINMAX     FALSE
+#endif
+
 
 #endif /* HALCONF_H */
 
