@@ -14,18 +14,19 @@ struct can_velocity {
 };
 
 PWMConfig pwmcfg = {
-        1000000,  // 1MHz Timer Frequency
-        50,      // period is 50 clock cycles to set the PWM frequency to 20kHz
-        NULL,
-        {
+        .frequency = 1000000,  // 1MHz Timer Frequency
+        .period = 50,      // period is 50 clock cycles to set the PWM frequency to 20kHz
+        .callback = NULL,
+        .channels = {
                 {PWM_OUTPUT_ACTIVE_HIGH, NULL}, // CH1 disabled
                 {PWM_OUTPUT_ACTIVE_HIGH, NULL}, // Enable CH2
                 {PWM_OUTPUT_ACTIVE_HIGH, NULL},
                 {PWM_OUTPUT_ACTIVE_HIGH, NULL},
         },
-        0,
-        0
+        .cr2 = 0,
+        .dier = 0
 };
+
 QEIConfig qeicfg = {
 	.mode = QEI_MODE_QUADRATURE,
 	.resolution = QEI_BOTH_EDGES,
@@ -36,8 +37,6 @@ QEIConfig qeicfg = {
 	.notify_cb = NULL,
 	.overflow_cb = NULL
 };
-
-
 
 struct dc_motor_cfg {
 	int PWM_channel;
@@ -53,7 +52,6 @@ static float actuator1_cmd_buffer[10];
 static objects_fifo_t actuator2_cmds;
 static msg_t actuator2_msg_buffer[10];
 static float actuator2_cmd_buffer[10];
-
 
 struct dc_motor_cfg motor_left_cfg = {
 	.PWM_channel = 1,
@@ -177,7 +175,6 @@ static THD_FUNCTION(actuator, arg)
 		chThdSleepMilliseconds(1);
 	}
 }
-
 
 int main(void)
 {
