@@ -100,30 +100,34 @@ static THD_FUNCTION(can_tx, arg)
 	}
 }
 
-void process_can_frame(CANRxFrame *rxmsg)
+void handle_velocity_cmd(struct can_velocity* msg)
 {
 	float *cmdObj;
+	switch (msg->actuator_id) {
+	case ACTUATOR1_ID:
+		cmdObj = (float *)chFifoTakeObjectTimeout(&actuator1_cmds, TIME_US2I(100));
+		if (cmdObj != NULL) {
+			*cmdObj = msg->velocity;
+			chFifoSendObject(&actuator1_cmds, (void *)cmdObj);
+		}
+		break;
+	case ACTUATOR2_ID:
+		cmdObj = (float *)chFifoTakeObjectTimeout(&actuator2_cmds, TIME_US2I(100));
+		if (cmdObj != NULL) {
+			*cmdObj = msg->velocity;
+			chFifoSendObject(&actuator2_cmds, (void *)cmdObj);
+		}
+		break;
+	}
+}
+
+void process_can_frame(CANRxFrame *rxmsg)
+{
 	// TODO: Refactor
 	if (rxmsg->IDE == CAN_IDE_EXT) {
 		switch ((rxmsg->EID >> 8) & 0xffff) {
 		case FRAME_ID_VELOCITY:
-			struct can_velocity *recv_cmd = (struct can_velocity*)rxmsg->data8;
-			switch (recv_cmd->actuator_id) {
-			case ACTUATOR1_ID:
-				cmdObj = (float *)chFifoTakeObjectTimeout(&actuator1_cmds, TIME_US2I(100));
-				if (cmdObj != NULL) {
-					*cmdObj = recv_cmd->velocity;
-					chFifoSendObject(&actuator1_cmds, (void *)cmdObj);
-				}
-				break;
-			case ACTUATOR2_ID:
-				cmdObj = (float *)chFifoTakeObjectTimeout(&actuator2_cmds, TIME_US2I(100));
-				if (cmdObj != NULL) {
-					*cmdObj = recv_cmd->velocity;
-					chFifoSendObject(&actuator2_cmds, (void *)cmdObj);
-				}
-				break;
-			}
+			handle_velocity_cmd((struct can_velocity*)rxmsg->data8);
 		}
 	}
 }
