@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #define FRAME_ID_VELOCITY 0x10
+#define FRAME_ID_POSITION 0x11
 
 #define ACTUATOR1_ID 0x1
 #define ACTUATOR2_ID 0x2
@@ -11,6 +12,21 @@
 struct can_velocity {
 	uint8_t actuator_id;
 	float velocity;
+};
+
+struct can_position {
+	uint8_t actuator_id;
+	float position;
+};
+
+enum ActuatorMode {
+	MODE_VELOCITY,
+	MODE_POSITION
+};
+
+struct actuator_cmd {
+	float setpoint;
+	enum ActuatorMode mode;
 };
 
 PWMConfig pwmcfg = {
@@ -47,11 +63,11 @@ struct dc_motor_cfg {
 
 static objects_fifo_t actuator1_cmds;
 static msg_t actuator1_msg_buffer[10];
-static float actuator1_cmd_buffer[10];
+static struct actuator_cmd actuator1_cmd_buffer[10];
 
 static objects_fifo_t actuator2_cmds;
 static msg_t actuator2_msg_buffer[10];
-static float actuator2_cmd_buffer[10];
+static struct actuator_cmd actuator2_cmd_buffer[10];
 
 struct dc_motor_cfg motor_left_cfg = {
 	.PWM_channel = 1,
@@ -75,6 +91,14 @@ static const CANConfig cancfg {
 	.btr = CAN_BTR_SJW(0) | CAN_BTR_TS2(1) | CAN_BTR_TS1(14) | CAN_BTR_BRP(1)
 };
 
+int target = 0;
+int pwm_cmd = 0;
+int counter = 0;
+int error[2] = {0};
+enum ActuatorMode mode = MODE_POSITION;
+float setpoint = 0.0;
+
+
 /*
  * Transmitter thread.
  * Derived from ChibiOS/ChibiOS/testhal/STM32/STM32F3xx/CAN/main.c
@@ -89,30 +113,66 @@ static THD_FUNCTION(can_tx, arg)
 	txmsg.IDE = CAN_IDE_EXT;
 	txmsg.EID = 0x01234567;
 	txmsg.RTR = CAN_RTR_DATA;
-	txmsg.DLC = 2;
+	txmsg.DLC = 8;
 	
 	while (true) {
-		txmsg.data16[0] = qeiGetCountI(&QEID3);
+		txmsg.DLC = 8;
+		txmsg.EID = 0x01234567;
+		txmsg.data32[0] = setpoint;
+		txmsg.data32[1] = abs(pwm_cmd);
 		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
-		chThdSleepMilliseconds(500);
+		txmsg.EID = 0x012345678;
+		txmsg.data32[0] = target;
+		txmsg.data32[1] = counter;
+		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
+		txmsg.EID = 0x012345679;
+		txmsg.DLC = 4;
+		txmsg.data32[0] = mode;
+		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
+		chThdSleepMilliseconds(1);
 	}
 }
 
 void handle_velocity_cmd(struct can_velocity* msg)
 {
-	float *cmdObj;
+	struct actuator_cmd *cmdObj;
 	switch (msg->actuator_id) {
 	case ACTUATOR1_ID:
-		cmdObj = (float *)chFifoTakeObjectTimeout(&actuator1_cmds, TIME_US2I(100));
+		cmdObj = (struct actuator_cmd*)chFifoTakeObjectTimeout(&actuator1_cmds, TIME_US2I(100));
 		if (cmdObj != NULL) {
-			*cmdObj = msg->velocity;
+			cmdObj->setpoint = msg->velocity;
+			cmdObj->mode = MODE_VELOCITY;
 			chFifoSendObject(&actuator1_cmds, (void *)cmdObj);
 		}
 		break;
 	case ACTUATOR2_ID:
-		cmdObj = (float *)chFifoTakeObjectTimeout(&actuator2_cmds, TIME_US2I(100));
+		cmdObj = (struct actuator_cmd*)chFifoTakeObjectTimeout(&actuator2_cmds, TIME_US2I(100));
 		if (cmdObj != NULL) {
-			*cmdObj = msg->velocity;
+			cmdObj->setpoint = msg->velocity;
+			cmdObj->mode = MODE_VELOCITY;
+			chFifoSendObject(&actuator2_cmds, (void *)cmdObj);
+		}
+		break;
+	}
+}
+
+void handle_position_cmd(struct can_position* msg)
+{
+	struct actuator_cmd *cmdObj;
+	switch (msg->actuator_id) {
+	case ACTUATOR1_ID:
+		cmdObj = (struct actuator_cmd*)chFifoTakeObjectTimeout(&actuator1_cmds, TIME_US2I(100));
+		if (cmdObj != NULL) {
+			cmdObj->setpoint = msg->position;
+			cmdObj->mode = MODE_POSITION;
+			chFifoSendObject(&actuator1_cmds, (void *)cmdObj);
+		}
+		break;
+	case ACTUATOR2_ID:
+		cmdObj = (struct actuator_cmd*)chFifoTakeObjectTimeout(&actuator2_cmds, TIME_US2I(100));
+		if (cmdObj != NULL) {
+			cmdObj->setpoint = msg->position;
+			cmdObj->mode = MODE_POSITION;
 			chFifoSendObject(&actuator2_cmds, (void *)cmdObj);
 		}
 		break;
@@ -126,6 +186,10 @@ void process_can_frame(CANRxFrame *rxmsg)
 		switch ((rxmsg->EID >> 8) & 0xffff) {
 		case FRAME_ID_VELOCITY:
 			handle_velocity_cmd((struct can_velocity*)rxmsg->data8);
+			break;
+		case FRAME_ID_POSITION:
+			handle_position_cmd((struct can_position*)rxmsg->data8);
+			break;
 		}
 	}
 }
@@ -152,26 +216,58 @@ static THD_FUNCTION(can_rx, p) {
 	chEvtUnregister(&CAND1.rxfull_event, &el);
 }
 
+#define MIN(a, b) (a < b ? a : b)
+#define Kp 10
+#define Ki 1
 static THD_WORKING_AREA(actuator1_wa, 256);
 static THD_WORKING_AREA(actuator2_wa, 256);
 static THD_FUNCTION(actuator, arg)
 {
 	struct dc_motor_cfg *cfg = (struct dc_motor_cfg*)arg;
-	float *recv_actuator_cmd;
-	int curr_actuator_cmd;
+	struct actuator_cmd *recv_actuator_cmd;
+	//int pwm_cmd = 0;
+	//enum ActuatorMode mode = MODE_VELOCITY;
+	int last_cmd = 0;
 	palSetPadMode(cfg->dir_gpio_port, cfg->dir_gpio_pad, PAL_MODE_OUTPUT_PUSHPULL);
 	while (true) {
 		msg_t status = chFifoReceiveObjectTimeout(cfg->fifo, (void**)&recv_actuator_cmd, TIME_US2I(100));
-		if (status == MSG_OK) {
-			curr_actuator_cmd = (int)(10000*(*recv_actuator_cmd));
-			if (curr_actuator_cmd >= 0) {
-				palSetPad(cfg->dir_gpio_port, cfg->dir_gpio_pad);
-			} else {
-				palClearPad(cfg->dir_gpio_port, cfg->dir_gpio_pad);
-			}
-			pwmEnableChannel(&PWMD2, cfg->PWM_channel, PWM_PERCENTAGE_TO_WIDTH(&PWMD2, abs(curr_actuator_cmd)));
+		if (status == MSG_OK){
+			setpoint = recv_actuator_cmd->setpoint;
+			mode = recv_actuator_cmd->mode;
 			chFifoReturnObject(cfg->fifo, recv_actuator_cmd);
 		}
+
+		counter = qeiGetCount(&QEID3) % 2443;
+		if (mode == MODE_POSITION) {
+			target = (int)(setpoint / 6.283185307179586 * 2442.96);
+			error[0] = error[1];
+			error[1] = target - counter;
+			last_cmd = pwm_cmd;
+			pwm_cmd = Kp * error[1];// - error[0]) + last_cmd + (error[1]/10000);
+			if (pwm_cmd > 2000) {
+				pwm_cmd = 2000;
+			} else if (pwm_cmd < -2000) {
+				pwm_cmd = -2000;
+			}
+			/*
+			if (target - 5 > counter) {
+				pwm_cmd = 2000;
+			} else if (target + 5 < counter) {
+				pwm_cmd = -2000;
+			} else {
+				pwm_cmd = 0;
+			}
+			*/
+		} else {
+			pwm_cmd = (int)(10000 * setpoint);
+		}
+
+		if (pwm_cmd >= 0) {
+			palSetPad(cfg->dir_gpio_port, cfg->dir_gpio_pad);
+		} else {
+			palClearPad(cfg->dir_gpio_port, cfg->dir_gpio_pad);
+		}
+		pwmEnableChannel(&PWMD2, cfg->PWM_channel, PWM_PERCENTAGE_TO_WIDTH(&PWMD2, MIN(10000, abs(pwm_cmd))));
 		chThdSleepMilliseconds(1);
 	}
 }
