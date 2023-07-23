@@ -95,6 +95,7 @@ int target = 0;
 int pwm_cmd = 0;
 int counter = 0;
 int error[2] = {0};
+int last_cmd = 0;
 enum ActuatorMode mode = MODE_POSITION;
 float setpoint = 0.0;
 
@@ -111,23 +112,36 @@ static THD_FUNCTION(can_tx, arg)
 	(void)arg;
 	chRegSetThreadName("transmitter");
 	txmsg.IDE = CAN_IDE_EXT;
-	txmsg.EID = 0x01234567;
 	txmsg.RTR = CAN_RTR_DATA;
-	txmsg.DLC = 8;
+	txmsg.DLC = 4;
 	
 	while (true) {
-		txmsg.DLC = 8;
-		txmsg.EID = 0x01234567;
-		txmsg.data32[0] = setpoint;
-		txmsg.data32[1] = abs(pwm_cmd);
+		txmsg.EID = 0x01230000;
+		txmsg.data32[0] = *((int*)&setpoint);
 		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
-		txmsg.EID = 0x012345678;
-		txmsg.data32[0] = target;
-		txmsg.data32[1] = counter;
-		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
-		txmsg.EID = 0x012345679;
-		txmsg.DLC = 4;
+		txmsg.EID = 0x01230001;
 		txmsg.data32[0] = mode;
+		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
+		txmsg.EID = 0x01230002;
+		txmsg.data32[0] = counter;
+		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
+		txmsg.EID = 0x01230003;
+		txmsg.data32[0] = target;
+		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
+		txmsg.EID = 0x01230004;
+		txmsg.data32[0] = error[0];
+		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
+		txmsg.EID = 0x01230005;
+		txmsg.data32[0] = error[1];
+		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
+		txmsg.EID = 0x01230006;
+		txmsg.data32[0] = last_cmd;
+		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
+		txmsg.EID = 0x01230007;
+		txmsg.data32[0] = 10 * error[0];
+		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
+		txmsg.EID = 0x01230008;
+		txmsg.data32[0] = pwm_cmd;
 		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
 		chThdSleepMilliseconds(1);
 	}
@@ -227,7 +241,7 @@ static THD_FUNCTION(actuator, arg)
 	struct actuator_cmd *recv_actuator_cmd;
 	//int pwm_cmd = 0;
 	//enum ActuatorMode mode = MODE_VELOCITY;
-	int last_cmd = 0;
+	//int last_cmd = 0;
 	palSetPadMode(cfg->dir_gpio_port, cfg->dir_gpio_pad, PAL_MODE_OUTPUT_PUSHPULL);
 	while (true) {
 		msg_t status = chFifoReceiveObjectTimeout(cfg->fifo, (void**)&recv_actuator_cmd, TIME_US2I(100));
