@@ -58,6 +58,11 @@ struct dc_motor_cfg {
 	int PWM_channel;
 	stm32_gpio_t* dir_gpio_port;
 	int dir_gpio_pad;
+	float steps_per_revolution;
+	int step_period_us;
+	// In radians - Would degrees make more sense?
+	float min_angle;
+	float max_angle;
 	objects_fifo_t *fifo;
 };
 
@@ -69,20 +74,49 @@ static objects_fifo_t actuator2_cmds;
 static msg_t actuator2_msg_buffer[10];
 static struct actuator_cmd actuator2_cmd_buffer[10];
 
-struct dc_motor_cfg motor_left_cfg = {
+struct dc_motor_cfg joint6_cfg = {
 	.PWM_channel = 1,
 	.dir_gpio_port = GPIOA,
 	.dir_gpio_pad = 0,
+	.steps_per_revolution = 200 * 32,
+	.step_period_us = 1000,
+	.min_angle = 0,
+	.max_angle = 6.2831853,
 	.fifo = &actuator1_cmds
 };
 
-struct dc_motor_cfg motor_right_cfg = {
+struct dc_motor_cfg joint5_cfg = {
 	.PWM_channel = 3,
 	.dir_gpio_port = GPIOA,
 	.dir_gpio_pad = 2,
+	.steps_per_revolution = 200 * 8 * 50,
+	.step_period_us = 25,
+	.min_angle = 0,
+	.max_angle = 6.2831853,
 	.fifo = &actuator2_cmds
 };
 
+struct dc_motor_cfg joint4_cfg = {
+	.PWM_channel = 1,
+	.dir_gpio_port = GPIOA,
+	.dir_gpio_pad = 0,
+	.steps_per_revolution = 200 * 8 * 80,
+	.step_period_us = 25,
+	.min_angle = 0,
+	.max_angle = 6.2831853,
+	.fifo = &actuator1_cmds
+};
+
+struct dc_motor_cfg joint3_cfg = {
+	.PWM_channel = 3,
+	.dir_gpio_port = GPIOA,
+	.dir_gpio_pad = 2,
+	.steps_per_revolution = 200 * 8 * 80,
+	.step_period_us = 25,
+	.min_angle = 0,
+	.max_angle = 6.2831853,
+	.fifo = &actuator2_cmds
+};
 static const CANConfig cancfg {
 	/* Automatic recovery from Bus-Off, 
 	 * Transmit buffers operate in FIFO mode */
@@ -91,13 +125,8 @@ static const CANConfig cancfg {
 	.btr = CAN_BTR_SJW(0) | CAN_BTR_TS2(1) | CAN_BTR_TS1(14) | CAN_BTR_BRP(1)
 };
 
-int target = 0;
-int pwm_cmd = 0;
-int counter = 0;
-int error[2] = {0};
-int last_cmd = 0;
-enum ActuatorMode mode = MODE_POSITION;
-float setpoint = 0.0;
+// TODO: Move these back into the local storage of the motor thread
+// These are currently global only for debugging purposes
 
 
 /*
@@ -230,20 +259,24 @@ static THD_FUNCTION(can_rx, p) {
 	chEvtUnregister(&CAND1.rxfull_event, &el);
 }
 
-#define MIN(a, b) (a < b ? a : b)
-#define Kp 10
-#define Ki 1
 static THD_WORKING_AREA(actuator1_wa, 256);
 static THD_WORKING_AREA(actuator2_wa, 256);
+
 static THD_FUNCTION(actuator, arg)
 {
 	struct dc_motor_cfg *cfg = (struct dc_motor_cfg*)arg;
 	struct actuator_cmd *recv_actuator_cmd;
-	//int pwm_cmd = 0;
-	//enum ActuatorMode mode = MODE_VELOCITY;
-	//int last_cmd = 0;
+	float angle_scale_factor = cfg->steps_per_revolution / 6.283185307179586;
+	int counter = 0;
+	int target = 0;
+	enum ActuatorMode mode = MODE_POSITION;
+	float setpoint = 0.0;
+
+	// Direction pin
 	palSetPadMode(cfg->dir_gpio_port, cfg->dir_gpio_pad, PAL_MODE_OUTPUT_PUSHPULL);
+
 	while (true) {
+		// Check for new encoder commands
 		msg_t status = chFifoReceiveObjectTimeout(cfg->fifo, (void**)&recv_actuator_cmd, TIME_US2I(100));
 		if (status == MSG_OK){
 			setpoint = recv_actuator_cmd->setpoint;
@@ -251,38 +284,28 @@ static THD_FUNCTION(actuator, arg)
 			chFifoReturnObject(cfg->fifo, recv_actuator_cmd);
 		}
 
-		counter = qeiGetCount(&QEID3) % 2443;
 		if (mode == MODE_POSITION) {
-			target = (int)(setpoint / 6.283185307179586 * 2442.96);
-			error[0] = error[1];
-			error[1] = target - counter;
-			last_cmd = pwm_cmd;
-			pwm_cmd = Kp * error[1];// - error[0]) + last_cmd + (error[1]/10000);
-			if (pwm_cmd > 2000) {
-				pwm_cmd = 2000;
-			} else if (pwm_cmd < -2000) {
-				pwm_cmd = -2000;
-			}
-			/*
-			if (target - 5 > counter) {
-				pwm_cmd = 2000;
-			} else if (target + 5 < counter) {
-				pwm_cmd = -2000;
-			} else {
-				pwm_cmd = 0;
-			}
-			*/
-		} else {
-			pwm_cmd = (int)(10000 * setpoint);
+			target = (int)(setpoint * angle_scale_factor);
 		}
 
-		if (pwm_cmd >= 0) {
+		if (target == counter) {
+			palClearPad(cfg->dir_gpio_port, cfg->PWM_channel);
+		} else if (target > counter) {
 			palSetPad(cfg->dir_gpio_port, cfg->dir_gpio_pad);
-		} else {
+			// Pulse step pin
+			palSetPad(cfg->dir_gpio_port, cfg->PWM_channel);
+			chThdSleepMicroseconds(cfg->step_period_us/2);
+			palClearPad(cfg->dir_gpio_port, cfg->PWM_channel);
+			counter++;
+		} else if (target < counter) {
 			palClearPad(cfg->dir_gpio_port, cfg->dir_gpio_pad);
+			// Pulse step pin
+			palSetPad(cfg->dir_gpio_port, cfg->PWM_channel);
+			chThdSleepMicroseconds(cfg->step_period_us/2);
+			palClearPad(cfg->dir_gpio_port, cfg->PWM_channel);
+			counter--;
 		}
-		pwmEnableChannel(&PWMD2, cfg->PWM_channel, PWM_PERCENTAGE_TO_WIDTH(&PWMD2, MIN(10000, abs(pwm_cmd))));
-		chThdSleepMilliseconds(1);
+		chThdSleepMicroseconds(cfg->step_period_us/2);
 	}
 }
 
@@ -293,25 +316,23 @@ int main(void)
 
 	canStart(&CAND1, &cancfg);
 	
-	// set A1 to PWM
-	palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(1));
-	// set A3 to PWM
-	palSetPadMode(GPIOA, 3, PAL_MODE_ALTERNATE(1));
-	// Start PWM driver on Timer 3
-	pwmStart(&PWMD2, &pwmcfg);
+	// set A1 and A3 to GPIO for TB6600 step pin
+	palSetPadMode(GPIOA, 1, PAL_MODE_OUTPUT_PUSHPULL);
+	palSetPadMode(GPIOA, 3, PAL_MODE_OUTPUT_PUSHPULL);
 
-	palSetPadMode(GPIOB, GPIOB_PIN4, PAL_MODE_ALTERNATE(2));
-	palSetPadMode(GPIOB, GPIOB_PIN5, PAL_MODE_ALTERNATE(2));
-	qeiStart(&QEID3, &qeicfg);
-	qeiEnable(&QEID3);
-
+	// FIFO buffers for sending commands received by the CAN thread to the motor controller threads
 	chFifoObjectInit(&actuator1_cmds, sizeof(float), 10, (void *)actuator1_cmd_buffer, actuator1_msg_buffer);
 	chFifoObjectInit(&actuator2_cmds, sizeof(float), 10, (void *)actuator2_cmd_buffer, actuator2_msg_buffer);
 	
+	// CAN threads
 	chThdCreateStatic(can_tx_wa, sizeof(can_tx_wa), NORMALPRIO + 7, can_tx, NULL);
 	chThdCreateStatic(can_rx_wa, sizeof(can_rx_wa), NORMALPRIO + 7, can_rx, NULL);
-	chThdCreateStatic(actuator1_wa, sizeof(actuator1_wa), NORMALPRIO + 7, actuator, (void *)&motor_left_cfg);
-	chThdCreateStatic(actuator2_wa, sizeof(actuator2_wa), NORMALPRIO + 7, actuator, (void *)&motor_right_cfg);
+
+	// Motor control threads
+	chThdCreateStatic(actuator1_wa, sizeof(actuator1_wa), NORMALPRIO + 7, actuator, (void *)&joint4_cfg);
+	chThdCreateStatic(actuator2_wa, sizeof(actuator2_wa), NORMALPRIO + 7, actuator, (void *)&joint3_cfg);
+
+	// Main (idle) loop
 	while(1) {
 		chThdSleepMilliseconds(50);
 	}
