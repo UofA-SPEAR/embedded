@@ -6,8 +6,8 @@
 #define FRAME_ID_VELOCITY 0x10
 #define FRAME_ID_POSITION 0x11
 
-#define ACTUATOR1_ID 0x1
-#define ACTUATOR2_ID 0x2
+#define ACTUATOR1_ID 33
+#define ACTUATOR2_ID 32
 
 struct can_velocity {
 	uint8_t actuator_id;
@@ -49,7 +49,7 @@ QEIConfig qeicfg = {
 	.dirinv = QEI_DIRINV_FALSE,
 	.overflow = QEI_OVERFLOW_WRAP,
 	.min = 0,
-	.max = 32767,
+	.max = 2443,
 	.notify_cb = NULL,
 	.overflow_cb = NULL
 };
@@ -145,33 +145,6 @@ static THD_FUNCTION(can_tx, arg)
 	txmsg.DLC = 4;
 	
 	while (true) {
-		txmsg.EID = 0x01230000;
-		txmsg.data32[0] = *((int*)&setpoint);
-		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
-		txmsg.EID = 0x01230001;
-		txmsg.data32[0] = mode;
-		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
-		txmsg.EID = 0x01230002;
-		txmsg.data32[0] = counter;
-		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
-		txmsg.EID = 0x01230003;
-		txmsg.data32[0] = target;
-		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
-		txmsg.EID = 0x01230004;
-		txmsg.data32[0] = error[0];
-		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
-		txmsg.EID = 0x01230005;
-		txmsg.data32[0] = error[1];
-		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
-		txmsg.EID = 0x01230006;
-		txmsg.data32[0] = last_cmd;
-		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
-		txmsg.EID = 0x01230007;
-		txmsg.data32[0] = 10 * error[0];
-		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
-		txmsg.EID = 0x01230008;
-		txmsg.data32[0] = pwm_cmd;
-		canTransmit(&CAND1, CAN_ANY_MAILBOX, &txmsg, TIME_MS2I(100));
 		chThdSleepMilliseconds(1);
 	}
 }
@@ -224,8 +197,9 @@ void handle_position_cmd(struct can_position* msg)
 
 void process_can_frame(CANRxFrame *rxmsg)
 {
-	// TODO: Refactor
+	// Our custom protocol only uses 29-bit (extended) CAN IDs
 	if (rxmsg->IDE == CAN_IDE_EXT) {
+		// Bits 23:8 of the CAN ID are the message identifier
 		switch ((rxmsg->EID >> 8) & 0xffff) {
 		case FRAME_ID_VELOCITY:
 			handle_velocity_cmd((struct can_velocity*)rxmsg->data8);
