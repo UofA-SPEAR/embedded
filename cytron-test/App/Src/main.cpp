@@ -6,8 +6,8 @@
 #define FRAME_ID_VELOCITY 0x10
 #define FRAME_ID_POSITION 0x11
 
-#define ACTUATOR1_ID 33
-#define ACTUATOR2_ID 32
+#define ACTUATOR1_ID 31
+#define ACTUATOR2_ID 30
 
 struct can_velocity {
 	uint8_t actuator_id;
@@ -117,6 +117,29 @@ struct dc_motor_cfg joint3_cfg = {
 	.max_angle = 6.2831853,
 	.fifo = &actuator2_cmds
 };
+
+struct dc_motor_cfg joint2_cfg = {
+	.PWM_channel = 1,
+	.dir_gpio_port = GPIOA,
+	.dir_gpio_pad = 0,
+	.steps_per_revolution = 200 * 32 * 200,
+	.step_period_us = 25,
+	.min_angle = 0,
+	.max_angle = 6.2831853,
+	.fifo = &actuator1_cmds
+};
+
+struct dc_motor_cfg joint1_cfg = {
+	.PWM_channel = 3,
+	.dir_gpio_port = GPIOA,
+	.dir_gpio_pad = 2,
+	.steps_per_revolution = 200 * 100,
+	.step_period_us = 100,
+	.min_angle = 0,
+	.max_angle = 6.2831853,
+	.fifo = &actuator2_cmds
+};
+
 static const CANConfig cancfg {
 	/* Automatic recovery from Bus-Off, 
 	 * Transmit buffers operate in FIFO mode */
@@ -303,8 +326,8 @@ int main(void)
 	chThdCreateStatic(can_rx_wa, sizeof(can_rx_wa), NORMALPRIO + 7, can_rx, NULL);
 
 	// Motor control threads
-	chThdCreateStatic(actuator1_wa, sizeof(actuator1_wa), NORMALPRIO + 7, actuator, (void *)&joint4_cfg);
-	chThdCreateStatic(actuator2_wa, sizeof(actuator2_wa), NORMALPRIO + 7, actuator, (void *)&joint3_cfg);
+	chThdCreateStatic(actuator1_wa, sizeof(actuator1_wa), NORMALPRIO + 7, actuator, (void *)&joint2_cfg);
+	chThdCreateStatic(actuator2_wa, sizeof(actuator2_wa), NORMALPRIO + 7, actuator, (void *)&joint1_cfg);
 
 	// Main (idle) loop
 	while(1) {
