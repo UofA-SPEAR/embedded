@@ -5,9 +5,15 @@
 
 #define FRAME_ID_VELOCITY 0x10
 #define FRAME_ID_POSITION 0x11
+#define FRAME_ID_PARAMETER 0x40
 
 #define ACTUATOR1_ID 31
 #define ACTUATOR2_ID 30
+
+enum param_ids {
+	STEP_PERIOD = 0,
+	STEPS_PER_REV
+};
 
 struct can_velocity {
 	uint8_t actuator_id;
@@ -17,6 +23,16 @@ struct can_velocity {
 struct can_position {
 	uint8_t actuator_id;
 	float position;
+};
+
+struct can_parameter {
+	uint8_t actuator_id;
+	uint8_t write;
+	uint8_t index;
+	union param_val {
+		uint32_t uint32_val;
+		float float_val;
+	} value;
 };
 
 enum ActuatorMode {
@@ -73,6 +89,11 @@ static struct actuator_cmd actuator1_cmd_buffer[10];
 static objects_fifo_t actuator2_cmds;
 static msg_t actuator2_msg_buffer[10];
 static struct actuator_cmd actuator2_cmd_buffer[10];
+
+mutex_t actuator1_cfg_mtx;
+mutex_t actuator2_cfg_mtx;
+struct dc_motor_cfg *actuator1_cfg;
+struct dc_motor_cfg *actuator2_cfg;
 
 struct dc_motor_cfg joint6_cfg = {
 	.PWM_channel = 1,
@@ -141,7 +162,7 @@ struct dc_motor_cfg joint1_cfg = {
 };
 
 static const CANConfig cancfg {
-	/* Automatic recovery from Bus-Off, 
+	/* Automatic recovery from Bus-Off,
 	 * Transmit buffers operate in FIFO mode */
 	.mcr = CAN_MCR_ABOM | CAN_MCR_TXFP,
 	/* 1 Mbaud bit rate from 36 MHz APB1 clock, sample point 87.5% */
@@ -166,7 +187,7 @@ static THD_FUNCTION(can_tx, arg)
 	txmsg.IDE = CAN_IDE_EXT;
 	txmsg.RTR = CAN_RTR_DATA;
 	txmsg.DLC = 4;
-	
+
 	while (true) {
 		chThdSleepMilliseconds(1);
 	}
@@ -218,6 +239,34 @@ void handle_position_cmd(struct can_position* msg)
 	}
 }
 
+void set_param(struct dc_motor_cfg *cfg, struct can_parameter *msg)
+{
+	switch (msg->index) {
+	case (STEP_PERIOD):
+		cfg->step_period_us = msg->value.uint32_val;
+		break;
+	case (STEPS_PER_REV):
+		cfg->steps_per_revolution = msg->value.uint32_val;
+		break;
+	}
+}
+
+void handle_parameter_cmd(struct can_parameter *msg)
+{
+	switch (msg->actuator_id) {
+	case ACTUATOR1_ID:
+		if (msg->write) {
+			set_param(actuator1_cfg, msg);
+		}
+		break;
+	case ACTUATOR2_ID:
+		if (msg->write) {
+			set_param(actuator2_cfg, msg);
+		}
+		break;
+	}
+}
+
 void process_can_frame(CANRxFrame *rxmsg)
 {
 	// Our custom protocol only uses 29-bit (extended) CAN IDs
@@ -229,6 +278,9 @@ void process_can_frame(CANRxFrame *rxmsg)
 			break;
 		case FRAME_ID_POSITION:
 			handle_position_cmd((struct can_position*)rxmsg->data8);
+			break;
+		case FRAME_ID_PARAMETER:
+			handle_parameter_cmd((struct can_parameter*)rxmsg->data8);
 			break;
 		}
 	}
@@ -312,7 +364,7 @@ int main(void)
 	halInit();
 
 	canStart(&CAND1, &cancfg);
-	
+
 	// set A1 and A3 to GPIO for TB6600 step pin
 	palSetPadMode(GPIOA, 1, PAL_MODE_OUTPUT_PUSHPULL);
 	palSetPadMode(GPIOA, 3, PAL_MODE_OUTPUT_PUSHPULL);
@@ -320,14 +372,18 @@ int main(void)
 	// FIFO buffers for sending commands received by the CAN thread to the motor controller threads
 	chFifoObjectInit(&actuator1_cmds, sizeof(float), 10, (void *)actuator1_cmd_buffer, actuator1_msg_buffer);
 	chFifoObjectInit(&actuator2_cmds, sizeof(float), 10, (void *)actuator2_cmd_buffer, actuator2_msg_buffer);
-	
+
 	// CAN threads
 	chThdCreateStatic(can_tx_wa, sizeof(can_tx_wa), NORMALPRIO + 7, can_tx, NULL);
 	chThdCreateStatic(can_rx_wa, sizeof(can_rx_wa), NORMALPRIO + 7, can_rx, NULL);
 
+	chMtxObjectInit(&actuator1_cfg_mtx);
+	chMtxObjectInit(&actuator2_cfg_mtx);
+	actuator2_cfg = &joint2_cfg;
+	actuator1_cfg = &joint1_cfg;
 	// Motor control threads
-	chThdCreateStatic(actuator1_wa, sizeof(actuator1_wa), NORMALPRIO + 7, actuator, (void *)&joint2_cfg);
-	chThdCreateStatic(actuator2_wa, sizeof(actuator2_wa), NORMALPRIO + 7, actuator, (void *)&joint1_cfg);
+	chThdCreateStatic(actuator1_wa, sizeof(actuator1_wa), NORMALPRIO + 7, actuator, (void *)actuator2_cfg);
+	chThdCreateStatic(actuator2_wa, sizeof(actuator2_wa), NORMALPRIO + 7, actuator, (void *)actuator1_cfg);
 
 	// Main (idle) loop
 	while(1) {
