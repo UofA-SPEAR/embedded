@@ -7,8 +7,8 @@
 #define FRAME_ID_POSITION 0x11
 #define FRAME_ID_PARAMETER 0x40
 
-#define ACTUATOR1_ID 31
-#define ACTUATOR2_ID 30
+#define ACTUATOR1_ID 35
+#define ACTUATOR2_ID 34
 
 enum param_ids {
 	STEP_PERIOD = 0,
@@ -315,7 +315,8 @@ static THD_FUNCTION(actuator, arg)
 {
 	struct dc_motor_cfg *cfg = (struct dc_motor_cfg*)arg;
 	struct actuator_cmd *recv_actuator_cmd;
-	float angle_scale_factor = cfg->steps_per_revolution / 6.283185307179586;
+	int old_steps_per_rev = 0;
+	float angle_scale_factor = 0.0;
 	int counter = 0;
 	int target = 0;
 	enum ActuatorMode mode = MODE_POSITION;
@@ -325,6 +326,10 @@ static THD_FUNCTION(actuator, arg)
 	palSetPadMode(cfg->dir_gpio_port, cfg->dir_gpio_pad, PAL_MODE_OUTPUT_PUSHPULL);
 
 	while (true) {
+		if (cfg->steps_per_revolution != old_steps_per_rev) {
+			old_steps_per_rev = cfg->steps_per_revolution;
+			angle_scale_factor = cfg->steps_per_revolution / 6.283185307179586;
+		}
 		// Check for new encoder commands
 		msg_t status = chFifoReceiveObjectTimeout(cfg->fifo, (void**)&recv_actuator_cmd, TIME_US2I(100));
 		if (status == MSG_OK){
@@ -379,11 +384,11 @@ int main(void)
 
 	chMtxObjectInit(&actuator1_cfg_mtx);
 	chMtxObjectInit(&actuator2_cfg_mtx);
-	actuator2_cfg = &joint2_cfg;
-	actuator1_cfg = &joint1_cfg;
+	actuator1_cfg = &joint6_cfg;
+	actuator2_cfg = &joint5_cfg;
 	// Motor control threads
-	chThdCreateStatic(actuator1_wa, sizeof(actuator1_wa), NORMALPRIO + 7, actuator, (void *)actuator2_cfg);
-	chThdCreateStatic(actuator2_wa, sizeof(actuator2_wa), NORMALPRIO + 7, actuator, (void *)actuator1_cfg);
+	chThdCreateStatic(actuator1_wa, sizeof(actuator1_wa), NORMALPRIO + 7, actuator, (void *)actuator1_cfg);
+	chThdCreateStatic(actuator2_wa, sizeof(actuator2_wa), NORMALPRIO + 7, actuator, (void *)actuator2_cfg);
 
 	// Main (idle) loop
 	while(1) {
