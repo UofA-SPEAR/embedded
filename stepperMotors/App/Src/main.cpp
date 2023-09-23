@@ -321,6 +321,7 @@ static THD_FUNCTION(actuator, arg)
 	int target = 0;
 	enum ActuatorMode mode = MODE_POSITION;
 	float setpoint = 0.0;
+	int timeout;
 
 	// Direction pin
 	palSetPadMode(cfg->dir_gpio_port, cfg->dir_gpio_pad, PAL_MODE_OUTPUT_PUSHPULL);
@@ -340,6 +341,15 @@ static THD_FUNCTION(actuator, arg)
 
 		if (mode == MODE_POSITION) {
 			target = (int)(setpoint * angle_scale_factor);
+			timeout = cfg->step_period_us/2;
+		} else {
+			if (setpoint > 0) {
+				target++;
+				timeout = (int)(cfg->step_period_us / (2 * setpoint));
+			} else if (setpoint < 0) {
+				target--;
+				timeout = (int)(cfg->step_period_us / (-2 * setpoint));
+			}
 		}
 
 		if (target == counter) {
@@ -348,18 +358,18 @@ static THD_FUNCTION(actuator, arg)
 			palSetPad(cfg->dir_gpio_port, cfg->dir_gpio_pad);
 			// Pulse step pin
 			palSetPad(cfg->dir_gpio_port, cfg->PWM_channel);
-			chThdSleepMicroseconds(cfg->step_period_us/2);
+			chThdSleepMicroseconds(timeout);
 			palClearPad(cfg->dir_gpio_port, cfg->PWM_channel);
 			counter++;
 		} else if (target < counter) {
 			palClearPad(cfg->dir_gpio_port, cfg->dir_gpio_pad);
 			// Pulse step pin
 			palSetPad(cfg->dir_gpio_port, cfg->PWM_channel);
-			chThdSleepMicroseconds(cfg->step_period_us/2);
+			chThdSleepMicroseconds(timeout);
 			palClearPad(cfg->dir_gpio_port, cfg->PWM_channel);
 			counter--;
 		}
-		chThdSleepMicroseconds(cfg->step_period_us/2);
+		chThdSleepMicroseconds(timeout);
 	}
 }
 
