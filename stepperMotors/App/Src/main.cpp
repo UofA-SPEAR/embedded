@@ -7,12 +7,14 @@
 #define FRAME_ID_POSITION 0x11
 #define FRAME_ID_PARAMETER 0x40
 
-#define ACTUATOR1_ID 35
-#define ACTUATOR2_ID 34
+#define ACTUATOR1_ID 31
+#define ACTUATOR2_ID 30
 
 enum param_ids {
 	STEP_PERIOD = 0,
-	STEPS_PER_REV
+	STEPS_PER_REV,
+	MIN_ANGLE,
+	MAX_ANGLE
 };
 
 struct can_velocity {
@@ -156,8 +158,8 @@ struct dc_motor_cfg joint1_cfg = {
 	.dir_gpio_pad = 2,
 	.steps_per_revolution = 200 * 8 * 100,
 	.step_period_us = 400,
-	.min_angle = 0,
-	.max_angle = 6.2831853,
+	.min_angle = -3.14159265,
+	.max_angle = 3.14159265,
 	.fifo = &actuator2_cmds
 };
 
@@ -248,6 +250,12 @@ void set_param(struct dc_motor_cfg *cfg, struct can_parameter *msg)
 	case (STEPS_PER_REV):
 		cfg->steps_per_revolution = msg->value.uint32_val;
 		break;
+	case (MIN_ANGLE):
+		cfg->min_angle = msg->value.float_val;
+		break;
+	case (MAX_ANGLE):
+		cfg->max_angle = msg->value.float_val;
+		break;
 	}
 }
 
@@ -321,7 +329,8 @@ static THD_FUNCTION(actuator, arg)
 	int target = 0;
 	enum ActuatorMode mode = MODE_POSITION;
 	float setpoint = 0.0;
-	int timeout;
+	int timeout = cfg->step_period_us / 2;
+	int min_target, max_target;
 
 	// Direction pin
 	palSetPadMode(cfg->dir_gpio_port, cfg->dir_gpio_pad, PAL_MODE_OUTPUT_PUSHPULL);
@@ -331,6 +340,8 @@ static THD_FUNCTION(actuator, arg)
 			old_steps_per_rev = cfg->steps_per_revolution;
 			angle_scale_factor = cfg->steps_per_revolution / 6.283185307179586;
 		}
+		max_target = (int)(cfg->max_angle * angle_scale_factor);
+		min_target = (int)(cfg->min_angle * angle_scale_factor);
 		// Check for new encoder commands
 		msg_t status = chFifoReceiveObjectTimeout(cfg->fifo, (void**)&recv_actuator_cmd, TIME_US2I(100));
 		if (status == MSG_OK){
@@ -351,6 +362,10 @@ static THD_FUNCTION(actuator, arg)
 				timeout = (int)(cfg->step_period_us / (-2 * setpoint));
 			}
 		}
+		if (target > max_target)
+			target = max_target;
+		if (target < min_target)
+			target = min_target;
 
 		if (target == counter) {
 			palClearPad(cfg->dir_gpio_port, cfg->PWM_channel);
@@ -394,8 +409,8 @@ int main(void)
 
 	chMtxObjectInit(&actuator1_cfg_mtx);
 	chMtxObjectInit(&actuator2_cfg_mtx);
-	actuator1_cfg = &joint6_cfg;
-	actuator2_cfg = &joint5_cfg;
+	actuator1_cfg = &joint2_cfg;
+	actuator2_cfg = &joint1_cfg;
 	// Motor control threads
 	chThdCreateStatic(actuator1_wa, sizeof(actuator1_wa), NORMALPRIO + 7, actuator, (void *)actuator1_cfg);
 	chThdCreateStatic(actuator2_wa, sizeof(actuator2_wa), NORMALPRIO + 7, actuator, (void *)actuator2_cfg);
