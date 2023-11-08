@@ -6,6 +6,8 @@ This is all the code for the embedded systems on the rover.
 
 This code will run on STM32 chips, specifically the F103 or F303 series (preferably F303)
 
+**MOST OF THE FOLLOWING IS OUTDATED**
+
 ## Onboarding
 
 1. First, create a GitHub account and send the username to the Controls team lead.
