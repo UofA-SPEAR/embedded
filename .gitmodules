@@ -1,13 +1,7 @@
-[submodule "common/libcanard"]
-	path = common/libcanard
-	url = https://github.com/UAVCAN/libcanard.git
 [submodule "ChibiOS"]
 	path = ChibiOS
 	url = https://github.com/ChibiOS/ChibiOS
 	branch = ver20.3.4
-[submodule "common/uavcan_dsdl"]
-	path = common/uavcan_dsdl
-	url = https://github.com/UofA-SPEAR/uavcan_dsdl.git
 [submodule "common/etl"]
 	path = common/etl
 	url = https://github.com/ETLCPP/etl
