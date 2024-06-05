@@ -80,6 +80,8 @@ void beginAll(TMC5160_SPI** motors,
 
 
 uint8_t getTemp(void); //Returns a value specifying the temperature in Celsius.
+//Disables motors if the temperature is high or starts fan
+void CheckBoardTemp(TMC5160_SPI** motors);
 
 /* USER CODE END PFP */
 
@@ -162,45 +164,6 @@ int main(void)
    uint8_t update_limit = sizeof(motors); //The value at which data will be sent
    uint8_t i = 0; //An iteration variable
 
-   uint32_t test_data = 0;
-   uint8_t read_status = 0;
-
-   uint32_t DriverStatus_Data1 = 0;
-   uint32_t DriverStatus_Data2 = 0;
-   uint32_t GCONF_Data = 0;
-   uint32_t GSTAT_Data = 0;
-   uint32_t IOIN_Data = 0;
-   uint32_t OTP_READ_Data = 0;
-   uint32_t RAMPMODE_Data = 0;
-   uint32_t XTARGET_Data = 0;
-   uint32_t XACTUAL_Data = 0;
-
-   while (1){
-	   //motor1.setTargetSpeed(0);
- 	   motor2.setTargetPosition(0);
- 	   HAL_Delay(5000);
- 	   //motor1.setTargetSpeed(200);
- 	   motor2.setTargetPosition(500);
- 	   HAL_Delay(50);
- 	   DriverStatus_Data2 = motor2.readRegister(TMC5160_Reg::DRV_STATUS);
- 	   DriverStatus_Data1 = motor2.readRegister(TMC5160_Reg::TSTEP);
- 	   //DriverStatus_Data1 = motor1.readRegister(TMC5160_Reg::DRV_STATUS);
-
- 	   HAL_Delay(5000);
-   }
-
-   while(1)
-   {
-
-	   boardMemory.EEPROM_write(EEPROM_Addr::IRUN_MEM, test_data);
-	   test_data = boardMemory.EEPROM_read(EEPROM_Addr::IRUN_MEM);
-	   test_data++;
-	   read_status = boardMemory.EEPROM_readStatus();
-
-   }
-
-
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -223,10 +186,13 @@ int main(void)
 	  motor5.CAN_IN(&CAN_RxHeader,CAN_RxData);
 	  motor6.CAN_IN(&CAN_RxHeader,CAN_RxData);
 
+	  //CheckBoardTemp(motors); //Checking for overtemperature
+
 	  for(i = 0; i < 6 ; i++)
 	  {
 		  if(motors[i]->CAN_SendStatus){updates++;}
 	  }
+
 
 	  //Checking if it is time to send
 	  if(updates == update_limit)
@@ -523,6 +489,25 @@ uint8_t getTemp(void)
     return tempAvg;
 }
 
+void CheckBoardTemp(TMC5160_SPI** motors)
+{	/* Disables the motors if the board temperature is too high. */
+
+	uint16_t temp = getTemp();
+
+	if (temp > TEMP_RANGE_MAX)
+	{
+		disableAll(motors);
+	}
+	if (temp > TEMP_RANGE_FAN && temp < TEMP_RANGE_MAX)
+	{
+		for(int i =0; i < 6; i++) //Checking if the fan is connected to this board
+		{
+			if (motors[i]->CAN_MotorID == CAN_FAN_ID){motors[i]->setTargetSpeed(100);}
+		}
+
+	}
+
+}
 
 // A function to enable all motors
 void enableAll(TMC5160_SPI** motors) {

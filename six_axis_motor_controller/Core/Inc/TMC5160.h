@@ -41,12 +41,13 @@ SOFTWARE.
 
 
 //The CAN motors/actuator IDs
-#define CAN_MOTOR_ID_1 0x01
-#define CAN_MOTOR_ID_2 0x02
-#define CAN_MOTOR_ID_3 0x03
-#define CAN_MOTOR_ID_4 0x04
-#define CAN_MOTOR_ID_5 0x05
-#define CAN_MOTOR_ID_6 0x06
+#define CAN_MOTOR_ID_1 0x00
+#define CAN_MOTOR_ID_2 0x01
+#define CAN_MOTOR_ID_3 0x02
+#define CAN_MOTOR_ID_4 0x03
+#define CAN_MOTOR_ID_5 0x04
+#define CAN_MOTOR_ID_6 0x05
+#define CAN_FAN_ID 0x07
 
 #define MAX_SPEED_VAL 255
 

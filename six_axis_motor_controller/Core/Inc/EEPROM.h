@@ -24,15 +24,15 @@ namespace EEPROM_Instr
 
 namespace EEPROM_Addr
 {	enum {
-		MOT1 = 0x0000, //Motor 1 parameters MEM location
-		MOT2  = 0x0004, //Motor 2 parameters MEM location
-		MOT3  = 0x0008, //Motor 3 parameters MEM location
-		MOT4  = 0x0012, //Motor 4 parameters MEM location
-		MOT5  = 0x0016, //Motor 5 parameters MEM location
-		MOT6  = 0x0020, //Motor 6 parameters MEM location
-		GLOB_SCALE_MEM = 0x0024,
-		IRUN_MEM = 0x0028,
-		IHOLD_MEM = 0x0032,
+		MOT1 = 0x0100, //Motor 1 parameters MEM location
+		MOT2  = 0x0104, //Motor 2 parameters MEM location
+		MOT3  = 0x0108, //Motor 3 parameters MEM location
+		MOT4  = 0x0112, //Motor 4 parameters MEM location
+		MOT5  = 0x0116, //Motor 5 parameters MEM location
+		MOT6  = 0x0120, //Motor 6 parameters MEM location
+		GLOB_SCALE_MEM = 0x0124,
+		IRUN_MEM = 0x0128,
+		IHOLD_MEM = 0x0132,
 
 };
 
@@ -60,7 +60,6 @@ public:
 private:
 	uint8_t send_array[EEPROM_DATA_SIZE];
 	uint8_t rec_array[EEPROM_DATA_SIZE];
-	void EEPROM_SPItransaction();
 	void EEPROM_Write_Enable();
 	void EEPROM_protect();
 	void EEPROM_expose();

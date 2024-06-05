@@ -12,6 +12,7 @@
 #define ADC_TEMP_INTER -47 //The ADC value if the temperature sensor is at 0 C (500 mV)
 #define TEMP_RANGE_MAX 70 //The maximum temperature that the sensor can measure
 #define TEMP_RANGE_MIN 0 //The minimum temperature that the sensor can measure
+#define TEMP_RANGE_FAN 50 //The fan start temperatue for the rover's electrical box
 
 
 
