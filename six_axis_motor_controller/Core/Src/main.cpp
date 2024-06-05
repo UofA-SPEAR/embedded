@@ -21,11 +21,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <general.h> //CAN filters and EEPROM commands
 #include "stdint.h" //To guarantee the size of variables.
 #include <stdio.h> // Include the standard input/output library for printf function
+#include <adc_temp.h> //CAN filters and EEPROM commands
 #include "TMC5160.h"
-#include "TMC5160_registers.h"
+#include "EEPROM.h"
 
 /* USER CODE END Includes */
 
@@ -63,7 +63,10 @@ static void MX_CAN_Init(void);
 static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 
-
+void CAN_Transmit(TMC5160_SPI** motors,
+		CAN_HandleTypeDef *hcan,
+		CAN_TxHeaderTypeDef *CAN_TxHeader,
+		uint32_t *CAN_TxMailbox);
 void CAN_Filter(CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef* CAN_TxHeader); //Initializes the CANBus filter for the board.
 // A method to enable all 6 motors at once
 void enableAll(TMC5160_SPI** motors);
@@ -118,16 +121,18 @@ int main(void)
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
+  EEPROM_SPI boardMemory(&hspi1, CSN_EEPROM_Pin, CSN_EEPROM_GPIO_Port,
+		  EEPROM_WP_Pin, EEPROM_WP_GPIO_Port, EEPROM_HOLD_Pin, EEPROM_HOLD_GPIO_Port);
+
   CAN_TxHeaderTypeDef CAN_TxHeader; //The transmission header.
   CAN_RxHeaderTypeDef CAN_RxHeader; //The receiver header.
-
-
+  uint32_t CAN_TxMailbox = 0;
   uint8_t CAN_RxData[CAN_DATA_SIZE]; //The receiving data variable.
 
   CAN_Filter(&hcan,&CAN_TxHeader); // Initializing the CANbus filter
   HAL_CAN_Start(&hcan); //Start the CANbus
-  uint32_t clock_freq = 12000000;
 
+  uint32_t clock_freq = 12000000;
   TMC5160_SPI motor1(&hspi1, CSN_MOTOR_1_Pin, CSN_MOTOR_1_GPIO_Port, clock_freq, CAN_MOTOR_ID_1);
   TMC5160_SPI motor2(&hspi1, CSN_MOTOR_2_Pin, CSN_MOTOR_2_GPIO_Port, clock_freq, CAN_MOTOR_ID_2);
   TMC5160_SPI motor3(&hspi1, CSN_MOTOR_3_Pin, CSN_MOTOR_3_GPIO_Port, clock_freq, CAN_MOTOR_ID_3);
@@ -143,9 +148,9 @@ int main(void)
    /* Infinite loop */
    /* USER CODE BEGIN WHILE */
    motorParams.globalScaler = 46;
-   motorParams.irun = 23; //To give 2.8A RMS coil current
-   motorParams.ihold = 10; // IHold 70% of IRUN or lower (pg 111)
-   powerStageParams.bbmTime = 2;
+   motorParams.irun = 26; //To give 2.8A RMS coil current
+   motorParams.ihold = 16; // IHold 70% of IRUN or lower (pg 111)
+   powerStageParams.bbmTime = 3;
 
    disableAll(motors);
    enableAll(motors);
@@ -153,8 +158,15 @@ int main(void)
    beginAll(motors, powerStageParams,motorParams,TMC5160::NORMAL_MOTOR_DIRECTION);
 
    enableAll(motors);
+   uint8_t updates = 0; //The number of updates to send
+   uint8_t update_limit = sizeof(motors); //The value at which data will be sent
+   uint8_t i = 0; //An iteration variable
 
-   uint32_t DriverStatus_Data = 0;
+   uint32_t test_data = 0;
+   uint8_t read_status = 0;
+
+   uint32_t DriverStatus_Data1 = 0;
+   uint32_t DriverStatus_Data2 = 0;
    uint32_t GCONF_Data = 0;
    uint32_t GSTAT_Data = 0;
    uint32_t IOIN_Data = 0;
@@ -164,21 +176,28 @@ int main(void)
    uint32_t XACTUAL_Data = 0;
 
    while (1){
+	   //motor1.setTargetSpeed(0);
  	   motor2.setTargetPosition(0);
  	   HAL_Delay(5000);
+ 	   //motor1.setTargetSpeed(200);
  	   motor2.setTargetPosition(500);
+ 	   HAL_Delay(50);
+ 	   DriverStatus_Data2 = motor2.readRegister(TMC5160_Reg::DRV_STATUS);
+ 	   DriverStatus_Data1 = motor2.readRegister(TMC5160_Reg::TSTEP);
+ 	   //DriverStatus_Data1 = motor1.readRegister(TMC5160_Reg::DRV_STATUS);
 
- 	   DriverStatus_Data = motor2.readRegister(TMC5160_Reg::DRV_STATUS);
- 	   GCONF_Data = motor2.readRegister(TMC5160_Reg::GCONF);
- 	   GSTAT_Data = motor2.readRegister(TMC5160_Reg::GSTAT);
- 	   OTP_READ_Data = motor2.readRegister(TMC5160_Reg::OTP_READ);
- 	   RAMPMODE_Data = motor2.readRegister(TMC5160_Reg::RAMPMODE);
- 	   XTARGET_Data = motor2.getTargetPosition();
- 	   XACTUAL_Data = motor2.getCurrentPosition();
  	   HAL_Delay(5000);
    }
 
+   while(1)
+   {
 
+	   boardMemory.EEPROM_write(EEPROM_Addr::IRUN_MEM, test_data);
+	   test_data = boardMemory.EEPROM_read(EEPROM_Addr::IRUN_MEM);
+	   test_data++;
+	   read_status = boardMemory.EEPROM_readStatus();
+
+   }
 
 
 
@@ -203,9 +222,24 @@ int main(void)
 	  motor4.CAN_IN(&CAN_RxHeader,CAN_RxData);
 	  motor5.CAN_IN(&CAN_RxHeader,CAN_RxData);
 	  motor6.CAN_IN(&CAN_RxHeader,CAN_RxData);
+
+	  for(i = 0; i < 6 ; i++)
+	  {
+		  if(motors[i]->CAN_SendStatus){updates++;}
+	  }
+
+	  //Checking if it is time to send
+	  if(updates == update_limit)
+	  {
+		  CAN_Transmit(motors, &hcan, &CAN_TxHeader, &CAN_TxMailbox);
+	  }
+	  updates = 0; //Resetting updates to avoid false sending
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }
@@ -406,59 +440,61 @@ static void MX_SPI1_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
+	  GPIO_InitTypeDef GPIO_InitStruct = {0};
+	/* USER CODE BEGIN MX_GPIO_Init_1 */
+	/* USER CODE END MX_GPIO_Init_1 */
 
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOF_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
+	  /* GPIO Ports Clock Enable */
+	  __HAL_RCC_GPIOC_CLK_ENABLE();
+	  __HAL_RCC_GPIOF_CLK_ENABLE();
+	  __HAL_RCC_GPIOA_CLK_ENABLE();
+	  __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, CSN_MOTOR_6_Pin|CSN_MOTOR_5_Pin, GPIO_PIN_RESET);
+	  /*Configure GPIO pin Output Level */
+	  HAL_GPIO_WritePin(GPIOC, CSN_MOTOR_6_Pin|CSN_MOTOR_5_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(CSN_MOTOR_4_GPIO_Port, CSN_MOTOR_4_Pin, GPIO_PIN_SET);
+	  /*Configure GPIO pin Output Level */
+	  HAL_GPIO_WritePin(GPIOA, CSN_MOTOR_4_Pin|CSN_MOTOR_3_Pin|CSN_MOTOR_2_Pin|CSN_MOTOR_1_Pin
+	                          |CSN_EEPROM_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, CSN_MOTOR_3_Pin|CSN_MOTOR_2_Pin|CSN_MOTOR_1_Pin|CSN_EEPROM_Pin, GPIO_PIN_RESET);
+	  /*Configure GPIO pin Output Level */
+	  HAL_GPIO_WritePin(GPIOB, EEPROM_WP_Pin|EEPROM_HOLD_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : CSN_MOTOR_6_Pin CSN_MOTOR_5_Pin */
-  GPIO_InitStruct.Pin = CSN_MOTOR_6_Pin|CSN_MOTOR_5_Pin|Unused_C13_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+	  /*Configure GPIO pins : CSN_MOTOR_6_Pin CSN_MOTOR_5_Pin */
+	  GPIO_InitStruct.Pin = CSN_MOTOR_6_Pin|CSN_MOTOR_5_Pin;
+	  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	  GPIO_InitStruct.Pull = GPIO_NOPULL;
+	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : CSN_MOTOR_4_Pin CSN_MOTOR_3_Pin CSN_MOTOR_2_Pin CSN_MOTOR_1_Pin
-                           CSN_EEPROM_Pin */
-  GPIO_InitStruct.Pin = CSN_MOTOR_4_Pin|CSN_MOTOR_3_Pin|CSN_MOTOR_2_Pin|CSN_MOTOR_1_Pin
-		  |CSN_EEPROM_Pin|Unused_B0_Pin|Unused_B2_Pin|Unused_B3_Pin|Unused_B10_Pin
-		  |Unused_B11_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	  /*Configure GPIO pins : CSN_MOTOR_4_Pin CSN_MOTOR_3_Pin CSN_MOTOR_2_Pin CSN_MOTOR_1_Pin
+	                           CSN_EEPROM_Pin */
+	  GPIO_InitStruct.Pin = CSN_MOTOR_4_Pin|CSN_MOTOR_3_Pin|CSN_MOTOR_2_Pin|CSN_MOTOR_1_Pin
+	                          |CSN_EEPROM_Pin;
+	  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	  GPIO_InitStruct.Pull = GPIO_NOPULL;
+	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : CAN_ADD_0_Pin CAN_ADD_1_Pin CAN_ADD_2_Pin CAN_ADD_3_Pin
-                           MOTOR_MODE_1_Pin MOTOR_MODE_2_Pin MOTOR_MODE_3_Pin MOTOR_MODE_4_Pin
-                           MOTOR_MODE_5_Pin MOTOR_MODE_6_Pin */
-  GPIO_InitStruct.Pin = CAN_ADD_0_Pin|CAN_ADD_1_Pin|CAN_ADD_2_Pin|CAN_ADD_3_Pin
-                          |MOTOR_MODE_1_Pin|MOTOR_MODE_2_Pin|MOTOR_MODE_3_Pin|MOTOR_MODE_4_Pin
-                          |MOTOR_MODE_5_Pin|MOTOR_MODE_6_Pin|Unused_A8_Pin|Unused_A9_Pin|Unused_A10_Pin
-						  |Unused_A15_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+	  /*Configure GPIO pins : EEPROM_WP_Pin EEPROM_HOLD_Pin */
+	  GPIO_InitStruct.Pin = EEPROM_WP_Pin|EEPROM_HOLD_Pin;
+	  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	  GPIO_InitStruct.Pull = GPIO_NOPULL;
+	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+	  /*Configure GPIO pins : CAN_ADD_0_Pin CAN_ADD_1_Pin CAN_ADD_2_Pin CAN_ADD_3_Pin
+	                           MOTOR_MODE_1_Pin MOTOR_MODE_2_Pin MOTOR_MODE_3_Pin MOTOR_MODE_4_Pin
+	                           MOTOR_MODE_5_Pin MOTOR_MODE_6_Pin */
+	  GPIO_InitStruct.Pin = CAN_ADD_0_Pin|CAN_ADD_1_Pin|CAN_ADD_2_Pin|CAN_ADD_3_Pin
+	                          |MOTOR_MODE_1_Pin|MOTOR_MODE_2_Pin|MOTOR_MODE_3_Pin|MOTOR_MODE_4_Pin
+	                          |MOTOR_MODE_5_Pin|MOTOR_MODE_6_Pin;
+	  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	  GPIO_InitStruct.Pull = GPIO_NOPULL;
+	  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-
-
-
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
+	/* USER CODE BEGIN MX_GPIO_Init_2 */
+	/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
@@ -500,7 +536,36 @@ void disableAll(TMC5160_SPI** motors) {
         motors[i]->disable();
 }
 
+// Sends the CAN messages for the motors.
+void CAN_Transmit(TMC5160_SPI** motors, CAN_HandleTypeDef *hcan,
+		CAN_TxHeaderTypeDef *CAN_TxHeader,
+		uint32_t *CAN_TxMailbox)
+{
+	uint8_t CAN_TxData[CAN_DATA_SIZE];
+	uint32_t CANintValue = 0;
+	float CANfloatValue = 0;
+	for(int i = 0; i < 6; i++)
+	{
+		if ((motors[i]->CAN_MotorTxData != CAN_NO_DATA) && (motors[i]->CAN_SendStatus))
+		{
+			CANfloatValue = motors[i]->CAN_MotorTxData;
+			CANintValue = reinterpret_cast<uint32_t &>(CANfloatValue);
 
+			CAN_TxData[0] = static_cast<uint8_t>(CANintValue >> 24);
+			CAN_TxData[1] = static_cast<uint8_t>(CANintValue >> 16);
+			CAN_TxData[2] = static_cast<uint8_t>(CANintValue >> 8);
+			CAN_TxData[3] = static_cast<uint8_t>(CANintValue);
+
+			//Adjusting the CAN_TxHeader
+			CAN_TxHeader->ExtId &= 0x0000F000; //Eliminate lingering data from other transmissions
+			CAN_TxHeader->ExtId |= motors[i]->CAN_MotorTxHeader; //Putting in the motor ID and command ID
+
+			HAL_CAN_AddTxMessage(hcan, CAN_TxHeader, CAN_TxData, CAN_TxMailbox);
+			motors[i]->CAN_SendStatus = false;
+
+			}
+		}
+}
 void CAN_Filter(CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef* CAN_TxHeader)
 {	//This function initializes the CAN filter for the board.
 	//The CANID ports are named for their respective address bits, i.e., 0 to the 0th bit.
@@ -544,6 +609,7 @@ void CAN_Filter(CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef* CAN_TxHeader)
 	 HAL_CAN_ConfigFilter(hcan, &CAN_FILTER_CONFIG);
 
 }
+
 // A function to initialize all motors
 void beginAll(TMC5160_SPI** motors,
 		const TMC5160::PowerStageParameters &powerParams,

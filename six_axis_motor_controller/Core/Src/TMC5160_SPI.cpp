@@ -109,6 +109,7 @@ void TMC5160_SPI::motorCommand(uint8_t commandID, float CANfloatData)
         	CAN_MotorTxData = getCurrentSpeed();
         	CAN_MotorTxHeader |= (CAN_Command::GetSpeed << 16);
         break;
+
     	case CAN_Command::Disable:
 				{	disable();}
 			CAN_MotorTxData = CAN_NO_DATA;

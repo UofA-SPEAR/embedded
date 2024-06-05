@@ -55,6 +55,16 @@ bool TMC5160::begin(const PowerStageParameters &powerParams, const MotorParamete
 	rampStat.position_reached = 1;
 	rampStat.status_latch_l = 1;
 	rampStat.status_latch_r = 1;
+	writeRegister(TMC5160_Reg::RAMP_STAT, rampStat.value);
+
+	TMC5160_Reg::SHORT_CONF_Register shortConf = { 0 };
+	shortConf.s2vs_level = 15; // Short to VS detector for low side FETs sensitivity
+	shortConf.s2g_level = 15; // Short to GND detector for high side FETs sensitivity
+	shortConf.shortfilter = 3; // Spike filtering bandwidth for short detection
+	shortConf.shortdelay = true;
+	writeRegister(TMC5160_Reg::SHORT_CONF, shortConf.value);
+
+	writeRegister(TMC5160_Reg::VDCMIN, 0);
 
 
 	if(mtrType == STEPPER){
@@ -76,7 +86,7 @@ bool TMC5160::begin(const PowerStageParameters &powerParams, const MotorParamete
 
 		// TODO set short detection / overcurrent protection levels
 		// set Stall Protection Levels
-		setStallProtectionLevels(0, 0, 0, 0, 0);
+		setStallProtectionLevels(15, 0, 0, 0, 0);
 
 		// Set initial PWM values
 		TMC5160_Reg::PWMCONF_Register pwmconf = { 0 };
@@ -109,9 +119,22 @@ bool TMC5160::begin(const PowerStageParameters &powerParams, const MotorParamete
 		setRampMode(POSITIONING_MODE);
 
 		TMC5160_Reg::GCONF_Register gconf = { 0 };
-		gconf.en_pwm_mode = true; //Enable stealthChop PWM mode
+
+		//steathChop must be disabled for stall Protection to work.
+		gconf.en_pwm_mode = false; //Enable stealthChop PWM mode
 		gconf.shaft = stepperDirection;
 		writeRegister(TMC5160_Reg::GCONF, gconf.value);
+
+		//TCOOLTHRS ≥ TSTEP ≥ THIGH:
+		//- CoolStep is enabled, if configured
+		//- StealthChop voltage PWM mode is disabled
+		//TCOOLTHRS ≥ TSTEP
+		//- Stop on stall is enabled, if configured
+		//- Stall output signal (DIAG0/1) is enabled, i
+		writeRegister(TMC5160_Reg::TPWMTHRS,0);
+		writeRegister(TMC5160_Reg::TCOOLTHRS,1000);
+		writeRegister(TMC5160_Reg::THIGH, 100);
+
 
 		//Set default start, stop, threshold speeds.
 		setRampSpeeds(50, 200, 0); //Start, stop, threshold speeds
@@ -156,7 +179,8 @@ bool TMC5160::begin(const PowerStageParameters &powerParams, const MotorParamete
 		writeRegister(TMC5160_Reg::IHOLD_IRUN, iholdrun.value);
 
 		TMC5160_Reg::GCONF_Register gconf = { 0 };
-		gconf.en_pwm_mode = true; //Enable stealthChop PWM mode
+		//steathChop must be disabled for stall protection to work
+		gconf.en_pwm_mode = false; //Enable stealthChop PWM mode
 		gconf.shaft = stepperDirection;
 		writeRegister(TMC5160_Reg::GCONF, gconf.value);
 
@@ -169,10 +193,11 @@ bool TMC5160::begin(const PowerStageParameters &powerParams, const MotorParamete
 
 		//Set default start, stop, threshold speeds.
 		setRampSpeeds(500, 500, 0); //Start, stop, threshold speeds
+		setTargetSpeed(0);
 
 
 		// set Stall Protection Levels
-		setStallProtectionLevels(0, 0, 0, 0, 0);
+		setStallProtectionLevels(60, 0, 0, 0, 0);
 
 		//set default max accel, max decel, start accel, and final decel
 		setAccelerations(500,500,0,0);
@@ -181,6 +206,13 @@ bool TMC5160::begin(const PowerStageParameters &powerParams, const MotorParamete
 		writeRegister(TMC5160_Reg::D_1, 100);
 
 	}
+
+	//Register for control by limit switches or stall protection
+	TMC5160_Reg::SW_MODE_Register limits = { 0 };
+		limits.sg_stop = true;
+		limits.stop_r_enable = true;
+		limits.stop_l_enable = true;
+	writeRegister(TMC5160_Reg::SW_MODE, limits.value);
 
 	return false;
 }
@@ -569,7 +601,6 @@ void TMC5160::setStallProtectionLevels(int sgtLevels, int IstepUp, int IstepDwn,
     coolConf.seimin = 0; // Minimum current for smart current control.  0 for 1/2 of IRUN, 1 for 1/4.
     coolConf.sgt = constrain(sgtLevels, -63, 63); // stallGuard2 threshold value
     coolConf.sfilt = 0;
-
     writeRegister(TMC5160_Reg::COOLCONF, coolConf.value);
 
 }

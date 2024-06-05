@@ -57,8 +57,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define Unused_C13_Pin GPIO_PIN_13
-#define Unused_C13_GPIO_Port GPIOC
 #define CSN_MOTOR_6_Pin GPIO_PIN_14
 #define CSN_MOTOR_6_GPIO_Port GPIOC
 #define CSN_MOTOR_5_Pin GPIO_PIN_15
@@ -73,14 +71,10 @@ void Error_Handler(void);
 #define CSN_MOTOR_1_GPIO_Port GPIOA
 #define CSN_EEPROM_Pin GPIO_PIN_4
 #define CSN_EEPROM_GPIO_Port GPIOA
-#define Unused_B0_Pin GPIO_PIN_0
-#define Unused_B0_GPIO_Port GPIOB
-#define Unused_B2_Pin GPIO_PIN_2
-#define Unused_B2_GPIO_Port GPIOB
-#define Unused_B10_Pin GPIO_PIN_10
-#define Unused_B10_GPIO_Port GPIOB
-#define Unused_B11_Pin GPIO_PIN_11
-#define Unused_B11_GPIO_Port GPIOB
+#define EEPROM_WP_Pin GPIO_PIN_0
+#define EEPROM_WP_GPIO_Port GPIOB
+#define EEPROM_HOLD_Pin GPIO_PIN_2
+#define EEPROM_HOLD_GPIO_Port GPIOB
 #define CAN_ADD_0_Pin GPIO_PIN_12
 #define CAN_ADD_0_GPIO_Port GPIOB
 #define CAN_ADD_1_Pin GPIO_PIN_13
@@ -89,16 +83,6 @@ void Error_Handler(void);
 #define CAN_ADD_2_GPIO_Port GPIOB
 #define CAN_ADD_3_Pin GPIO_PIN_15
 #define CAN_ADD_3_GPIO_Port GPIOB
-#define Unused_A8_Pin GPIO_PIN_8
-#define Unused_A8_GPIO_Port GPIOA
-#define Unused_A9_Pin GPIO_PIN_9
-#define Unused_A9_GPIO_Port GPIOA
-#define Unused_A10_Pin GPIO_PIN_10
-#define Unused_A10_GPIO_Port GPIOA
-#define Unused_A15_Pin GPIO_PIN_15
-#define Unused_A15_GPIO_Port GPIOA
-#define Unused_B3_Pin GPIO_PIN_3
-#define Unused_B3_GPIO_Port GPIOB
 #define MOTOR_MODE_1_Pin GPIO_PIN_4
 #define MOTOR_MODE_1_GPIO_Port GPIOB
 #define MOTOR_MODE_2_Pin GPIO_PIN_5
