@@ -160,6 +160,10 @@ public:
 	bool isTargetPositionReached(void); // Return true if the target position has been reached
 	bool isTargetVelocityReached(void); // Return true if the target velocity has been reached
 
+	bool isLeftLimitReached(void); // Return true if the left limit switch has been triggered
+	bool isRightLimitReached(void); // Return true if the right limit switch has been triggered
+	bool isMotorStalled(void);
+
 	void stop(); // Stop the current motion according to the set ramp mode and motion parameters. The max speed and start speed are set to 0 but the target position stays unchanged.
 
 	void disable(); //Disable the driver, all bridges off
