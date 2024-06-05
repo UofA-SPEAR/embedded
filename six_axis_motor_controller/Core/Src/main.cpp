@@ -150,8 +150,8 @@ int main(void)
    /* Infinite loop */
    /* USER CODE BEGIN WHILE */
    motorParams.globalScaler = 46;
-   motorParams.irun = 26; //To give 2.8A RMS coil current
-   motorParams.ihold = 16; // IHold 70% of IRUN or lower (pg 111)
+   motorParams.irun = 31; //To give 2.8A RMS coil current
+   motorParams.ihold = 20; // IHold 70% of IRUN or lower (pg 111)
    powerStageParams.bbmTime = 3;
 
    disableAll(motors);
@@ -168,6 +168,97 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+
+   // homing sequence - the motor runs until either limit switch or stall is triggered, 
+   // sets the position to 0, then runs to other limit, retrieves the actual position,
+   // divides the actual position by two, moves to this middle position,
+   // and then sets the middle position as point 0.
+
+
+   uint32_t position1 = 0;
+   uint32_t position2 = 0;
+
+
+
+   //motor3.setTargetPosition(1000);
+
+   // homing of motor 1
+   while (!motor1.isLeftLimitReached()) {
+	   motor1.setTargetPosition(-1E6);
+   }
+   motor1.setCurrentPosition(0);
+   motor1.setTargetPosition(1E6);
+   HAL_Delay(1500);
+   while (!motor1.isRightLimitReached()){
+   }
+   position1 = motor1.getCurrentPosition();
+   position1 = position1 / 2;
+
+
+
+   // homing of motor 2
+   while (!motor2.isLeftLimitReached()) {
+	   motor2.setTargetPosition(-1E6);
+   }
+   motor2.setCurrentPosition(0);
+   motor2.setTargetPosition(1E6);
+   HAL_Delay(1500);
+   while (!motor2.isRightLimitReached()){
+   }
+   position2 = motor2.getCurrentPosition();
+   position2 = position2 / 2;
+
+
+
+
+   motor2.setTargetPosition(position2);
+   HAL_Delay(1000);
+   motor1.setTargetPosition(position1);
+
+   while (!(motor1.isTargetPositionReached() || motor2.isTargetPositionReached())){
+   }
+   HAL_Delay(1000);
+
+
+   motor3.setTargetPosition(1000);
+   HAL_Delay(50);
+   while(!motor3.isTargetPositionReached()){
+   }
+   motor3.setTargetPosition(0);
+   HAL_Delay(50);
+   while(!motor3.isTargetPositionReached()){
+   }
+
+
+   motor6.setTargetPosition(500);
+   while(!motor6.isTargetPositionReached()){
+   }
+   HAL_Delay(50);
+   motor6.setTargetPosition(0);
+   while(!motor6.isTargetPositionReached()){
+   }
+   HAL_Delay(50);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   //motor1.setCurrentPosition(0);
+   //motor2.setCurrentPosition(0);
+
   while (1)
   {
 

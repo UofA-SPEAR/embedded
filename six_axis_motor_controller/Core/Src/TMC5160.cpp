@@ -86,7 +86,7 @@ bool TMC5160::begin(const PowerStageParameters &powerParams, const MotorParamete
 
 		// TODO set short detection / overcurrent protection levels
 		// set Stall Protection Levels
-		setStallProtectionLevels(15, 0, 0, 0, 0);
+		setStallProtectionLevels(20, 0, 0, 0, 0);
 
 		// Set initial PWM values
 		TMC5160_Reg::PWMCONF_Register pwmconf = { 0 };
@@ -143,10 +143,14 @@ bool TMC5160::begin(const PowerStageParameters &powerParams, const MotorParamete
 		setAccelerations(250,250,0,0);
 
 		//set default max speed
-		setMaxSpeed(125);
+		setMaxSpeed(300);
 
 		//Set default D1 (must not be = 0 in positioning mode even with V1=0)
 		writeRegister(TMC5160_Reg::D_1, 100);
+
+		setCurrentPosition(0);
+		HAL_Delay(50);
+		setTargetPosition(0);
 	}
 	if(mtrType == DC_BRUSHED){
 
@@ -392,21 +396,32 @@ bool TMC5160::isTargetPositionReached(void)
 
 bool TMC5160::isLeftLimitReached(void)
 {
-	TMC5160_Reg::RAMP_STAT_Register rampStatus = {0};
-    rampStatus.value = readRegister(TMC5160_Reg::RAMP_STAT);
+	TMC5160_Reg::RAMP_STAT_Register rampStatus = { 0 };
+	rampStatus.value = readRegister(TMC5160_Reg::RAMP_STAT);
 	return rampStatus.status_stop_l ? true : false;
 }
 
 bool TMC5160::isRightLimitReached(void)
 {
-	TMC5160_Reg::RAMP_STAT_Register rampStatus = {0};
-    rampStatus.value = readRegister(TMC5160_Reg::RAMP_STAT);
+	TMC5160_Reg::RAMP_STAT_Register rampStatus = { 0 };
+	rampStatus.value = readRegister(TMC5160_Reg::RAMP_STAT);
 	return rampStatus.status_stop_r ? true : false;
 }
 
 
+bool TMC5160::isMotorStalled(void)
+{
+	TMC5160_Reg::DRV_STATUS_Register stallStat = { 0 };
+	stallStat.value = readRegister(TMC5160_Reg::DRV_STATUS);
+	return stallStat.stallguard ? true : false;
+}
 
 
+bool TMC5160::noLimits(void)
+{
+	bool no_limits = !(isLeftLimitReached() || isRightLimitReached() || isMotorStalled());
+	return no_limits;
+}
 
 /**
  *

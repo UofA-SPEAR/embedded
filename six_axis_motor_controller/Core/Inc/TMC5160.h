@@ -165,6 +165,8 @@ public:
 	bool isRightLimitReached(void); // Return true if the right limit switch has been triggered
 	bool isMotorStalled(void);
 
+	bool noLimits(void); //Returns true if neither limit switch has been triggered, and motor has not stalled
+
 	void stop(); // Stop the current motion according to the set ramp mode and motion parameters. The max speed and start speed are set to 0 but the target position stays unchanged.
 
 	void disable(); //Disable the driver, all bridges off
