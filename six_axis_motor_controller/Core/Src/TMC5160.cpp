@@ -390,6 +390,24 @@ bool TMC5160::isTargetPositionReached(void)
 	return rampStatus.position_reached ? true : false;
 }
 
+bool TMC5160::isLeftLimitReached(void)
+{
+	TMC5160_Reg::RAMP_STAT_Register rampStatus = {0};
+    rampStatus.value = readRegister(TMC5160_Reg::RAMP_STAT);
+	return rampStatus.status_stop_l ? true : false;
+}
+
+bool TMC5160::isRightLimitReached(void)
+{
+	TMC5160_Reg::RAMP_STAT_Register rampStatus = {0};
+    rampStatus.value = readRegister(TMC5160_Reg::RAMP_STAT);
+	return rampStatus.status_stop_r ? true : false;
+}
+
+
+
+
+
 /**
  *
  * @see Datasheet rev 1.15, section 6.3.2.2 "RAMP_STAT - Ramp & Reference Switch Status Register".
