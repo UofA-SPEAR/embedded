@@ -354,8 +354,6 @@ namespace TMC5160_Reg {
 
 
 
-
-
   /* Register field values */
   enum RAMPMODE_Values {
     POSITIONING_MODE  = 0x00,	// using all A, D and V parameters

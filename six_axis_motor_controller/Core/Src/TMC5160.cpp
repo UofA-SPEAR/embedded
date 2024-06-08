@@ -12,7 +12,7 @@ copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+copies or substantial portions of the Software
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -114,16 +114,16 @@ bool TMC5160::begin(const PowerStageParameters &powerParams, const MotorParamete
 		writeRegister(TMC5160_Reg::GCONF, gconf.value);
 
 		//Set default start, stop, threshold speeds.
-		setRampSpeeds(50, 200, 0); //Start, stop, threshold speeds
+		setRampSpeeds(10, 10, 0); //Start, stop, threshold speeds
 
 		//set default max accel, max decel, start accel, and final decel
-		setAccelerations(250,250,0,0);
+		setAccelerations(10,10,0,0);
 
 		//set default max speed
-		setMaxSpeed(125);
+		setMaxSpeed(10);
 
 		//Set default D1 (must not be = 0 in positioning mode even with V1=0)
-		writeRegister(TMC5160_Reg::D_1, 100);
+		writeRegister(TMC5160_Reg::D_1, 10);
 	}
 	if(mtrType == DC_BRUSHED){
 

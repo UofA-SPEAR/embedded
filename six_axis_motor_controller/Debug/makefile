@@ -84,8 +84,8 @@ all: main-build
 main-build: SUPER_SPEEDY.elf secondary-outputs
 
 # Tool invocations
-SUPER_SPEEDY.elf SUPER_SPEEDY.map: $(OBJS) $(USER_OBJS) C:\Users\milt\Downloads\March\ 14\ Rebuild\2024.03.13\Rebuild\STM32F303CCTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-g++ -o "SUPER_SPEEDY.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\milt\Downloads\March 14 Rebuild\2024.03.13\Rebuild\STM32F303CCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="SUPER_SPEEDY.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+SUPER_SPEEDY.elf SUPER_SPEEDY.map: $(OBJS) $(USER_OBJS) C:\Users\milt\Downloads\SUPER_SPEEDY-20240407T211329Z-001\SUPER_SPEEDY\STM32F303CCTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-g++ -o "SUPER_SPEEDY.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\milt\Downloads\SUPER_SPEEDY-20240407T211329Z-001\SUPER_SPEEDY\STM32F303CCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="SUPER_SPEEDY.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

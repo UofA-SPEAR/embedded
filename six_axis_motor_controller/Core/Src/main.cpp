@@ -142,9 +142,9 @@ int main(void)
 
    /* Infinite loop */
    /* USER CODE BEGIN WHILE */
-   motorParams.globalScaler = 46;
-   motorParams.irun = 23; //To give 2.8A RMS coil current
-   motorParams.ihold = 10; // IHold 70% of IRUN or lower (pg 111)
+   motorParams.globalScaler = 100;
+   motorParams.irun = 31; //To give 2.8A RMS coil current
+   motorParams.ihold = 20; // IHold 70% of IRUN or lower (pg 111)
    powerStageParams.bbmTime = 2;
 
    disableAll(motors);
@@ -154,32 +154,25 @@ int main(void)
 
    enableAll(motors);
 
-   uint32_t DriverStatus_Data = 0;
-   uint32_t GCONF_Data = 0;
-   uint32_t GSTAT_Data = 0;
-   uint32_t IOIN_Data = 0;
-   uint32_t OTP_READ_Data = 0;
-   uint32_t RAMPMODE_Data = 0;
-   uint32_t XTARGET_Data = 0;
-   uint32_t XACTUAL_Data = 0;
 
-   while (1){
- 	   motor2.setTargetPosition(0);
- 	   HAL_Delay(5000);
- 	   motor2.setTargetPosition(500);
 
- 	   DriverStatus_Data = motor2.readRegister(TMC5160_Reg::DRV_STATUS);
- 	   GCONF_Data = motor2.readRegister(TMC5160_Reg::GCONF);
- 	   GSTAT_Data = motor2.readRegister(TMC5160_Reg::GSTAT);
- 	   OTP_READ_Data = motor2.readRegister(TMC5160_Reg::OTP_READ);
- 	   RAMPMODE_Data = motor2.readRegister(TMC5160_Reg::RAMPMODE);
- 	   XTARGET_Data = motor2.getTargetPosition();
- 	   XACTUAL_Data = motor2.getCurrentPosition();
- 	   HAL_Delay(5000);
+   /*
+   while(1){
+   motor2.setTargetPosition(10);
+   motor3.setTargetPosition(10);
+   motor4.setTargetPosition(10);
+   motor5.setTargetPosition(10);
+
+   while (!motor2.isTargetPositionReached()){
    }
-
-
-
+   motor2.setTargetPosition(-10);
+   motor3.setTargetPosition(-10);
+   motor4.setTargetPosition(-10);
+   motor5.setTargetPosition(-10);
+   while (!motor5.isTargetPositionReached()){
+   }
+   }
+   */
 
 
   /* USER CODE END 2 */
