@@ -5,14 +5,13 @@
 #ifndef BITFIELD_H_
 #define BITFIELD_H_
 
-#include <stdint.h>
+#include <array>
+#include <cmath>
+#include <limits>
 #include <stddef.h>
+#include <stdint.h>
 #include <type_traits>
 #include <typeinfo>
-#include <cmath>
-#include <array>
-#include <limits>
-
 
 // using std::uint8_t;
 // using std::uint16_t;
@@ -23,35 +22,35 @@
 // Disabling GCC optimizations seem to fix the problem.
 #ifndef ESP_PLATFORM
 #pragma GCC push_options
-#pragma GCC optimize ("O0")
+#pragma GCC optimize("O0")
 #endif
 
 // Using macros to define missing bit operations and the constrain function.
-#define bitRead(value,  bit) (((value) >> (bit)) & 1ULL)
-#define bitSet(value,   bit) ((value) |=  (1ULL << (bit)))
+#define bitRead(value, bit) (((value) >> (bit)) & 1ULL)
+#define bitSet(value, bit) ((value) |= (1ULL << (bit)))
 #define bitClear(value, bit) ((value) &= ~(1ULL << (bit)))
-#define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value,  bit))
+#define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
 
-#define min(a,b) ((a)<(b)?(a):(b))
-#define max(a,b) ((a)>(b)?(a):(b))
-#define abs(x) ((x)>0?(x):-(x))
-#define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
-#define round(x)     ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
-//#define radians(deg) ((deg)*DEG_TO_RAD)
-//#define degrees(rad) ((rad)*RAD_TO_DEG)
-#define sq(x) ((x)*(x))
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define abs(x) ((x) > 0 ? (x) : -(x))
+#define constrain(amt, low, high) ((amt) < (low) ? (low) : ((amt) > (high) ? (high) : (amt)))
+#define round(x) ((x) >= 0 ? (long)((x) + 0.5) : (long)((x)-0.5))
+// #define radians(deg) ((deg)*DEG_TO_RAD)
+// #define degrees(rad) ((rad)*RAD_TO_DEG)
+#define sq(x) ((x) * (x))
 
 namespace {
 
 template <size_t LastBit>
 struct MinimumTypeHelper {
     typedef
-        typename std::conditional<LastBit == 0 , void,
-        typename std::conditional<LastBit <= 8 , uint8_t,
-        typename std::conditional<LastBit <= 16, uint16_t,
-        typename std::conditional<LastBit <= 32, uint32_t,
-        typename std::conditional<LastBit <= 64, uint64_t,
-        void>::type>::type>::type>::type>::type type;
+        typename std::conditional<LastBit == 0, void,
+            typename std::conditional<LastBit <= 8, uint8_t,
+                typename std::conditional<LastBit <= 16, uint16_t,
+                    typename std::conditional<LastBit <= 32, uint32_t,
+                        typename std::conditional<LastBit <= 64, uint64_t,
+                            void>::type>::type>::type>::type>::type type;
 };
 
 }
@@ -64,25 +63,36 @@ private:
     };
 
     typedef typename MinimumTypeHelper<Index + Bits>::type T;
+
 public:
     template <class T2>
-    BitField &operator=(T2 value) {
+    BitField& operator=(T2 value)
+    {
         value_ = (value_ & ~((T)Mask << Index)) | (((T)value & (T)Mask) << Index);
         return *this;
     }
 
-    operator T() const             { return (value_ >> Index) & (T)Mask; }
+    operator T() const { return (value_ >> Index) & (T)Mask; }
     explicit operator bool() const { return value_ & ((T)Mask << Index); }
-    BitField &operator++()         { return *this = *this + 1; }
-    T operator++(int)              { T r = *this; ++*this; return r; }
-    BitField &operator--()         { return *this = *this - 1; }
-    T operator--(int)              { T r = *this; --*this; return r; }
-    size_t size() const            { return Bits; }
+    BitField& operator++() { return *this = *this + 1; }
+    T operator++(int)
+    {
+        T r = *this;
+        ++*this;
+        return r;
+    }
+    BitField& operator--() { return *this = *this - 1; }
+    T operator--(int)
+    {
+        T r = *this;
+        --*this;
+        return r;
+    }
+    size_t size() const { return Bits; }
 
 private:
     T value_;
 };
-
 
 template <size_t Index>
 class BitField<Index, 1> {
@@ -93,8 +103,10 @@ private:
     };
 
     typedef typename MinimumTypeHelper<Index + Bits>::type T;
+
 public:
-    BitField &operator=(bool value) {
+    BitField& operator=(bool value)
+    {
         value_ = (value_ & ~((T)Mask << Index)) | ((T)value << Index);
         return *this;
     }
