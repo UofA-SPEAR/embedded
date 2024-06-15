@@ -7,6 +7,7 @@
 
 #ifndef INC_EEPROM_H_
 #define INC_EEPROM_H_
+#include <main.h>
 
 #define EEPROM_DATA_SIZE 4 // The EEPROM data size in bytes, 2 for Addr (A15-A0), 1 for data
 
