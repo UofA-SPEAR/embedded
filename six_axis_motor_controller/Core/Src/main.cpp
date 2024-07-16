@@ -114,12 +114,51 @@ int main(void)
     }
     */
 
+    //motor4.setTargetPosition(15);
+    //HAL_Delay(3000);
+    //motor4.setTargetPosition(0);
+
+
+    // Initialize encoders
+    motor1.setEncoderResolution(200,2000,false);
+    motor2.setEncoderResolution(200,2000,false);
+    motor3.setEncoderResolution(200,2000,false);
+    motor4.setEncoderResolution(200,2000,false);
+    motor5.setEncoderResolution(200,2000,false);
+    motor6.setEncoderResolution(200,2000,false);
+
+    uint32_t CAN_TxMailbox = 0;
+
     while (1) {
 
-        // Do nothing until a CAN message comes in.
-        while (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) == 0) { }
 
-        // Get CAN message.
+    	// Motor position correction check
+    	for(int i=0;i<6;i++){
+    		float adjustedEncPos = motors[i]->getEncoderPosition()/2.0;
+				if (
+						(adjustedEncPos - motors[i]->getCurrentPosition() > 1)
+						|| (adjustedEncPos - motors[i]->getCurrentPosition() < -1)
+					){
+					motors[i]->setCurrentPosition(adjustedEncPos, false);
+				}
+    	}
+
+    	// Send encoder positions over CAN
+		uint8_t CAN_TxData[CAN_DATA_SIZE] = {0};
+		CAN_TxData[0] = int8_t(motor1.getEncoderPosition());
+		CAN_TxData[1] = int8_t(motor2.getEncoderPosition());
+		CAN_TxData[2] = int8_t(motor4.getEncoderPosition());
+		CAN_TxData[3] = int8_t(motor5.getEncoderPosition());
+		HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
+
+        // Do nothing until a CAN message comes in.
+        if (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) == 0){
+        	continue;
+        }
+
+        // Get CAN message. priority: 0 command id: 02
+        //actuator id: fl:24 fr:21 bl:26 br:23
+        //sender node: 1
         HAL_CAN_GetRxMessage(&hcan, CAN_RX_FIFO0, &CAN_RxHeader, CAN_RxData);
 
         // Adjust motors relative to CAN message
