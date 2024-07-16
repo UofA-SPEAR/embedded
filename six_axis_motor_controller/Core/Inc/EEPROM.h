@@ -54,9 +54,9 @@ public:
     /*An SPI handle pointer, the chip select pin and port, the write protect pin and port,
      * and the hold pin and port for the EEPROM.
      */
-    void EEPROM_write(uint16_t address, uint32_t data);
-    uint32_t EEPROM_read(uint16_t address);
-    uint8_t EEPROM_readStatus();
+    void write(uint16_t address, uint32_t data);
+    uint32_t read(uint16_t address);
+    uint8_t readStatus();
 
 private:
     uint8_t send_array[EEPROM_DATA_SIZE];

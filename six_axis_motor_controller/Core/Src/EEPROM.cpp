@@ -35,7 +35,7 @@ void EEPROM_SPI::EEPROM_Write_Enable()
     HAL_GPIO_WritePin(chipSelectPort, chipSelectPin, GPIO_PIN_SET);
 }
 
-void EEPROM_SPI::EEPROM_write(uint16_t address, uint32_t data)
+void EEPROM_SPI::write(uint16_t address, uint32_t data)
 { // Writes to the EEPROM given a 16-bit starting address and 4-byte array
 
     uint8_t data_array[EEPROM_DATA_SIZE];
@@ -60,7 +60,7 @@ void EEPROM_SPI::EEPROM_write(uint16_t address, uint32_t data)
     }
 }
 
-uint32_t EEPROM_SPI::EEPROM_read(uint16_t address)
+uint32_t EEPROM_SPI::read(uint16_t address)
 {
     uint32_t value = 0;
 
@@ -82,7 +82,7 @@ uint32_t EEPROM_SPI::EEPROM_read(uint16_t address)
     return value;
 }
 
-uint8_t EEPROM_SPI::EEPROM_readStatus()
+uint8_t EEPROM_SPI::readStatus()
 {
     // This function reads the status of the EEPROM.
     send_array[0] = EEPROM_Instr::RDSR; // OPcode READ command 0x05
