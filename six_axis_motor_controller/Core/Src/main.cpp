@@ -94,9 +94,9 @@ int main(void)
     TMC5160::PowerStageParameters powerStageParams; // defaults.
     TMC5160::MotorParameters motorParams;
 
-    motorParams.globalScaler = 46;
+    motorParams.globalScaler = 47;
     motorParams.irun = 31; // To give 2.8A RMS coil current
-    motorParams.ihold = 20; // IHold 70% of IRUN or lower (pg 111)
+    motorParams.ihold = 21; // IHold 70% of IRUN or lower (pg 111)
     powerStageParams.bbmTime = 3;
 
     disableAll(motors);
@@ -107,8 +107,9 @@ int main(void)
     enableAll(motors);
     uint8_t updates = 0; // The number of updates to send
     uint8_t update_limit = sizeof(motors); // The value at which data will be sent
-    uint8_t i = 0; // An iteration variable
 
+    //Old capstone homing code
+    /*
     // homing sequence - the motor runs until either limit switch or stall is triggered,
     // sets the position to 0, then runs to other limit, retrieves the actual position,
     // divides the actual position by two, moves to this middle position,
@@ -171,36 +172,49 @@ int main(void)
 
     // motor1.setCurrentPosition(0);
     // motor2.setCurrentPosition(0);
+	//*/
+    for (uint8_t i = 0; i < 6; i++){
+    	motors[i] -> setEncoderResolution(100, 2000, false);
+    }
 
     while (1) {
+    	for (uint8_t i = 0; i < 6; i++){
+    		float adjustedEncPos = motors[i] -> getEncoderPosition()/2.0;
+    		if ((adjustedEncPos - motors[i] -> getCurrentPosition() > 1)
+			|| (adjustedEncPos - motors[i] -> getCurrentPosition() < -1)){
+    			motors[i] -> setCurrentPosition(adjustedEncPos, false);
+    		}
+    	}
 
         // Do nothing until a CAN message comes in.
-        while (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) == 0) { }
-
-        // Get CAN message.
-        HAL_CAN_GetRxMessage(&hcan, CAN_RX_FIFO0, &CAN_RxHeader, CAN_RxData);
-
-        // Adjust motors relative to CAN message
-        motor1.CAN_IN(&CAN_RxHeader, CAN_RxData);
-        motor2.CAN_IN(&CAN_RxHeader, CAN_RxData);
-        motor3.CAN_IN(&CAN_RxHeader, CAN_RxData);
-        motor4.CAN_IN(&CAN_RxHeader, CAN_RxData);
-        motor5.CAN_IN(&CAN_RxHeader, CAN_RxData);
-        motor6.CAN_IN(&CAN_RxHeader, CAN_RxData);
-
-        // CheckBoardTemp(motors); //Checking for overtemperature
-
-        for (i = 0; i < 6; i++) {
-            if (motors[i]->CAN_SendStatus) {
-                updates++;
-            }
+        if (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) == 0){
+        	continue;
         }
 
-        // Checking if it is time to send
-        if (updates == update_limit) {
-            CAN_Transmit(motors, &hcan, &CAN_TxHeader, &CAN_TxMailbox);
-        }
-        updates = 0; // Resetting updates to avoid false sending
+		// Get CAN message.
+		HAL_CAN_GetRxMessage(&hcan, CAN_RX_FIFO0, &CAN_RxHeader, CAN_RxData);
+
+		// Adjust motors relative to CAN message
+		motor1.CAN_IN(&CAN_RxHeader, CAN_RxData);
+		motor2.CAN_IN(&CAN_RxHeader, CAN_RxData);
+		motor3.CAN_IN(&CAN_RxHeader, CAN_RxData);
+		motor4.CAN_IN(&CAN_RxHeader, CAN_RxData);
+		motor5.CAN_IN(&CAN_RxHeader, CAN_RxData);
+		motor6.CAN_IN(&CAN_RxHeader, CAN_RxData);
+
+		// CheckBoardTemp(motors); //Checking for overtemperature
+
+		for (uint8_t i = 0; i < 6; i++) {
+			if (motors[i]->CAN_SendStatus) {
+				updates++;
+			}
+		}
+
+		// Checking if it is time to send
+		if (updates == update_limit) {
+			CAN_Transmit(motors, &hcan, &CAN_TxHeader, &CAN_TxMailbox);
+		}
+		updates = 0; // Resetting updates to avoid false sending
     }
 }
 

@@ -193,7 +193,7 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
         setTargetSpeed(0);
 
         // set Stall Protection Levels
-        setStallProtectionLevels(60, 0, 0, 0, 0);
+        setStallProtectionLevels(0, 0, 0, 0, 0);
 
         // set default max accel, max decel, start accel, and final decel
         setAccelerations(500, 500, 0, 0);
