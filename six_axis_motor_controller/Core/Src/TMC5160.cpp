@@ -204,7 +204,7 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
 
     // Register for control by limit switches or stall protection
     TMC5160_Reg::SW_MODE_Register limits = { 0 };
-    limits.sg_stop = true;
+    limits.sg_stop = false;
     limits.stop_r_enable = true;
     limits.stop_l_enable = true;
     writeRegister(TMC5160_Reg::SW_MODE, limits.value);

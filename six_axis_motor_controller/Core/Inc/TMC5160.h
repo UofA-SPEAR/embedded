@@ -105,7 +105,7 @@ public:
         uint16_t globalScaler = 32; // global current scaling (32 to 256)
         uint8_t irun = 16; // motor run current (0 to 31). For best performance don't set lower than 16
         uint8_t ihold = 0; // standstill current (0 to 31). Set 70% of irun or lower.
-        TMC5160_Reg::PWMCONF_freewheel_Values freewheeling = TMC5160_Reg::FREEWHEEL_NORMAL; // Freewheeling / passive braking of ihold = 0
+        TMC5160_Reg::PWMCONF_freewheel_Values freewheeling = TMC5160_Reg::FREEWHEEL_SHORT_LS; // Freewheeling / passive braking of ihold = 0
         uint8_t pwmOfsInitial = 30; // initial stealthChop PWM amplitude offset (0-255)
         uint8_t pwmGradInitial = 0; // initial stealthChop velocity dependent gradient for PWM amplitude
     };

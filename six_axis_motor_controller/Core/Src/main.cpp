@@ -96,7 +96,7 @@ int main(void)
 
     motorParams.globalScaler = 47;
     motorParams.irun = 31; // To give 2.8A RMS coil current
-    motorParams.ihold = 21; // IHold 70% of IRUN or lower (pg 111)
+    motorParams.ihold = 0; // IHold 70% of IRUN or lower (pg 111)
     powerStageParams.bbmTime = 3;
 
     disableAll(motors);
@@ -182,7 +182,7 @@ int main(void)
     		float adjustedEncPos = motors[i] -> getEncoderPosition()/2.0;
     		if ((adjustedEncPos - motors[i] -> getCurrentPosition() > 1)
 			|| (adjustedEncPos - motors[i] -> getCurrentPosition() < -1)){
-    			motors[i] -> setCurrentPosition(adjustedEncPos, false);
+    			//motors[i] -> setCurrentPosition(adjustedEncPos, false);
     		}
     	}
 
