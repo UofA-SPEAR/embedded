@@ -31,8 +31,15 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+// CAN ID of device (4 bits)
+#define CAN_ID 0b0001
+
+#define CAN_MASK 0b00000000000001111000000000000000
+
 // The number of data bytes in the CAN data frames (float32 values).
 #define CAN_DATA_SIZE 4
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -42,6 +49,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 CAN_HandleTypeDef hcan;
+CAN_TxHeaderTypeDef CAN_TxHeader; // Transmission header.
+CAN_RxHeaderTypeDef CAN_RxHeader; // Receiver header.
 
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
@@ -106,6 +115,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+
+  CAN_TxHeaderTypeDef CAN_TxHeader; // The transmission header.
+  CAN_RxHeaderTypeDef CAN_RxHeader; // The receiver header.
+  CAN_Filter(&hcan, &CAN_TxHeader); // Initializing the CANbus filter
+  HAL_CAN_Start(&hcan);
+
   int pulse = 0;
   int pulseServo = 4;
 
@@ -367,35 +382,22 @@ void CAN_Filter(CAN_HandleTypeDef* hcan, CAN_TxHeaderTypeDef* CAN_TxHeader)
     CAN_TxHeader->DLC = CAN_DATA_SIZE; // CAN_SIZE_DATA; //The data size (5 bytes)
     CAN_TxHeader->ExtId = 0; // Needs to be changed depending on the frame
 
-    // Initializing a filter for CAN messages.
-    uint32_t filter_ID_low = CAN_ID_LOW;
-    uint32_t filter_mask_low = CAN_MASK_LOW;
-
-    uint32_t filter_ID_high = CAN_ID_HIGH;
-    uint32_t filter_mask_high = CAN_MASK_HIGH;
-
-    // Using bitshifting to assign the receiver ID bits in the filter.
-
-    filter_ID_low |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << 15);
-    filter_ID_high |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin));
-    filter_ID_high |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << 1);
-    filter_ID_high |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << 2);
-
     // Setting the extended transmission header based on the CAN pins
-    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << 12);
-    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin) << 13);
-    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << 14);
-    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << 15);
+
+    ///CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << 12);
+    //CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin) << 13);
+    //CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << 14);
+    //CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << 15);
 
     CAN_FilterTypeDef CAN_FILTER_CONFIG; // Declaring the filter structure.
     CAN_FILTER_CONFIG.FilterFIFOAssignment = CAN_FILTER_FIFO0; // Choosing the FIFO0 set.
-    CAN_FILTER_CONFIG.FilterIdHigh = filter_ID_high;
-    CAN_FILTER_CONFIG.FilterIdLow = filter_ID_low;
-    CAN_FILTER_CONFIG.FilterMaskIdHigh = filter_mask_high;
-    CAN_FILTER_CONFIG.FilterMaskIdLow = filter_mask_low;
+    CAN_FILTER_CONFIG.FilterIdHigh = (uint32_t)(CAN_ID >> 1);
+    CAN_FILTER_CONFIG.FilterMaskIdLow = (uint32_t)((CAN_ID << 15) & 0xFFFF);
+    CAN_FILTER_CONFIG.FilterMaskIdHigh = (uint32_t)(CAN_MASK >> 16);
+    CAN_FILTER_CONFIG.FilterMaskIdLow = (uint32_t)(CAN_MASK & 0xFFFF);
     CAN_FILTER_CONFIG.FilterMode = CAN_FILTERMODE_IDMASK; // Using the mask mode to ignore certain bits.
     CAN_FILTER_CONFIG.FilterScale = CAN_FILTERSCALE_32BIT; // Using the extended ID so 32bit filters.
-    CAN_FILTER_CONFIG.FilterActivation = ENABLE; // Enabling the filter.
+    CAN_FILTER_CONFIG.FilterActivation = CAN_FILTER_ENABLE; // Enabling the filter.
     HAL_CAN_ConfigFilter(hcan, &CAN_FILTER_CONFIG);
 }
 /* USER CODE END 4 */
