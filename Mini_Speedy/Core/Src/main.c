@@ -118,6 +118,8 @@ int main(void)
 
   CAN_TxHeaderTypeDef CAN_TxHeader; // The transmission header.
   CAN_RxHeaderTypeDef CAN_RxHeader; // The receiver header.
+  uint32_t CAN_TxMailbox = 0;
+  uint8_t CAN_TxData[CAN_DATA_SIZE] = {0};
   CAN_Filter(&hcan, &CAN_TxHeader); // Initializing the CANbus filter
   HAL_CAN_Start(&hcan);
 
@@ -143,6 +145,15 @@ int main(void)
 	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseServo);
 
 	  HAL_Delay(10);
+
+	  CAN_TxData[0] = 0b0100;
+	  HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
+
+	  if (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) == 0){
+		  continue;
+	  }
+	  CAN_TxData[0] = 0b0001;
+	  HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -384,17 +395,15 @@ void CAN_Filter(CAN_HandleTypeDef* hcan, CAN_TxHeaderTypeDef* CAN_TxHeader)
 
     // Setting the extended transmission header based on the CAN pins
 
-    ///CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << 12);
-    //CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin) << 13);
-    //CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << 14);
-    //CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << 15);
+    CAN_TxHeader->ExtId |= (uint32_t)(CAN_ID << 12);
 
     CAN_FilterTypeDef CAN_FILTER_CONFIG; // Declaring the filter structure.
     CAN_FILTER_CONFIG.FilterFIFOAssignment = CAN_FILTER_FIFO0; // Choosing the FIFO0 set.
     CAN_FILTER_CONFIG.FilterIdHigh = (uint32_t)(CAN_ID >> 1);
-    CAN_FILTER_CONFIG.FilterMaskIdLow = (uint32_t)((CAN_ID << 15) & 0xFFFF);
+    CAN_FILTER_CONFIG.FilterIdLow = (uint32_t)((CAN_ID << 15) & 0xFFFF);
     CAN_FILTER_CONFIG.FilterMaskIdHigh = (uint32_t)(CAN_MASK >> 16);
     CAN_FILTER_CONFIG.FilterMaskIdLow = (uint32_t)(CAN_MASK & 0xFFFF);
+    CAN_FILTER_CONFIG.FilterBank = 0;
     CAN_FILTER_CONFIG.FilterMode = CAN_FILTERMODE_IDMASK; // Using the mask mode to ignore certain bits.
     CAN_FILTER_CONFIG.FilterScale = CAN_FILTERSCALE_32BIT; // Using the extended ID so 32bit filters.
     CAN_FILTER_CONFIG.FilterActivation = CAN_FILTER_ENABLE; // Enabling the filter.
