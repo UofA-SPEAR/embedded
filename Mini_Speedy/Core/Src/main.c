@@ -49,8 +49,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 CAN_HandleTypeDef hcan;
-CAN_TxHeaderTypeDef CAN_TxHeader; // Transmission header.
-CAN_RxHeaderTypeDef CAN_RxHeader; // Receiver header.
 
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
@@ -119,7 +117,8 @@ int main(void)
   CAN_TxHeaderTypeDef CAN_TxHeader; // The transmission header.
   CAN_RxHeaderTypeDef CAN_RxHeader; // The receiver header.
   uint32_t CAN_TxMailbox = 0;
-  uint8_t CAN_TxData[CAN_DATA_SIZE] = {0};
+  uint8_t CAN_TxData[CAN_DATA_SIZE] = {};
+  uint8_t CAN_RxData[CAN_DATA_SIZE] = {};
   CAN_Filter(&hcan, &CAN_TxHeader); // Initializing the CANbus filter
   HAL_CAN_Start(&hcan);
 
@@ -146,13 +145,14 @@ int main(void)
 
 	  HAL_Delay(10);
 
-	  CAN_TxData[0] = 0b0100;
-	  HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
-
 	  if (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) == 0){
 		  continue;
 	  }
+	  HAL_CAN_GetRxMessage(&hcan, CAN_RX_FIFO0, &CAN_RxHeader, CAN_RxData);
 	  CAN_TxData[0] = 0b0001;
+	  CAN_TxData[1] = 0;
+	  CAN_TxData[2] = 0;
+	  CAN_TxData[3] = 0;
 	  HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
     /* USER CODE END WHILE */
 
@@ -177,7 +177,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL8;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -187,12 +189,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
   {
     Error_Handler();
   }
