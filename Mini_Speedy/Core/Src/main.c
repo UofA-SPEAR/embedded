@@ -35,7 +35,8 @@
 // CAN ID of device (4 bits)
 #define CAN_ID 0b0001
 
-#define CAN_MASK 0b00000000000001111000000000000000
+#define CAN_ID_MASK 		0b00000000000011110000000000000000
+#define CAN_ACTUATOR_MASK 	0b00000000000000001111000000000000
 
 // The number of data bytes in the CAN data frames (float32 values).
 #define CAN_DATA_SIZE 4
@@ -123,7 +124,6 @@ int main(void)
   HAL_CAN_Start(&hcan);
 
   int pulse = 0;
-  int pulseServo = 4;
 
   /* USER CODE END 2 */
 
@@ -135,25 +135,38 @@ int main(void)
 	  if (pulse > 255) {
 		  pulse = 0;
 	  }
-	  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, pulse);
+	  //__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, pulse);
 
-	  pulseServo = pulseServo + 1;
-	  if (pulseServo > 20){
-		  pulseServo = 4;
-	  }
-	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, pulseServo);
-
-	  HAL_Delay(10);
+	  HAL_Delay(500);
 
 	  if (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) == 0){
 		  continue;
 	  }
 	  HAL_CAN_GetRxMessage(&hcan, CAN_RX_FIFO0, &CAN_RxHeader, CAN_RxData);
-	  CAN_TxData[0] = 0b0001;
-	  CAN_TxData[1] = 0;
-	  CAN_TxData[2] = 0;
-	  CAN_TxData[3] = 0;
+	  uint8_t actuatorID = (uint8_t)((CAN_RxHeader.ExtId & CAN_ACTUATOR_MASK) >> 12);
+
+	  CAN_TxData[0] = (uint8_t)((CAN_RxHeader.ExtId) >> 24);;
+	  CAN_TxData[1] = (uint8_t)((CAN_RxHeader.ExtId) >> 16);;
+	  CAN_TxData[2] = (uint8_t)((CAN_RxHeader.ExtId) >> 8);;
+	  CAN_TxData[3] = (uint8_t)((CAN_RxHeader.ExtId) >> 0);;
 	  HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
+
+	  switch(actuatorID){
+		  case 0b0000:{
+			  CAN_TxData[0] = 0b0001;
+			  CAN_TxData[1] = 0;
+			  CAN_TxData[2] = 0;
+			  CAN_TxData[3] = 0;
+			  HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
+		  }
+		  case 0b0001:{
+			  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, CAN_RxData[0]);
+			  break;
+		  }
+		  case 0b0010:{
+			  break;
+		  }
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -174,12 +187,13 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -316,9 +330,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 999;
+  htim3.Init.Prescaler = 639;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 159;
+  htim3.Init.Period = 999;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -341,7 +355,7 @@ static void MX_TIM3_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
+  sConfigOC.Pulse = 75;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
@@ -367,6 +381,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
@@ -403,8 +418,8 @@ void CAN_Filter(CAN_HandleTypeDef* hcan, CAN_TxHeaderTypeDef* CAN_TxHeader)
     CAN_FILTER_CONFIG.FilterFIFOAssignment = CAN_FILTER_FIFO0; // Choosing the FIFO0 set.
     CAN_FILTER_CONFIG.FilterIdHigh = (uint32_t)(CAN_ID >> 1);
     CAN_FILTER_CONFIG.FilterIdLow = (uint32_t)((CAN_ID << 15) & 0xFFFF);
-    CAN_FILTER_CONFIG.FilterMaskIdHigh = (uint32_t)(CAN_MASK >> 16);
-    CAN_FILTER_CONFIG.FilterMaskIdLow = (uint32_t)(CAN_MASK & 0xFFFF);
+    CAN_FILTER_CONFIG.FilterMaskIdHigh = (uint32_t)(CAN_ID_MASK >> 16);
+    CAN_FILTER_CONFIG.FilterMaskIdLow = (uint32_t)(CAN_ID_MASK & 0xFFFF);
     CAN_FILTER_CONFIG.FilterBank = 0;
     CAN_FILTER_CONFIG.FilterMode = CAN_FILTERMODE_IDMASK; // Using the mask mode to ignore certain bits.
     CAN_FILTER_CONFIG.FilterScale = CAN_FILTERSCALE_32BIT; // Using the extended ID so 32bit filters.
