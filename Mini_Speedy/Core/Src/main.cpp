@@ -35,12 +35,17 @@
 // CAN ID of device (4 bits)
 #define CAN_ID 0b0001
 
-#define CAN_ID_MASK 		0b00000000000011110000000000000000
-#define CAN_ACTUATOR_MASK 	0b00000000000000001111000000000000
+#define CAN_ID_MASK 		0b00000000000000001111000000000000
+#define CAN_ACTUATOR_MASK 	0b00000000000000000000111100000000
+
 
 // The number of data bytes in the CAN data frames (float32 values).
 #define CAN_DATA_SIZE 4
 
+
+// Servo motor angle limits
+#define SERVO_LIMIT_LOW -40
+#define SERVO_LIMIT_HIGH 40
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -122,48 +127,75 @@ int main(void)
   uint8_t CAN_RxData[CAN_DATA_SIZE] = {};
   CAN_Filter(&hcan, &CAN_TxHeader); // Initializing the CANbus filter
   HAL_CAN_Start(&hcan);
-
-  int pulse = 0;
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  pulse = pulse + 1;
-	  if (pulse > 255) {
-		  pulse = 0;
-	  }
-	  //__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, pulse);
-
-	  HAL_Delay(500);
 
 	  if (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) == 0){
 		  continue;
 	  }
 	  HAL_CAN_GetRxMessage(&hcan, CAN_RX_FIFO0, &CAN_RxHeader, CAN_RxData);
-	  uint8_t actuatorID = (uint8_t)((CAN_RxHeader.ExtId & CAN_ACTUATOR_MASK) >> 12);
-
-	  CAN_TxData[0] = (uint8_t)((CAN_RxHeader.ExtId) >> 24);;
-	  CAN_TxData[1] = (uint8_t)((CAN_RxHeader.ExtId) >> 16);;
-	  CAN_TxData[2] = (uint8_t)((CAN_RxHeader.ExtId) >> 8);;
-	  CAN_TxData[3] = (uint8_t)((CAN_RxHeader.ExtId) >> 0);;
-	  HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
+	  uint8_t actuatorID = (uint8_t)((CAN_RxHeader.ExtId & CAN_ACTUATOR_MASK) >> 8);
 
 	  switch(actuatorID){
 		  case 0b0000:{
-			  CAN_TxData[0] = 0b0001;
-			  CAN_TxData[1] = 0;
+			  CAN_TxData[0] = actuatorID >> 4;
+			  CAN_TxData[1] = actuatorID >> 0;
 			  CAN_TxData[2] = 0;
 			  CAN_TxData[3] = 0;
 			  HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
+			  break;
 		  }
 		  case 0b0001:{
-			  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, CAN_RxData[0]);
+			  float CANfloatValue = 0;
+			  uint32_t CANdata = 0;
+
+			  CANdata |= (CAN_RxData[0]) << 24;
+			  CANdata |= (CAN_RxData[1]) << 16;
+			  CANdata |= (CAN_RxData[2]) << 8;
+			  CANdata |= (CAN_RxData[3]);
+
+			  CANfloatValue = reinterpret_cast<float&>(CANdata);
+			  CANfloatValue = CANfloatValue * -1;
+
+			  if (CANfloatValue < 0){
+				  CANfloatValue = CANfloatValue * -1;
+				  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+
+			  }
+			  else if (CANfloatValue > 0){
+				  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+
+			  }
+
+			  uint8_t DC_motor = CANfloatValue * 255.0;
+
+		  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2,  DC_motor);
 			  break;
 		  }
 		  case 0b0010:{
+			  float CANfloatValue = 0;
+			  uint32_t CANdata = 0;
+
+			  CANdata |= (CAN_RxData[0]) << 24;
+			  CANdata |= (CAN_RxData[1]) << 16;
+			  CANdata |= (CAN_RxData[2]) << 8;
+			  CANdata |= (CAN_RxData[3]);
+
+			  CANfloatValue = reinterpret_cast<float&>(CANdata);
+
+			  if (CANfloatValue < SERVO_LIMIT_LOW){
+				  CANfloatValue = SERVO_LIMIT_LOW;
+			  }
+			  if (CANfloatValue > SERVO_LIMIT_HIGH){
+				  CANfloatValue = SERVO_LIMIT_HIGH;
+			  }
+
+			  uint8_t servo = (uint8_t)(((CANfloatValue + 90.0) * (115.0/180.0)) + 18.0);
+			  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, servo);
 			  break;
 		  }
 	  }
@@ -271,7 +303,7 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 0;
+  htim2.Init.Prescaler = 6;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 255;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -376,24 +408,23 @@ static void MX_TIM3_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	/* USER CODE BEGIN MX_GPIO_Init_1 */
+	/* USER CODE END MX_GPIO_Init_1 */
 
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOF_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
+	  /* GPIO Ports Clock Enable */
+	  __HAL_RCC_GPIOF_CLK_ENABLE();
+	  __HAL_RCC_GPIOA_CLK_ENABLE();
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_RESET);
+	  /*Configure GPIO pin Output Level */
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+	  /*Configure GPIO pin : PA0 */
+	  GPIO_InitStruct.Pin = GPIO_PIN_0;
+	  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	  GPIO_InitStruct.Pull = GPIO_NOPULL;
+	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -418,8 +449,8 @@ void CAN_Filter(CAN_HandleTypeDef* hcan, CAN_TxHeaderTypeDef* CAN_TxHeader)
     CAN_FILTER_CONFIG.FilterFIFOAssignment = CAN_FILTER_FIFO0; // Choosing the FIFO0 set.
     CAN_FILTER_CONFIG.FilterIdHigh = (uint32_t)(CAN_ID >> 1);
     CAN_FILTER_CONFIG.FilterIdLow = (uint32_t)((CAN_ID << 15) & 0xFFFF);
-    CAN_FILTER_CONFIG.FilterMaskIdHigh = (uint32_t)(CAN_ID_MASK >> 16);
-    CAN_FILTER_CONFIG.FilterMaskIdLow = (uint32_t)(CAN_ID_MASK & 0xFFFF);
+    CAN_FILTER_CONFIG.FilterMaskIdHigh = (uint32_t)(CAN_ID_MASK >> 13);
+    CAN_FILTER_CONFIG.FilterMaskIdLow = (uint32_t)((CAN_ID_MASK << 3) & 0xFFFF);
     CAN_FILTER_CONFIG.FilterBank = 0;
     CAN_FILTER_CONFIG.FilterMode = CAN_FILTERMODE_IDMASK; // Using the mask mode to ignore certain bits.
     CAN_FILTER_CONFIG.FilterScale = CAN_FILTERSCALE_32BIT; // Using the extended ID so 32bit filters.
