@@ -77,6 +77,7 @@ int main(void)
     CAN_RxHeaderTypeDef CAN_RxHeader; // The receiver header.
     uint32_t CAN_TxMailbox = 0;
     uint8_t CAN_RxData[CAN_DATA_SIZE]; // The receiving data variable.
+    uint8_t CAN_TxData[CAN_DATA_SIZE];
 
     CAN_Filter(&hcan, &CAN_TxHeader); // Initializing the CANbus filter
     HAL_CAN_Start(&hcan); // Start the CANbus
@@ -107,6 +108,14 @@ int main(void)
     enableAll(motors);
     uint8_t updates = 0; // The number of updates to send
     uint8_t update_limit = sizeof(motors); // The value at which data will be sent
+
+    uint32_t delayLimit = 100;
+    uint32_t delayCount = 0;
+
+    unsigned int nMotors = 6;
+    uint32_t thead[nMotors] = {};
+    uint32_t tdata[nMotors] = {};
+    unsigned int tindex = nMotors;
 
     //Old capstone homing code
     /*
@@ -186,6 +195,36 @@ int main(void)
     		}
     	}
 
+    	//Transmit data
+    	if (tindex < nMotors){
+
+    		CAN_TxData[0] = static_cast<uint8_t>(tdata[tindex] >> 24);
+			CAN_TxData[1] = static_cast<uint8_t>(tdata[tindex] >> 16);
+			CAN_TxData[2] = static_cast<uint8_t>(tdata[tindex] >> 8);
+			CAN_TxData[3] = static_cast<uint8_t>(tdata[tindex]);
+
+			CAN_TxHeader.ExtId &= 0x0000F000; // Eliminate lingering data from other transmissions
+			CAN_TxHeader.ExtId |= thead[tindex]; // Putting in the motor ID and command ID
+
+			HAL_StatusTypeDef tresult = HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
+			if (tresult == HAL_OK){
+				tindex++;
+			}
+    	}
+
+    	//Set data to be transmitted
+    	delayCount++;
+    	if (delayCount >= delayLimit){
+    		delayCount = 0;
+    		for (int i = 0; i < 6; i++) {
+    			float CANfloatValue = motors[i]->getCurrentPosition();
+				tdata[i] = reinterpret_cast<uint32_t&>(CANfloatValue);
+
+				thead[i] = motors[i]->CAN_MotorTxHeader;
+			}
+    		tindex = 0;
+    	}
+
         // Do nothing until a CAN message comes in.
         if (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) == 0){
         	continue;
@@ -204,6 +243,7 @@ int main(void)
 
 		// CheckBoardTemp(motors); //Checking for overtemperature
 
+		/*
 		for (uint8_t i = 0; i < 6; i++) {
 			if (motors[i]->CAN_SendStatus) {
 				updates++;
@@ -215,6 +255,7 @@ int main(void)
 			CAN_Transmit(motors, &hcan, &CAN_TxHeader, &CAN_TxMailbox);
 		}
 		updates = 0; // Resetting updates to avoid false sending
+		//*/
     }
 }
 
