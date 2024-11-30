@@ -62,6 +62,11 @@ static void MX_CAN_Init(void);
 static void MX_ADC2_Init(void);
 /* USER CODE BEGIN PFP */
 
+
+	float map(float x,float minVal, float maxVal, float nMin, float nMax);
+
+
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -84,6 +89,8 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
+
+/*
 	int displaying_number = 0;
 	int displaying_number2 = 0;
 	int digits[10] = {0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F};
@@ -97,12 +104,12 @@ int main(void)
 	CAN_Filter(&hcan, &CAN_TxHeader); // Initializing the CANbus filter
 	HAL_CAN_Start(&hcan);
 
-	uint8_t speedySelect;
-	uint8_t actuatorSelect;
-	uint8_t debugId;
-	uint8_t priority;
-	uint8_t commandId;
-
+	uint8_t speedySelect = 0;
+	uint8_t actuatorSelect = 0;
+	uint8_t debugId = 0;
+	uint8_t priority = 0;
+	uint8_t commandId = 0;
+/*
 
   /* USER CODE END 1 */
 
@@ -128,6 +135,28 @@ int main(void)
   MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
 
+  	uint8_t displaying_number = 0;
+  	uint8_t displaying_number2 = 0;
+  	int digits[10] = {0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F};
+  	uint8_t mode = 0;   // Variable that will store the current mode
+
+  	CAN_TxHeaderTypeDef CAN_TxHeader; // The transmission header.
+  	CAN_RxHeaderTypeDef CAN_RxHeader; // The receiver header.
+  	uint32_t CAN_TxMailbox = 0;
+  	uint8_t CAN_TxData[CAN_DATA_SIZE] = {};
+  	uint8_t CAN_RxData[CAN_DATA_SIZE] = {};
+  	CAN_Filter(&hcan, &CAN_TxHeader); // Initializing the CANbus filter
+  	HAL_CAN_Start(&hcan);
+
+  	uint8_t speedySelect = 0;
+  	uint8_t actuatorSelect = 0;
+  	uint8_t debugId = 15;
+  	uint8_t priority = 0;
+  	uint8_t commandId = 0x02;
+
+
+
+
   // Turn off all of the segments initially, then display 0 --> 0x7F
   HAL_GPIO_WritePin(GPIOA,0x7F,GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOA,digits[displaying_number], GPIO_PIN_RESET);
@@ -136,15 +165,11 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB,0x7F,GPIO_PIN_SET);
   HAL_GPIO_WritePin(GPIOB,digits[displaying_number2], GPIO_PIN_RESET);
 
-  uint16_t readXval; // Joystick X-axis Value
+  uint32_t readXval; // Joystick X-axis Value
   HAL_ADC_Start(&hadc2); // Start ADC2 for the channel corresponding to PA7
 
  // HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
   /* USER CODE END 2 */
-
-
-
-
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -238,29 +263,37 @@ int main(void)
 
 
 	  }
-/*
-	  		  if(displaying_number == 1 && displaying_number2 == 1){
+	  }
 
-	  			  HAL_ADC_PollForConversion(&hadc2, 1000); // Wait for ADC2 to complete conversion
+
+	  		  //if(displaying_number == 1 && displaying_number2 == 1){
+
+	  			  HAL_ADC_PollForConversion(&hadc2, 100); // Wait for ADC2 to complete conversion
 	  			  readXval = HAL_ADC_GetValue(&hadc2);  // Read the ADC value from PA7
 
+	  			  float data = map((float)readXval, 0, 255, -100, 100);
+	  			  uint32_t data2;
+	  			  memcpy(&data2, &data, sizeof data2);
 
+	  			 speedySelect = displaying_number2;
+	  			 actuatorSelect = displaying_number;
 
+	  			 CAN_TxData[0] = data2>>24;
+	  			 CAN_TxData[1] = data2>>16;
+	  			 CAN_TxData[2] = data2>>8;
+	  			 CAN_TxData[3] = data2;
 
-
-
-	  			 CAN_TxHeader.ExtId &= 0x0000F000;
-	  			 CAN_TxHeader.ExtId |= priority<<24|commandId<<16|speedySelect<<12|actuatorSelect<<8|debugId<<4;
+	  			 CAN_TxHeader.ExtId = priority<<24|commandId<<16|speedySelect<<12|actuatorSelect<<8|debugId<<4;
 
 	  			 HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader,&CAN_TxData, &CAN_TxMailbox);
 
 
 
-	  		  }
-*/
+	  		 // }
+
 
 	  	  }
-	  }
+
 	  	  break;
 
 
@@ -284,9 +317,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
 
+  /* USER CODE END 3 */
+}
 
 /**
   * @brief System Clock Configuration
@@ -319,7 +352,7 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
@@ -356,7 +389,7 @@ static void MX_ADC2_Init(void)
   */
   hadc2.Instance = ADC2;
   hadc2.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
-  hadc2.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc2.Init.Resolution = ADC_RESOLUTION_8B;
   hadc2.Init.ScanConvMode = ADC_SCAN_DISABLE;
   hadc2.Init.ContinuousConvMode = ENABLE;
   hadc2.Init.DiscontinuousConvMode = DISABLE;
@@ -447,7 +480,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6, GPIO_PIN_RESET);
+                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_8, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
@@ -460,9 +493,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA0 PA1 PA2 PA3
-                           PA4 PA5 PA6 */
+                           PA4 PA5 PA6 PA8 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6;
+                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_8;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -490,6 +523,21 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+float map(float x,float minVal, float maxVal, float nMin, float nMax){
+
+
+	 if (maxVal == minVal) return 0;
+
+	    // Apply the mapping formula
+	    return nMin + ((x - minVal) * (nMax - nMin)) / (maxVal - minVal);
+
+
+
+}
+
+
+
 void CAN_Filter(CAN_HandleTypeDef* hcan, CAN_TxHeaderTypeDef* CAN_TxHeader)
 { // This function initializes the CAN filter for the board.
   // The CANID ports are named for their respective address bits, i.e., 0 to the 0th bit.
