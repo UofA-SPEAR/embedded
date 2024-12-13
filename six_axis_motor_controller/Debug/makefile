@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (11.3.rel1)
+# Toolchain: GNU Tools for STM32 (12.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -84,8 +84,8 @@ all: main-build
 main-build: SUPER_SPEEDY.elf secondary-outputs
 
 # Tool invocations
-SUPER_SPEEDY.elf SUPER_SPEEDY.map: $(OBJS) $(USER_OBJS) C:\Users\milt\Downloads\SUPER_SPEEDY-20240407T211329Z-001\SUPER_SPEEDY\STM32F303CCTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-g++ -o "SUPER_SPEEDY.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\milt\Downloads\SUPER_SPEEDY-20240407T211329Z-001\SUPER_SPEEDY\STM32F303CCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="SUPER_SPEEDY.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+SUPER_SPEEDY.elf SUPER_SPEEDY.map: $(OBJS) $(USER_OBJS) S:\Personal\ Folder\Github\ Repository\UofA-SPEAR\embedded\six_axis_motor_controller\STM32F303CCTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-g++ -o "SUPER_SPEEDY.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"S:\Personal Folder\Github Repository\UofA-SPEAR\embedded\six_axis_motor_controller\STM32F303CCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="SUPER_SPEEDY.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

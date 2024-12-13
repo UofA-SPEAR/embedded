@@ -134,7 +134,7 @@ int main(void)
 
     	// Motor position correction check
     	for(int i=0;i<6;i++){
-    		float adjustedEncPos = motors[i]->getEncoderPosition()/2.0;
+    		float adjustedEncPos = motors[i]->getEncoderPosition();
 				if (
 						(adjustedEncPos - motors[i]->getCurrentPosition() > 1)
 						|| (adjustedEncPos - motors[i]->getCurrentPosition() < -1)

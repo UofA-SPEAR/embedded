@@ -94,7 +94,7 @@ void TMC5160_SPI::motorCommand(uint8_t commandID, float CANfloatData)
 
     case CAN_Command::SetPosition:
         CANfloatData = CANfloatData / (M_TWOPI);
-        CANfloatData = round(100 * CANfloatData);
+        CANfloatData = round(200 * CANfloatData);
         setTargetPosition(CANfloatData);
         CAN_MotorTxData = getCurrentPosition();
         CAN_MotorTxHeader |= (CAN_Command::GetPosition << 16);
