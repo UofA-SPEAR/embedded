@@ -107,7 +107,7 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
         _chopConf.tbl = 2;
         _chopConf.hstrt_tfd = 5;
         _chopConf.hend_offset = 10;
-        _chopConf.mres = 1;
+        _chopConf.mres = 0;
         writeRegister(TMC5160_Reg::CHOPCONF, _chopConf.value);
 
         // use position mode

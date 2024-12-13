@@ -183,12 +183,12 @@ int main(void)
     // motor2.setCurrentPosition(0);
 	//*/
     for (uint8_t i = 0; i < 6; i++){
-    	motors[i] -> setEncoderResolution(100, 2000, false);
+    	motors[i] -> setEncoderResolution(200, 2000, false);
     }
 
     while (1) {
     	for (uint8_t i = 0; i < 6; i++){
-    		float adjustedEncPos = motors[i] -> getEncoderPosition()/2.0;
+    		float adjustedEncPos = motors[i] -> getEncoderPosition();
     		if ((adjustedEncPos - motors[i] -> getCurrentPosition() > 1)
 			|| (adjustedEncPos - motors[i] -> getCurrentPosition() < -1)){
     			//motors[i] -> setCurrentPosition(adjustedEncPos, false);
