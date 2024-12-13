@@ -218,6 +218,7 @@ int main(void)
     		delayCount = 0;
     		for (int i = 0; i < 6; i++) {
     			float CANfloatValue = motors[i]->getCurrentPosition();
+    			CANfloatValue = CANfloatValue / 200 * M_TWOPI;//Divided by steps per revolution
 				tdata[i] = reinterpret_cast<uint32_t&>(CANfloatValue);
 
 				thead[i] = motors[i]->CAN_MotorTxHeader;
