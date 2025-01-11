@@ -89,28 +89,6 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
-
-/*
-	int displaying_number = 0;
-	int displaying_number2 = 0;
-	int digits[10] = {0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F};
-	uint8_t mode = 0;   // Variable that will store the current mode
-
-	CAN_TxHeaderTypeDef CAN_TxHeader; // The transmission header.
-	CAN_RxHeaderTypeDef CAN_RxHeader; // The receiver header.
-	uint32_t CAN_TxMailbox = 0;
-	uint8_t CAN_TxData[CAN_DATA_SIZE] = {};
-	uint8_t CAN_RxData[CAN_DATA_SIZE] = {};
-	CAN_Filter(&hcan, &CAN_TxHeader); // Initializing the CANbus filter
-	HAL_CAN_Start(&hcan);
-
-	uint8_t speedySelect = 0;
-	uint8_t actuatorSelect = 0;
-	uint8_t debugId = 0;
-	uint8_t priority = 0;
-	uint8_t commandId = 0;
-/*
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -175,7 +153,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-// 	read each pins of the slide switch to determine position of the switch, each position will correspond to a mode 1-4
+
+//read each pins of the slide switch to determine position of the switch, each position will correspond to a mode 1-4
+
 	  if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12) == GPIO_PIN_SET){
 		  mode = 1;
 	  } else if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_13)== GPIO_PIN_SET){
@@ -191,7 +171,7 @@ int main(void)
 
 	  case 1: {
 
-		  // Incrementing button #1
+// Incrementing button #1
 	  if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_15) == GPIO_PIN_SET){
 		  HAL_Delay(50);   // Debounce delay --> checking twice to ensure button is pressed
 
@@ -200,10 +180,10 @@ int main(void)
 				  displaying_number++;
 		  }
 
-//        	  Turn off all segments
+//Turn off all segments
 			  HAL_GPIO_WritePin(GPIOA,0x7F,GPIO_PIN_SET);
 			  HAL_Delay(10);
-//        	  Set new digit
+//Set new digit
 			  HAL_GPIO_WritePin(GPIOA,digits[displaying_number],GPIO_PIN_RESET);
 			  HAL_Delay(100);
 		  	  }
@@ -219,14 +199,14 @@ int main(void)
 		}
 
 			  HAL_GPIO_WritePin(GPIOA,0x7F,GPIO_PIN_SET);
-//        	  Turn off all segments
+//Turn off all segments
 			  HAL_Delay(10);
-//        	  Set new digit
+//Set new digit
 			  HAL_GPIO_WritePin(GPIOA,digits[displaying_number],GPIO_PIN_RESET);
 			  HAL_Delay(100);
 }
 }
-	  // 2nd Button incrementer
+// 2nd Button incrementer
 
 	  if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_7) == GPIO_PIN_SET){
 	  		  HAL_Delay(50);   // Debounce delay --> checking twice to ensure button is pressed
@@ -236,15 +216,16 @@ int main(void)
 	  				  displaying_number2++;
 	  		  }
 
-	  //        	  Turn off all segments
+//Turn off all segments
 	  			  HAL_GPIO_WritePin(GPIOB,0x7F,GPIO_PIN_SET);
 	  			  HAL_Delay(10);
-	  //        	  Set new digit
+//Set new digit
 	  			  HAL_GPIO_WritePin(GPIOB,digits[displaying_number2],GPIO_PIN_RESET);
 	  			  HAL_Delay(100);
 	  		  	  }
 	  	  }
-	  // 2nd button decrementer
+
+//2nd button decrementer
 	  if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8) == GPIO_PIN_SET){
 
 	  		  HAL_Delay(50);
@@ -255,9 +236,9 @@ int main(void)
 	  		}
 
 	  			  HAL_GPIO_WritePin(GPIOB,0x7F,GPIO_PIN_SET);
-	  //        	  Turn off all segments
+// Turn off all segments
 	  			  HAL_Delay(10);
-	  //        	  Set new digit
+//Set new digit
 	  			  HAL_GPIO_WritePin(GPIOB,digits[displaying_number2],GPIO_PIN_RESET);
 	  			  HAL_Delay(100);
 
@@ -266,12 +247,20 @@ int main(void)
 	  }
 
 
-	  		  //if(displaying_number == 1 && displaying_number2 == 1){
+
 
 	  			  HAL_ADC_PollForConversion(&hadc2, 100); // Wait for ADC2 to complete conversion
 	  			  readXval = HAL_ADC_GetValue(&hadc2);  // Read the ADC value from PA7
 
 	  			  float data = map((float)readXval, 0, 255, -100, 100);
+
+	  			 // if(-50 < data && 50 > data)
+	  				//  continue;
+
+	  			  if(-50 < data && data < 50){
+	  				  data = 0;
+	  			  }
+
 	  			  uint32_t data2;
 	  			  memcpy(&data2, &data, sizeof data2);
 
@@ -289,7 +278,7 @@ int main(void)
 
 
 
-	  		 // }
+
 
 
 	  	  }
