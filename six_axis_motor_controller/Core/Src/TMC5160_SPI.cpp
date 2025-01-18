@@ -114,6 +114,11 @@ void TMC5160_SPI::motorCommand(uint8_t commandID, float CANfloatData)
         CAN_MotorTxData = CAN_NO_DATA;
         break;
 
+    case CAN_Command::StepperSpeed:{
+    	setMaxSpeed(CANfloatData);
+    	break;
+    }
+
     default:
         CAN_MotorTxData = CAN_NO_DATA;
         break;
