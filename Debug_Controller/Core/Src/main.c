@@ -130,7 +130,7 @@ int main(void)
   	uint8_t actuatorSelect = 0;
   	uint8_t debugId = 15;
   	uint8_t priority = 0;
-  	uint8_t commandId = 0x02;
+  	uint8_t commandId = 0x07;
 
 
 
@@ -252,7 +252,7 @@ int main(void)
 	  			  HAL_ADC_PollForConversion(&hadc2, 100); // Wait for ADC2 to complete conversion
 	  			  readXval = HAL_ADC_GetValue(&hadc2);  // Read the ADC value from PA7
 
-	  			  float data = map((float)readXval, 0, 255, -100, 100);
+	  			  float data = map((float)readXval, 0, 255, -200, 200);
 
 	  			 // if(-50 < data && 50 > data)
 	  				//  continue;
