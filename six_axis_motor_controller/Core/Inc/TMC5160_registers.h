@@ -328,10 +328,10 @@ union DRV_STATUS_Register {
 /* stealthChop voltage PWM mode chopper configuration */
 union PWMCONF_Register {
     uint32_t value;
-    BitField<0, 8> pwm_ofs; // User defined PWM amplitude (offset)
-    BitField<8, 8> pwm_grad; // User defined PWM amplitude (gradient)
-    BitField<16, 2> pwm_freq; // PWM frequency selection
-    BitField<18> pwm_autoscale; // Enable PWM automatic amplitude scaling
+    BitField<0, 8> pwm_ofs; // User defined PWM amplitude (offset)   // C4
+    BitField<8, 8> pwm_grad; // User defined PWM amplitude (gradient) // next two hex
+    BitField<16, 2> pwm_freq; // PWM frequency selection //0-3
+    BitField<18> pwm_autoscale; // Enable PWM automatic amplitude scaling  //
     BitField<19> pwm_autograd; // PWM automatic gradient adaptation
     BitField<20, 2> freewheel; // Stand still option when motor current setting is zero (I_HOLD=0).
     BitField<24, 4> pwm_reg; // Regulation loop gradient

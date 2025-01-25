@@ -106,6 +106,18 @@ int main(void)
     beginAll(motors, powerStageParams, motorParams, TMC5160::NORMAL_MOTOR_DIRECTION);
 
     enableAll(motors);
+
+/*
+    for (uint8_t i = 0; i < 6; i++) {
+        motors[i]->writeRegister(TMC5160::PWMCONF, 0x000401C8);  // Configure StealthChop mode
+        motors[i]->writeRegister(TMC5160::CHOPCONF, 0x00010053); // Enable StealthChop with optimized chopping
+        motors[i]->setPWMThreshold(2000);  // Set velocity threshold (adjust as needed)
+        motors[i]->setStealthChop(true);   // Enable StealthChop mode
+    }
+*/
+
+
+
     uint8_t updates = 0; // The number of updates to send
     uint8_t update_limit = sizeof(motors); // The value at which data will be sent
 

@@ -25,6 +25,8 @@ SOFTWARE.
 
 #include "TMC5160.h"
 
+
+
 TMC5160::TMC5160(uint32_t fclk)
     : _fclk(fclk)
 {
@@ -85,7 +87,19 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
 
         // Set initial PWM values
         TMC5160_Reg::PWMCONF_Register pwmconf = { 0 };
+                pwmconf.value = 0xC40C001E; // Reset default
+                pwmconf.pwm_ofs = 0x00;
+                pwmconf.pwm_grad = 0x04;
+                pwmconf.pwm_freq = 0b01;
+                pwmconf.pwm_autoscale = false;
+                pwmconf.pwm_autograd = false;
+                pwmconf.freewheel = 0b10;
+                pwmconf.pwm_reg = 0xC;
+                pwmconf.pwm_lim = 0x8;
+
+ /*       TMC5160_Reg::PWMCONF_Register pwmconf = { 0 };
         pwmconf.value = 0xC40C001E; // Reset default
+
         pwmconf.pwm_autoscale = false; // Temp to set OFS and GRAD initial values
         if (_fclk > DEFAULT_F_CLK)
             pwmconf.pwm_freq = 0;
@@ -94,11 +108,13 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
         pwmconf.pwm_grad = motorParams.pwmGradInitial;
         pwmconf.pwm_ofs = motorParams.pwmOfsInitial;
         pwmconf.freewheel = motorParams.freewheeling;
+
+    */
         writeRegister(TMC5160_Reg::PWMCONF, pwmconf.value);
 
-        pwmconf.pwm_autoscale = true;
-        pwmconf.pwm_autograd = true;
-        writeRegister(TMC5160_Reg::PWMCONF, pwmconf.value);
+       // pwmconf.pwm_autoscale = true;
+       // pwmconf.pwm_autograd = true;
+        //writeRegister(TMC5160_Reg::PWMCONF, pwmconf.value);
 
         // Recommended settings in quick config guide
         _chopConf.diss2vs = 1; // Disabling the short protection
@@ -148,8 +164,13 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
     }
     if (mtrType == DC_BRUSHED) {
 
-        TMC5160_Reg::PWMCONF_Register pwmconf = { 0 };
-        pwmconf.value = 0xC40C001E; // Reset default
+
+
+
+
+
+    	TMC5160_Reg::PWMCONF_Register pwmconf = { 0 };
+		pwmconf.value = 0xC40C001E; // Reset default
         pwmconf.pwm_autoscale = false; // set to true to limit current
         if (_fclk > DEFAULT_F_CLK)
             pwmconf.pwm_freq = 0;
@@ -177,7 +198,7 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
 
         TMC5160_Reg::GCONF_Register gconf = { 0 };
         // steathChop must be disabled for stall protection to work
-        gconf.en_pwm_mode = false; // Enable stealthChop PWM mode
+        gconf.en_pwm_mode = true; // Enable stealthChop PWM mode
         gconf.shaft = stepperDirection;
         writeRegister(TMC5160_Reg::GCONF, gconf.value);
 
