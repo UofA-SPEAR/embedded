@@ -48,6 +48,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc2;
+ADC_HandleTypeDef hadc4;
 
 CAN_HandleTypeDef hcan;
 
@@ -60,6 +61,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN_Init(void);
 static void MX_ADC2_Init(void);
+static void MX_ADC4_Init(void);
 /* USER CODE BEGIN PFP */
 
 
@@ -111,6 +113,7 @@ int main(void)
   MX_GPIO_Init();
   MX_CAN_Init();
   MX_ADC2_Init();
+  MX_ADC4_Init();
   /* USER CODE BEGIN 2 */
 
   	uint8_t displaying_number = 0;
@@ -144,8 +147,9 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB,digits[displaying_number2], GPIO_PIN_RESET);
 
   uint32_t readXval; // Joystick X-axis Value
+  uint32_t readYval;
   HAL_ADC_Start(&hadc2); // Start ADC2 for the channel corresponding to PA7
-
+  HAL_ADC_Start(&hadc4);
  // HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
   /* USER CODE END 2 */
 
@@ -162,8 +166,8 @@ int main(void)
 		  mode = 2;
 	  } else if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_14)== GPIO_PIN_SET){
 		  mode = 3;
-	  } else if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_15)== GPIO_PIN_SET){
-		  mode = 4;
+	 // } else if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_15)== GPIO_PIN_SET){
+		//  mode = 4;
 	  }
 
 	  switch(mode)
@@ -252,16 +256,28 @@ int main(void)
 	  			  HAL_ADC_PollForConversion(&hadc2, 100); // Wait for ADC2 to complete conversion
 	  			  readXval = HAL_ADC_GetValue(&hadc2);  // Read the ADC value from PA7
 
+	  			  HAL_ADC_PollForConversion(&hadc4, 100); // Wait for ADC4 to complete conversion
+	  			  readYval = HAL_ADC_GetValue(&hadc4);  // Read the ADC value from PB15
+
 	  			  float data = map((float)readXval, 0, 255, -200, 200);
 
-	  			 // if(-50 < data && 50 > data)
-	  				//  continue;
+	  			  float newData = map((float)readYval, 0, 4095, -200, 200);   // for left joystick
+
 
 	  			  if(-50 < data && data < 50){
 	  				  data = 0;
 	  			  }
 
+	  			  if(-50 < newData && newData < 50){   // deadzone for left joystick
+	  				  newData = 0;
+	  			  }
+
+
+
 	  			  uint32_t data2;
+				  uint32_t newData2;
+
+	  			  memcpy(&newData2, &newData, sizeof newData2);  // left joystick
 	  			  memcpy(&data2, &data, sizeof data2);
 
 	  			 speedySelect = displaying_number2;
@@ -271,6 +287,14 @@ int main(void)
 	  			 CAN_TxData[1] = data2>>16;
 	  			 CAN_TxData[2] = data2>>8;
 	  			 CAN_TxData[3] = data2;
+
+
+	  			 CAN_TxData[4] = newData2>>24;
+	  			 CAN_TxData[5] = newData2>>16;
+	  			 CAN_TxData[6] = newData2>>8;
+	  		     CAN_TxData[7] = newData2;
+
+
 
 	  			 CAN_TxHeader.ExtId = priority<<24|commandId<<16|speedySelect<<12|actuatorSelect<<8|debugId<<4;
 
@@ -348,8 +372,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC12;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC12|RCC_PERIPHCLK_ADC34;
   PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
+  PeriphClkInit.Adc34ClockSelection = RCC_ADC34PLLCLK_DIV1;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -410,6 +435,63 @@ static void MX_ADC2_Init(void)
   /* USER CODE BEGIN ADC2_Init 2 */
 
   /* USER CODE END ADC2_Init 2 */
+
+}
+
+/**
+  * @brief ADC4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC4_Init(void)
+{
+
+  /* USER CODE BEGIN ADC4_Init 0 */
+
+  /* USER CODE END ADC4_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC4_Init 1 */
+
+  /* USER CODE END ADC4_Init 1 */
+
+  /** Common config
+  */
+  hadc4.Instance = ADC4;
+  hadc4.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+  hadc4.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc4.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc4.Init.ContinuousConvMode = DISABLE;
+  hadc4.Init.DiscontinuousConvMode = DISABLE;
+  hadc4.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc4.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc4.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc4.Init.NbrOfConversion = 1;
+  hadc4.Init.DMAContinuousRequests = DISABLE;
+  hadc4.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc4.Init.LowPowerAutoWait = DISABLE;
+  hadc4.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
+  if (HAL_ADC_Init(&hadc4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_5;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc4, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC4_Init 2 */
+
+  /* USER CODE END ADC4_Init 2 */
 
 }
 
@@ -499,10 +581,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB12 PB13 PB14 PB15
-                           PB7 PB8 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15
-                          |GPIO_PIN_7|GPIO_PIN_8;
+  /*Configure GPIO pins : PB12 PB13 PB14 PB7
+                           PB8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_7
+                          |GPIO_PIN_8;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);

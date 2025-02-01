@@ -107,7 +107,27 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
   /* USER CODE BEGIN ADC2_MspInit 1 */
 
   /* USER CODE END ADC2_MspInit 1 */
+  }
+  else if(hadc->Instance==ADC4)
+  {
+  /* USER CODE BEGIN ADC4_MspInit 0 */
 
+  /* USER CODE END ADC4_MspInit 0 */
+    /* Peripheral clock enable */
+    __HAL_RCC_ADC34_CLK_ENABLE();
+
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    /**ADC4 GPIO Configuration
+    PB15     ------> ADC4_IN5
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_15;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* USER CODE BEGIN ADC4_MspInit 1 */
+
+  /* USER CODE END ADC4_MspInit 1 */
   }
 
 }
@@ -136,6 +156,23 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
   /* USER CODE BEGIN ADC2_MspDeInit 1 */
 
   /* USER CODE END ADC2_MspDeInit 1 */
+  }
+  else if(hadc->Instance==ADC4)
+  {
+  /* USER CODE BEGIN ADC4_MspDeInit 0 */
+
+  /* USER CODE END ADC4_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_ADC34_CLK_DISABLE();
+
+    /**ADC4 GPIO Configuration
+    PB15     ------> ADC4_IN5
+    */
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_15);
+
+  /* USER CODE BEGIN ADC4_MspDeInit 1 */
+
+  /* USER CODE END ADC4_MspDeInit 1 */
   }
 
 }
