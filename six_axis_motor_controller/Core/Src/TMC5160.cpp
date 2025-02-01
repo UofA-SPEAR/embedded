@@ -127,7 +127,7 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
         writeRegister(TMC5160_Reg::CHOPCONF, _chopConf.value);
 
         // use position mode
-        setRampMode(VELOCITY_MODE);
+        setRampMode(POSITIONING_MODE);
 
         TMC5160_Reg::GCONF_Register gconf = { 0 };
 
@@ -153,7 +153,7 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
         setAccelerations(250, 250, 0, 0);
 
         // set default max speed
-        setMaxSpeed(0);
+        setMaxSpeed(300);
 
         // Set default D1 (must not be = 0 in positioning mode even with V1=0)
         writeRegister(TMC5160_Reg::D_1, 100);
@@ -531,6 +531,26 @@ bool TMC5160::setEncoderResolution(int32_t motorSteps, int32_t encResolution, bo
 
     // Check if the binary prescaler gives an exact match
     if ((int32_t)(factor * 65536.0f) * encResolution == motorSteps * _uStepCount * 65536) {
+
+
+    	TMC5160_Reg:: ENCMODE_Register encodePosition = {0};
+		encodePosition.latch_x_act = true;
+		encodePosition.pol_A = false;
+		encodePosition.pol_B = false;
+		encodePosition.pol_N = true;
+		encodePosition.ignore_AB = true;
+		encodePosition.clr_cont = true;  // changed
+		encodePosition.clr_once = false;
+		encodePosition.sensitivity = 0b00;
+		encodePosition.clr_enc_x = false;
+		encodePosition.enc_sel_decimal = false;
+
+		 writeRegister(TMC5160_Reg::ENCMODE , encodePosition.value);
+
+
+
+
+
         TMC5160_Reg::ENCMODE_Register encmode = { 0 };
         encmode.value = readRegister(TMC5160_Reg::ENCMODE);
         encmode.enc_sel_decimal = false;
