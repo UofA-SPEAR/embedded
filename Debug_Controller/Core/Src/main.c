@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -259,14 +260,23 @@ int main(void)
 	  			  HAL_ADC_PollForConversion(&hadc4, 100); // Wait for ADC4 to complete conversion
 	  			  readYval = HAL_ADC_GetValue(&hadc4);  // Read the ADC value from PB15
 
-	  			  float data = map((float)readXval, 0, 255, -200, 200);
+	  			  float data = map((float)readXval, 0, 140, -110, 110);
 
 	  			  float newData = map((float)readYval, 0, 4095, -200, 200);   // for left joystick
 
-
-	  			  if(-50 < data && data < 50){
-	  				  data = 0;
+	  			  if(data < 0){
+	  				  data += 10;
+	  				  if(data > 0){
+	  					  data = 0;
+	  				  }
+	  			  } else {
+	  				  data -= 10;
+	  				  if(data < 0){
+	  					  data = 0;
+	  				  }
 	  			  }
+
+	  			  data *= 0.01 * (4*M_PI);
 
 	  			  if(-50 < newData && newData < 50){   // deadzone for left joystick
 	  				  newData = 0;
@@ -289,16 +299,16 @@ int main(void)
 	  			 CAN_TxData[3] = data2;
 
 
-	  			 CAN_TxData[4] = newData2>>24;
-	  			 CAN_TxData[5] = newData2>>16;
-	  			 CAN_TxData[6] = newData2>>8;
-	  		     CAN_TxData[7] = newData2;
+	  			 //CAN_TxData[4] = newData2>>24;
+	  			 //CAN_TxData[5] = newData2>>16;
+	  			 //CAN_TxData[6] = newData2>>8;
+	  		     //CAN_TxData[7] = newData2;
 
 
 
 	  			 CAN_TxHeader.ExtId = priority<<24|commandId<<16|speedySelect<<12|actuatorSelect<<8|debugId<<4;
 
-	  			 HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader,&CAN_TxData, &CAN_TxMailbox);
+	  			 HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader,CAN_TxData, &CAN_TxMailbox);
 
 
 
