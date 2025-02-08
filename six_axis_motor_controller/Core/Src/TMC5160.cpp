@@ -532,7 +532,7 @@ bool TMC5160::setEncoderResolution(int32_t motorSteps, int32_t encResolution, bo
     // Check if the binary prescaler gives an exact match
     if ((int32_t)(factor * 65536.0f) * encResolution == motorSteps * _uStepCount * 65536) {
 
-
+    	/*
     	TMC5160_Reg:: ENCMODE_Register encodePosition = {0};
 		encodePosition.latch_x_act = true;
 		encodePosition.pol_A = false;
@@ -546,7 +546,7 @@ bool TMC5160::setEncoderResolution(int32_t motorSteps, int32_t encResolution, bo
 		encodePosition.enc_sel_decimal = false;
 
 		 writeRegister(TMC5160_Reg::ENCMODE , encodePosition.value);
-
+		//*/
 
 
 
