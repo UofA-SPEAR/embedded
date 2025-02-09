@@ -96,6 +96,7 @@ void TMC5160_SPI::motorCommand(uint8_t commandID, float CANfloatData)
         CANfloatData = CANfloatData / (M_TWOPI);
         CANfloatData = round(200 * CANfloatData);//Multiplied by steps per revolution
         setTargetPosition(CANfloatData);
+        setMaxSpeed(300); //DEFAULT NEED ORGANIZING
         CAN_MotorTxData = getCurrentPosition();
         CAN_MotorTxHeader |= (CAN_Command::GetPosition << 16);
         break;
@@ -114,8 +115,21 @@ void TMC5160_SPI::motorCommand(uint8_t commandID, float CANfloatData)
         CAN_MotorTxData = CAN_NO_DATA;
         break;
 
-    case CAN_Command::StepperSpeed:{
-    	setMaxSpeed(CANfloatData);
+    case CAN_Command::MoveWithSpeed:{
+    	if(CANfloatData == 0){
+    		setMaxSpeed(300); //DEFAULT BUT ORGANIZE IT
+    		setTargetPosition(getCurrentPosition());
+    	} else if (CANfloatData > 0){
+    		CANfloatData = CANfloatData / (M_TWOPI);
+			CANfloatData = round(200 * CANfloatData);
+    		setMaxSpeed(CANfloatData);
+    		setTargetPosition(1E6);
+    	} else {
+    		CANfloatData = CANfloatData / (M_TWOPI);
+			CANfloatData = round(200 * CANfloatData);
+    		setMaxSpeed(CANfloatData);
+    		setTargetPosition(-1E6);
+    	}
     	break;
     }
 

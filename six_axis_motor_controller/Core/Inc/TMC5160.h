@@ -66,7 +66,7 @@ enum {
     HomeActuator = 0x04, // Home the actuators/motors
     Stop = 0x05, // Stop all motors
     Disable = 0x06, // Disable all drivers
-	StepperSpeed = 0x07,
+	MoveWithSpeed = 0x07,
 };
 
 };
