@@ -260,7 +260,7 @@ int main(void)
 	  			  HAL_ADC_PollForConversion(&hadc4, 100); // Wait for ADC4 to complete conversion
 	  			  readYval = HAL_ADC_GetValue(&hadc4);  // Read the ADC value from PB15
 
-	  			  float data = map((float)readXval, 0, 140, -110, 110);
+	  			  float data = map((float)readXval, 0, 194, -110, 110);
 
 	  			  float newData = map((float)readYval, 0, 4095, -200, 200);   // for left joystick
 
