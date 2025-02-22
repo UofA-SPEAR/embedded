@@ -40,6 +40,9 @@
 // The number of data bytes in the CAN data frames (float32 values).
 #define CAN_DATA_SIZE 4
 
+//Joystick dead zone size as ratio of joystick range (must be < 1 and positive).
+#define DEAD_ZONE_SIZE 0.15
+#define MOTOR_SPEED_MAX (4*M_PI)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -260,23 +263,18 @@ int main(void)
 	  			  HAL_ADC_PollForConversion(&hadc4, 100); // Wait for ADC4 to complete conversion
 	  			  readYval = HAL_ADC_GetValue(&hadc4);  // Read the ADC value from PB15
 
-	  			  float data = map((float)readXval, 0, 194, -110, 110);
+	  			  float data = -map((float)readXval, 0, 200, -1, 1);
 
 	  			  float newData = map((float)readYval, 0, 4095, -200, 200);   // for left joystick
 
-	  			  if(data < 0){
-	  				  data += 10;
-	  				  if(data > 0){
-	  					  data = 0;
-	  				  }
+	  			  if(data < -DEAD_ZONE_SIZE){
+	  				  data = (data+DEAD_ZONE_SIZE)/(1-DEAD_ZONE_SIZE);
+	  			  } else if(data > DEAD_ZONE_SIZE){
+	  				  data = (data-DEAD_ZONE_SIZE)/(1-DEAD_ZONE_SIZE);;
 	  			  } else {
-	  				  data -= 10;
-	  				  if(data < 0){
-	  					  data = 0;
-	  				  }
+	  				  data = 0;
 	  			  }
-
-	  			  data *= 0.01 * (4*M_PI);
+	  			  data *= MOTOR_SPEED_MAX;
 
 	  			  if(-50 < newData && newData < 50){   // deadzone for left joystick
 	  				  newData = 0;
