@@ -214,9 +214,12 @@ int main(void)
 			CAN_TxData[1] = static_cast<uint8_t>(tdata[tindex] >> 16);
 			CAN_TxData[2] = static_cast<uint8_t>(tdata[tindex] >> 8);
 			CAN_TxData[3] = static_cast<uint8_t>(tdata[tindex]);
-
-			CAN_TxHeader.ExtId &= 0x0000F000; // Eliminate lingering data from other transmissions
-			CAN_TxHeader.ExtId |= thead[tindex]; // Putting in the motor ID and command ID
+			// Eliminate lingering data from other transmissions
+			CAN_TxHeader.ExtId = thead[tindex]; // Putting in the motor ID and command ID
+			CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << (12-8));
+			CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin) << (13-8));
+			CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << (14-8));
+			CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << (15-8));
 
 			HAL_StatusTypeDef tresult = HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
 			if (tresult == HAL_OK){
@@ -548,8 +551,7 @@ void CAN_Transmit(TMC5160_SPI** motors, CAN_HandleTypeDef* hcan,
             CAN_TxData[3] = static_cast<uint8_t>(CANintValue);
 
             // Adjusting the CAN_TxHeader
-            CAN_TxHeader->ExtId &= 0x0000F000; // Eliminate lingering data from other transmissions
-            CAN_TxHeader->ExtId |= motors[i]->CAN_MotorTxHeader; // Putting in the motor ID and command ID
+            CAN_TxHeader->ExtId = motors[i]->CAN_MotorTxHeader; // Putting in the motor ID and command ID
 
             HAL_CAN_AddTxMessage(hcan, CAN_TxHeader, CAN_TxData, CAN_TxMailbox);
             motors[i]->CAN_SendStatus = false;
@@ -581,10 +583,10 @@ void CAN_Filter(CAN_HandleTypeDef* hcan, CAN_TxHeaderTypeDef* CAN_TxHeader)
     filter_ID_high |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << 2);
 
     // Setting the extended transmission header based on the CAN pins
-    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << 12);
-    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin) << 13);
-    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << 14);
-    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << 15);
+    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << (12-8));
+    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin) << (13-8));
+    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << (14-8));
+    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << (15-8));
 
     CAN_FilterTypeDef CAN_FILTER_CONFIG; // Declaring the filter structure.
     CAN_FILTER_CONFIG.FilterFIFOAssignment = CAN_FILTER_FIFO0; // Choosing the FIFO0 set.

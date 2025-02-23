@@ -33,7 +33,7 @@ TMC5160_SPI::TMC5160_SPI(SPI_HandleTypeDef* h_spi, uint16_t Pin, GPIO_TypeDef* P
     chipSelectPort = Port;
     CAN_MotorID = ID;
     CAN_MotorTxData = 0;
-    CAN_MotorTxHeader = 0x00000F00 & (((uint32_t)(CAN_MotorID)) << 8);
+    CAN_MotorTxHeader = 0x00010100 | (((uint32_t)(CAN_MotorID)) << 0);
     CAN_SendStatus = false;
 }
 
