@@ -67,6 +67,7 @@ int main(void)
     CAN_RxHeaderTypeDef CAN_RxHeader; // The receiver header.
 
     uint8_t CAN_RxData[CAN_DATA_SIZE]; // The receiving data variable.
+    uint8_t CAN_TxData[CAN_DATA_SIZE];
 
     CAN_Filter(&hcan, &CAN_TxHeader); // Initializing the CANbus filter
     HAL_CAN_Start(&hcan); // Start the CANbus
@@ -84,10 +85,10 @@ int main(void)
     TMC5160::PowerStageParameters powerStageParams; // defaults.
     TMC5160::MotorParameters motorParams;
 
-    motorParams.globalScaler = 100;
-    motorParams.irun = 31; // To give 2.8A RMS coil current
-    motorParams.ihold = 20; // IHold 70% of IRUN or lower (pg 111)
-    powerStageParams.bbmTime = 2;
+    motorParams.globalScaler = 57;
+    motorParams.irun = 10; // To give 1.68A MAX (1.19A RMS) coil current
+    motorParams.ihold = 5; // To give 1.06A MAX (0.75A RMS) coil current
+    powerStageParams.bbmTime = 3;
 
     disableAll(motors);
     enableAll(motors);
@@ -118,14 +119,18 @@ int main(void)
     //HAL_Delay(3000);
     //motor4.setTargetPosition(0);
 
+    uint32_t delayLimit = 100;
+	uint32_t delayCount = 0;
+
+	unsigned int nMotors = 6;
+	uint32_t thead[nMotors] = {};
+	uint32_t tdata[nMotors] = {};
+	unsigned int tindex = nMotors;
 
     // Initialize encoders
-    motor1.setEncoderResolution(200,2000,false);
-    motor2.setEncoderResolution(200,2000,false);
-    motor3.setEncoderResolution(200,2000,false);
-    motor4.setEncoderResolution(200,2000,false);
-    motor5.setEncoderResolution(200,2000,false);
-    motor6.setEncoderResolution(200,2000,false);
+    for (uint8_t i = 0; i < 6; i++){
+    	motors[i]->setEncoderResolution(200, 4000, false);
+    }
 
     uint32_t CAN_TxMailbox = 0;
 
@@ -136,20 +141,47 @@ int main(void)
     	for(int i=0;i<6;i++){
     		float adjustedEncPos = motors[i]->getEncoderPosition();
 				if (
-						(adjustedEncPos - motors[i]->getCurrentPosition() > 1)
-						|| (adjustedEncPos - motors[i]->getCurrentPosition() < -1)
+						(adjustedEncPos - motors[i]->getCurrentPosition() > 0.5)
+						|| (adjustedEncPos - motors[i]->getCurrentPosition() < -0.5)
 					){
 					motors[i]->setCurrentPosition(adjustedEncPos, false);
 				}
     	}
 
-    	// Send encoder positions over CAN
-		uint8_t CAN_TxData[CAN_DATA_SIZE] = {0};
-		CAN_TxData[0] = int8_t(motor1.getEncoderPosition());
-		CAN_TxData[1] = int8_t(motor2.getEncoderPosition());
-		CAN_TxData[2] = int8_t(motor4.getEncoderPosition());
-		CAN_TxData[3] = int8_t(motor5.getEncoderPosition());
-		HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
+    	//Transmit data
+    	if (tindex < nMotors){
+
+    		CAN_TxData[0] = static_cast<uint8_t>(tdata[tindex] >> 24);
+			CAN_TxData[1] = static_cast<uint8_t>(tdata[tindex] >> 16);
+			CAN_TxData[2] = static_cast<uint8_t>(tdata[tindex] >> 8);
+			CAN_TxData[3] = static_cast<uint8_t>(tdata[tindex]);
+			// Eliminate lingering data from other transmissions
+			CAN_TxHeader.ExtId = thead[tindex]; // Putting in the motor ID and command ID
+			CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << (12-8));
+			CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin) << (13-8));
+			CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << (14-8));
+			CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << (15-8));
+
+			HAL_StatusTypeDef tresult = HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
+			if (tresult == HAL_OK){
+				tindex++;
+			}
+    	}
+
+    	//Set data to be transmitted
+    	delayCount++;
+    	if (delayCount >= delayLimit){
+    		delayCount = 0;
+    		for (int i = 0; i < 6; i++) {
+    			float CANfloatValue = motors[i]->getCurrentPosition();
+    			CANfloatValue = CANfloatValue / 200 * M_TWOPI;//Divided by steps per revolution
+				tdata[i] = reinterpret_cast<uint32_t&>(CANfloatValue);
+
+				thead[i] = motors[i]->CAN_MotorTxHeader;
+			}
+    		tindex = 0;
+    	}
+
 
         // Do nothing until a CAN message comes in.
         if (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) == 0){
@@ -429,10 +461,10 @@ void CAN_Filter(CAN_HandleTypeDef* hcan, CAN_TxHeaderTypeDef* CAN_TxHeader)
     filter_ID_high |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << 2);
 
     // Setting the extended transmission header based on the CAN pins
-    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << 12);
-    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin) << 13);
-    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << 14);
-    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << 15);
+    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << (12-8));
+    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin) << (13-8));
+    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << (14-8));
+    CAN_TxHeader->ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << (15-8));
 
     CAN_FilterTypeDef CAN_FILTER_CONFIG; // Declaring the filter structure.
     CAN_FILTER_CONFIG.FilterFIFOAssignment = CAN_FILTER_FIFO0; // Choosing the FIFO0 set.

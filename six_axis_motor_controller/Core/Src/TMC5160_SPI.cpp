@@ -33,7 +33,7 @@ TMC5160_SPI::TMC5160_SPI(SPI_HandleTypeDef* h_spi, uint16_t Pin, GPIO_TypeDef* P
     chipSelectPort = Port;
     CAN_MotorID = ID;
     CAN_MotorTxData = 0;
-    CAN_MotorTxHeader = 0x00000F00 & (((uint32_t)(CAN_MotorID)) << 8);
+    CAN_MotorTxHeader = 0x00010100 | (((uint32_t)(CAN_MotorID)) << 0);
     CAN_SendStatus = false;
 }
 
@@ -92,13 +92,15 @@ void TMC5160_SPI::motorCommand(uint8_t commandID, float CANfloatData)
         CAN_MotorTxData = CAN_NO_DATA;
         break;
 
-    case CAN_Command::SetPosition:
-        CANfloatData = CANfloatData / (M_TWOPI);
-        CANfloatData = round(200 * CANfloatData);
-        setTargetPosition(CANfloatData);
-        CAN_MotorTxData = getCurrentPosition();
-        CAN_MotorTxHeader |= (CAN_Command::GetPosition << 16);
-        break;
+    case CAN_Command::SetPosition:{
+    	CANfloatData = CANfloatData / (M_TWOPI);
+		CANfloatData = round(200 * CANfloatData);//Multiplied by steps per revolution
+		setTargetPosition(CANfloatData);
+		setMaxSpeed(300); //DEFAULT NEED ORGANIZING
+		CAN_MotorTxData = getCurrentPosition();
+		CAN_MotorTxHeader |= (CAN_Command::GetPosition << 16);
+		break;
+    }
 
     case CAN_Command::SetSpeed: { // Multiplying the float by the steps/second max speed
         CANfloatData = CANfloatData * MAX_SPEED_VAL;
@@ -112,7 +114,23 @@ void TMC5160_SPI::motorCommand(uint8_t commandID, float CANfloatData)
     }
         CAN_MotorTxData = CAN_NO_DATA;
         break;
-
+    case CAN_Command::MoveWithSpeed:{
+		if(CANfloatData == 0){
+			setMaxSpeed(300); //DEFAULT BUT ORGANIZE IT
+			setTargetPosition(getCurrentPosition());
+		} else if (CANfloatData > 0){
+			CANfloatData = CANfloatData / (M_TWOPI);
+			CANfloatData = round(200 * CANfloatData);
+			setMaxSpeed(CANfloatData);
+			setTargetPosition(1E6);
+		} else {
+			CANfloatData = CANfloatData / (M_TWOPI);
+			CANfloatData = round(200 * CANfloatData);
+			setMaxSpeed(CANfloatData);
+			setTargetPosition(-1E6);
+		}
+		break;
+	}
     default:
         CAN_MotorTxData = CAN_NO_DATA;
         break;
