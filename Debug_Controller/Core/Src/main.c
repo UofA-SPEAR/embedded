@@ -274,7 +274,7 @@ int main(void)
 	  			  } else {
 	  				  data = 0;
 	  			  }
-	  			  data *= MOTOR_SPEED_MAX;
+	  			  //data *= MOTOR_SPEED_MAX;
 
 	  			  if(-50 < newData && newData < 50){   // deadzone for left joystick
 	  				  newData = 0;
