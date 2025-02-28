@@ -96,40 +96,48 @@ void TMC5160_SPI::motorCommand(uint8_t commandID, float CANfloatData)
     	CANfloatData = CANfloatData / (M_TWOPI);
 		CANfloatData = round(200 * CANfloatData);//Multiplied by steps per revolution
 		setTargetPosition(CANfloatData);
-		setMaxSpeed(300); //DEFAULT NEED ORGANIZING
+		setMaxSpeed(stepperMaxSpeed);
 		CAN_MotorTxData = getCurrentPosition();
 		CAN_MotorTxHeader |= (CAN_Command::GetPosition << 16);
+		wasSpeedMoving = false;
 		break;
     }
 
     case CAN_Command::SetSpeed: { // Multiplying the float by the steps/second max speed
-        CANfloatData = CANfloatData * MAX_SPEED_VAL;
-        setTargetSpeed(CANfloatData);
+    	if (setMotorType == STEPPER){
+    		if(CANfloatData == 0){
+    			if (wasSpeedMoving){
+    				wasSpeedMoving = false;
+    				setMaxSpeed(stepperMaxSpeed);
+    				setTargetPosition(getCurrentPosition());
+    			}
+			} else {
+				wasSpeedMoving = true;
+				CANfloatData = constrain(CANfloatData, -1, 1);
+				CANfloatData = round(stepperMaxSpeed * CANfloatData);
+				setMaxSpeed(fabs(CANfloatData));
+				if (CANfloatData > 0){
+					setTargetPosition(1E6);
+				} else if (CANfloatData < 0){
+					setTargetPosition(-1E6);
+				}
+			}
+			break;
+    	} else if (setMotorType == DC_BRUSHED){
+    		CANfloatData = CANfloatData * MAX_SPEED_VAL;
+			setTargetSpeed(CANfloatData);
+			CAN_MotorTxData = getCurrentSpeed();
+			CAN_MotorTxHeader |= (CAN_Command::GetSpeed << 16);
+			break;
+    	}
     }
-        CAN_MotorTxData = getCurrentSpeed();
-        CAN_MotorTxHeader |= (CAN_Command::GetSpeed << 16);
-        break;
     case CAN_Command::Disable: {
         disable();
     }
         CAN_MotorTxData = CAN_NO_DATA;
         break;
     case CAN_Command::MoveWithSpeed:{
-		if(CANfloatData == 0){
-			setMaxSpeed(300); //DEFAULT BUT ORGANIZE IT
-			setTargetPosition(getCurrentPosition());
-		} else if (CANfloatData > 0){
-			CANfloatData = CANfloatData / (M_TWOPI);
-			CANfloatData = round(200 * CANfloatData);
-			setMaxSpeed(CANfloatData);
-			setTargetPosition(1E6);
-		} else {
-			CANfloatData = CANfloatData / (M_TWOPI);
-			CANfloatData = round(200 * CANfloatData);
-			setMaxSpeed(CANfloatData);
-			setTargetPosition(-1E6);
-		}
-		break;
+
 	}
     default:
         CAN_MotorTxData = CAN_NO_DATA;

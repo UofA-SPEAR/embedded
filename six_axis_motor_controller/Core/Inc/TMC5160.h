@@ -243,12 +243,16 @@ public:
 
 protected:
     static constexpr uint8_t WRITE_ACCESS = 0x80; // Register write access for spi / uart communication
+    MotorType setMotorType = STEPPER;
+    float stepperMaxSpeed = 300;
+    bool wasSpeedMoving = false;
 
     bool _lastRegisterReadSuccess = false;
     const uint32_t _fclk;
 
 private:
     RampMode _currentRampMode;
+
     static constexpr uint16_t _uStepCount = 256; // Number of microsteps per step
     TMC5160_Reg::CHOPCONF_Register _chopConf = { 0 }; // CHOPCONF register (saved here to be restored when disabling / enabling driver)
 

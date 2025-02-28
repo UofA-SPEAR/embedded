@@ -37,6 +37,9 @@ TMC5160::~TMC5160()
 
 bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParameters& motorParams, MotorDirection stepperDirection, MotorType mtrType)
 {
+	setMotorType = mtrType;
+	stepperMaxSpeed = 300;
+
     /* Clear the reset and charge pump undervoltage flags */
     TMC5160_Reg::GSTAT_Register gstat = { 0 };
     gstat.reset = true;
@@ -115,7 +118,7 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
         setAccelerations(250, 250, 0, 0);
 
         // set default max speed
-        setMaxSpeed(300);
+        setMaxSpeed(stepperMaxSpeed);
 
         // Set default D1 (must not be = 0 in positioning mode even with V1=0)
         writeRegister(TMC5160_Reg::D_1, 100);
@@ -124,13 +127,15 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
 
         TMC5160_Reg::PWMCONF_Register pwmconf = { 0 };
         pwmconf.value = 0xC40C001E; // Reset default
-        pwmconf.pwm_autoscale = false; // set to true to limit current
+        //pwmconf.pwm_autoscale = false; // set to true to limit current
+        pwmconf.pwm_autoscale = true; //Try
         if (_fclk > DEFAULT_F_CLK)
             pwmconf.pwm_freq = 0;
         else
             pwmconf.pwm_freq = 0b01; // recommended : 35kHz with internal typ. 12MHZ clock. 0b01 => 2/683 * f_clk
 
-        pwmconf.pwm_ofs = 255; // set to 30 if using autoscale
+        //pwmconf.pwm_ofs = 255; // set to 30 if using autoscale
+        pwmconf.pwm_ofs = 30; //Try
         pwmconf.pwm_grad = 4;
         writeRegister(TMC5160_Reg::PWMCONF, pwmconf.value);
 
@@ -143,10 +148,14 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
         _chopConf.hend_offset = 10;
         writeRegister(TMC5160_Reg::CHOPCONF, _chopConf.value);
 
+        //Try
+        writeRegister(TMC5160_Reg::GLOBAL_SCALER, constrain(180, 32, 256));
+
         // set initial currents and delay
         TMC5160_Reg::IHOLD_IRUN_Register iholdrun = { 0 };
         // IHOLD limits the amount of current delivered to the DC motor
-        iholdrun.ihold = 31;
+        //iholdrun.ihold = 31;
+        iholdrun.ihold = 24; //Try
         writeRegister(TMC5160_Reg::IHOLD_IRUN, iholdrun.value);
 
         TMC5160_Reg::GCONF_Register gconf = { 0 };
@@ -310,7 +319,7 @@ void TMC5160::setTargetSpeed(float speed) // Set the target speed for DC motors 
 {
     int64_t target_speed = (int64_t)(speed);
     // Constrain the target speed to a signed 256-bit value
-    target_speed = max(min(target_speed, (int64_t)256), (int64_t)-256);
+    target_speed = max(min(target_speed, (int64_t)255), (int64_t)-255);
     writeRegister(TMC5160_Reg::XTARGET, (int32_t)target_speed); // Ensure it fits into a 32-bit integer
 }
 

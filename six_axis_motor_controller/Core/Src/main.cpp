@@ -85,9 +85,9 @@ int main(void)
     TMC5160::PowerStageParameters powerStageParams; // defaults.
     TMC5160::MotorParameters motorParams;
 
-    motorParams.globalScaler = 57;
-    motorParams.irun = 10; // To give 1.68A MAX (1.19A RMS) coil current
-    motorParams.ihold = 5; // To give 1.06A MAX (0.75A RMS) coil current
+    motorParams.globalScaler = 40;
+    motorParams.irun = 21; // To give 1.6A RMS coil current (Sine wave)
+    motorParams.ihold = 15; // To give 1.6A MAX coil current (Constant)
     powerStageParams.bbmTime = 3;
 
     disableAll(motors);
@@ -119,7 +119,7 @@ int main(void)
     //HAL_Delay(3000);
     //motor4.setTargetPosition(0);
 
-    uint32_t delayLimit = 100;
+    uint32_t delayLimit = 50;
 	uint32_t delayCount = 0;
 
 	unsigned int nMotors = 6;
