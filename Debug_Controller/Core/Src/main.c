@@ -137,7 +137,7 @@ int main(void)
   	uint8_t actuatorSelect = 0;
   	uint8_t debugId = 15;
   	uint8_t priority = 0;
-  	uint8_t commandId = 0x07;
+  	uint8_t commandId = 0x03;
 
 
 
