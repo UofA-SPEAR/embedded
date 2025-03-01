@@ -121,7 +121,7 @@ public:
      * stepperDirection : normal / inverted
      */
 
-    virtual bool begin(const PowerStageParameters& powerParams, const MotorParameters& motorParams, MotorDirection stepperDirection, MotorType mtrType /*=NORMAL_MOTOR_DIRECTION*/);
+    virtual bool begin(const PowerStageParameters& powerParams, const MotorParameters& stepperMotorParams, const MotorParameters& dcBrushMotorParams, MotorDirection stepperDirection, MotorType mtrType /*=NORMAL_MOTOR_DIRECTION*/);
     void end();
 
     // TODO stealthChop tuning procedure

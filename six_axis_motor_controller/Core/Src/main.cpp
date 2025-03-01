@@ -40,7 +40,8 @@ void disableAll(TMC5160_SPI** motors);
 // A method to initialize all 6 motor at once
 void beginAll(TMC5160_SPI** motors,
     const TMC5160::PowerStageParameters& powerParams,
-    const TMC5160::MotorParameters& motorParams,
+    const TMC5160::MotorParameters& stepperMotorParams,
+	const TMC5160::MotorParameters& dcBrushMotorParams,
     TMC5160::MotorDirection stepperDirection);
 
 uint8_t getTemp(void); // Returns a value specifying the temperature in Celsius.
@@ -83,17 +84,60 @@ int main(void)
 
     // This sets the motor & driver parameters /!\ run the configWizard for your driver and motor for fine tuning !
     TMC5160::PowerStageParameters powerStageParams; // defaults.
-    TMC5160::MotorParameters motorParams;
+    TMC5160::MotorParameters stepperMotorParams;
+    TMC5160::MotorParameters dcBrushMotorParams;
 
-    motorParams.globalScaler = 40;
-    motorParams.irun = 21; // To give 1.6A RMS coil current (Sine wave)
-    motorParams.ihold = 15; // To give 1.6A MAX coil current (Constant)
+    uint8_t speedyID = 0;
+    speedyID |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << (0));
+    speedyID |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin) << (1));
+    speedyID |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << (2));
+    speedyID |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << (3));
+
+    switch (speedyID){
+    case 1:{
+    	stepperMotorParams.globalScaler = 40;
+    	stepperMotorParams.irun = 21; // To give 1.6A RMS coil current (Sine wave)
+    	stepperMotorParams.ihold = 15; // To give 1.6A MAX coil current (Constant)
+    	dcBrushMotorParams.globalScaler = 180;
+    	dcBrushMotorParams.irun = 31;
+    	dcBrushMotorParams.ihold = 24; // To give 10A MAX coil current
+    	break;
+    }
+    case 2:{
+    	stepperMotorParams.globalScaler = 40;
+    	stepperMotorParams.irun = 21; // To give 1.6A RMS coil current (Sine wave)
+    	stepperMotorParams.ihold = 15; // To give 1.6A MAX coil current (Constant)
+    	dcBrushMotorParams.globalScaler = 180;
+    	dcBrushMotorParams.irun = 31;
+    	dcBrushMotorParams.ihold = 24; // To give 10A MAX coil current (Constant)
+		break;
+	}
+    case 3:{
+    	stepperMotorParams.globalScaler = 47;
+    	stepperMotorParams.irun = 31; // To give 1.6A RMS coil current (Sine wave)
+    	stepperMotorParams.ihold = 0; // To give 1.6A MAX coil current (Constant)
+    	dcBrushMotorParams.globalScaler = 180;
+    	dcBrushMotorParams.irun = 31;
+    	dcBrushMotorParams.ihold = 24; // To give 10A MAX coil current (Constant)
+		break;
+	}
+    default:{
+    	stepperMotorParams.globalScaler = 40;
+    	stepperMotorParams.irun = 21; // To give 1.6A RMS coil current (Sine wave)
+    	stepperMotorParams.ihold = 15; // To give 1.6A MAX coil current (Constant)
+    	dcBrushMotorParams.globalScaler = 180;
+    	dcBrushMotorParams.irun = 31;
+    	dcBrushMotorParams.ihold = 24; // To give 10A MAX coil current (Constant)
+		break;
+	}
+    }
+
     powerStageParams.bbmTime = 3;
 
     disableAll(motors);
     enableAll(motors);
 
-    beginAll(motors, powerStageParams, motorParams, TMC5160::NORMAL_MOTOR_DIRECTION);
+    beginAll(motors, powerStageParams, stepperMotorParams, dcBrushMotorParams, TMC5160::NORMAL_MOTOR_DIRECTION);
 
     enableAll(motors);
 
@@ -480,7 +524,8 @@ void CAN_Filter(CAN_HandleTypeDef* hcan, CAN_TxHeaderTypeDef* CAN_TxHeader)
 // A function to initialize all motors
 void beginAll(TMC5160_SPI** motors,
     const TMC5160::PowerStageParameters& powerParams,
-    const TMC5160::MotorParameters& motorParams,
+    const TMC5160::MotorParameters& stepperMotorParams,
+	const TMC5160::MotorParameters& dcBrushMotorParams,
     TMC5160::MotorDirection stepperDirection)
 {
 
@@ -495,9 +540,9 @@ void beginAll(TMC5160_SPI** motors,
 
     for (int i = 0; i < 6; i++) {
         if (mtrType[i] == 0)
-            motors[i]->begin(powerParams, motorParams, stepperDirection, TMC5160::DC_BRUSHED);
+            motors[i]->begin(powerParams, stepperMotorParams, dcBrushMotorParams, stepperDirection, TMC5160::DC_BRUSHED);
         else if (mtrType[i] == 1)
-            motors[i]->begin(powerParams, motorParams, stepperDirection, TMC5160::STEPPER);
+            motors[i]->begin(powerParams, stepperMotorParams, dcBrushMotorParams, stepperDirection, TMC5160::STEPPER);
     }
 }
 

@@ -35,7 +35,7 @@ TMC5160::~TMC5160()
     ;
 }
 
-bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParameters& motorParams, MotorDirection stepperDirection, MotorType mtrType)
+bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParameters& stepperMotorParams, const MotorParameters& dcBrushMotorParams, MotorDirection stepperDirection, MotorType mtrType)
 {
 	setMotorType = mtrType;
 	stepperMaxSpeed = 300;
@@ -63,12 +63,12 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
         drvConf.bbmclks = constrain(powerParams.bbmClks, 0, 15);
         writeRegister(TMC5160_Reg::DRV_CONF, drvConf.value);
 
-        writeRegister(TMC5160_Reg::GLOBAL_SCALER, constrain(motorParams.globalScaler, 32, 256));
+        writeRegister(TMC5160_Reg::GLOBAL_SCALER, constrain(stepperMotorParams.globalScaler, 32, 256));
 
         // set initial currents and delay
         TMC5160_Reg::IHOLD_IRUN_Register iholdrun = { 0 };
-        iholdrun.ihold = constrain(motorParams.ihold, 0, 31);
-        iholdrun.irun = constrain(motorParams.irun, 0, 31);
+        iholdrun.ihold = constrain(stepperMotorParams.ihold, 0, 31);
+        iholdrun.irun = constrain(stepperMotorParams.irun, 0, 31);
         iholdrun.iholddelay = 7;
         writeRegister(TMC5160_Reg::IHOLD_IRUN, iholdrun.value);
 
@@ -84,9 +84,9 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
             pwmconf.pwm_freq = 0;
         else
             pwmconf.pwm_freq = 0b01; // recommended : 35kHz with internal typ. 12MHZ clock. 0b01 => 2/683 * f_clk
-        pwmconf.pwm_grad = motorParams.pwmGradInitial;
-        pwmconf.pwm_ofs = motorParams.pwmOfsInitial;
-        pwmconf.freewheel = motorParams.freewheeling;
+        pwmconf.pwm_grad = stepperMotorParams.pwmGradInitial;
+        pwmconf.pwm_ofs = stepperMotorParams.pwmOfsInitial;
+        pwmconf.freewheel = stepperMotorParams.freewheeling;
         writeRegister(TMC5160_Reg::PWMCONF, pwmconf.value);
 
         pwmconf.pwm_autoscale = true;
@@ -149,13 +149,13 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
         writeRegister(TMC5160_Reg::CHOPCONF, _chopConf.value);
 
         //Try
-        writeRegister(TMC5160_Reg::GLOBAL_SCALER, constrain(180, 32, 256));
+        writeRegister(TMC5160_Reg::GLOBAL_SCALER, constrain(dcBrushMotorParams.globalScaler, 32, 256));
 
         // set initial currents and delay
         TMC5160_Reg::IHOLD_IRUN_Register iholdrun = { 0 };
         // IHOLD limits the amount of current delivered to the DC motor
         //iholdrun.ihold = 31;
-        iholdrun.ihold = 24; //Try
+        iholdrun.ihold = dcBrushMotorParams.ihold; //Try
         writeRegister(TMC5160_Reg::IHOLD_IRUN, iholdrun.value);
 
         TMC5160_Reg::GCONF_Register gconf = { 0 };
