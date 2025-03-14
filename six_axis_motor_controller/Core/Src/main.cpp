@@ -188,7 +188,7 @@ int main(void)
 						(adjustedEncPos - motors[i]->getCurrentPosition() > 0.5)
 						|| (adjustedEncPos - motors[i]->getCurrentPosition() < -0.5)
 					){
-					motors[i]->setCurrentPosition(adjustedEncPos, false);
+					//motors[i]->setCurrentPosition(adjustedEncPos, false);
 				}
     	}
 

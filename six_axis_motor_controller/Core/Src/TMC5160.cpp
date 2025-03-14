@@ -38,7 +38,7 @@ TMC5160::~TMC5160()
 bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParameters& stepperMotorParams, const MotorParameters& dcBrushMotorParams, MotorDirection stepperDirection, MotorType mtrType)
 {
 	setMotorType = mtrType;
-	stepperMaxSpeed = 300;
+	stepperMaxSpeed = 500;
 
     /* Clear the reset and charge pump undervoltage flags */
     TMC5160_Reg::GSTAT_Register gstat = { 0 };
