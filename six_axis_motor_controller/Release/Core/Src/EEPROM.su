@@ -1,0 +1,7 @@
+../Core/Src/EEPROM.cpp:11:1:EEPROM_SPI::EEPROM_SPI(SPI_HandleTypeDef*, uint16_t, GPIO_TypeDef*, uint16_t, GPIO_TypeDef*, uint16_t, GPIO_TypeDef*)	16	static
+../Core/Src/EEPROM.cpp:28:6:void EEPROM_SPI::EEPROM_Write_Enable()	16	static
+../Core/Src/EEPROM.cpp:38:6:void EEPROM_SPI::write(uint16_t, uint32_t)	40	static
+../Core/Src/EEPROM.cpp:63:10:uint32_t EEPROM_SPI::read(uint16_t)	40	static
+../Core/Src/EEPROM.cpp:85:9:uint8_t EEPROM_SPI::readStatus()	16	static
+../Core/Src/EEPROM.cpp:99:6:void EEPROM_SPI::EEPROM_protect()	16	static
+../Core/Src/EEPROM.cpp:109:6:void EEPROM_SPI::EEPROM_expose()	24	static

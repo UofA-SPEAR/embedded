@@ -55,6 +55,13 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
     rampStat.status_latch_l = 1;
     rampStat.status_latch_r = 1;
 
+    //Register for control by limit switches or stall protection
+	TMC5160_Reg::SW_MODE_Register limits = { 0 };
+	limits.sg_stop = true;
+	limits.stop_r_enable = true;
+	limits.stop_l_enable = true;
+	writeRegister(TMC5160_Reg::SW_MODE, limits.value);
+
     if (mtrType == STEPPER) {
 
         TMC5160_Reg::DRV_CONF_Register drvConf = { 0 };

@@ -115,7 +115,7 @@ int main(void)
     case 3:{
     	stepperMotorParams.globalScaler = 47;
     	stepperMotorParams.irun = 31; // To give 1.6A RMS coil current (Sine wave)
-    	stepperMotorParams.ihold = 0; // To give 1.6A MAX coil current (Constant)
+    	stepperMotorParams.ihold = 5; // To give 1.6A MAX coil current (Constant)
     	dcBrushMotorParams.globalScaler = 180;
     	dcBrushMotorParams.irun = 31;
     	dcBrushMotorParams.ihold = 24; // To give 10A MAX coil current (Constant)
@@ -163,7 +163,7 @@ int main(void)
     //HAL_Delay(3000);
     //motor4.setTargetPosition(0);
 
-    uint32_t delayLimit = 50;
+    uint32_t delayLimit = 3200;
 	uint32_t delayCount = 0;
 
 	unsigned int nMotors = 6;
@@ -182,15 +182,15 @@ int main(void)
 
 
     	// Motor position correction check
-    	for(int i=0;i<6;i++){
-    		float adjustedEncPos = motors[i]->getEncoderPosition();
-				if (
-						(adjustedEncPos - motors[i]->getCurrentPosition() > 0.5)
-						|| (adjustedEncPos - motors[i]->getCurrentPosition() < -0.5)
-					){
-					//motors[i]->setCurrentPosition(adjustedEncPos, false);
-				}
-    	}
+//    	for(int i=0;i<6;i++){
+//    		float adjustedEncPos = motors[i]->getEncoderPosition();
+//				if (
+//						(adjustedEncPos - motors[i]->getCurrentPosition() > 0.5)
+//						|| (adjustedEncPos - motors[i]->getCurrentPosition() < -0.5)
+//					){
+//					//motors[i]->setCurrentPosition(adjustedEncPos, false);
+//				}
+//    	}
 
     	//Transmit data
     	if (tindex < nMotors){

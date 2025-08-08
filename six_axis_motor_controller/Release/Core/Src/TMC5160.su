@@ -1,0 +1,90 @@
+../Core/Inc/TMC5160.h:264:13:int32_t TMC5160::accelFromHz(float)	24	static
+../Core/Inc/TMC5160.h:267:13:int32_t TMC5160::thrsSpeedToTstep(float)	24	static
+../Core/Src/TMC5160.cpp:28:1:TMC5160::TMC5160(uint32_t)	0	static
+../Core/Src/TMC5160.cpp:33:1:TMC5160::~TMC5160()	0	static
+../Core/Src/TMC5160.cpp:215:6:void TMC5160::end()	0	static
+../Core/Src/TMC5160.cpp:221:6:bool TMC5160::isLastReadSuccessful()	0	static
+../Core/Src/TMC5160.cpp:246:7:float TMC5160::getCurrentPosition()	8	static
+../Core/Src/TMC5160.cpp:256:7:float TMC5160::getEncoderPosition()	8	static
+../Core/Src/TMC5160.cpp:266:7:float TMC5160::getLatchedPosition()	8	static
+../Core/Src/TMC5160.cpp:276:7:float TMC5160::getLatchedEncoderPosition()	8	static
+../Core/Src/TMC5160.cpp:286:7:float TMC5160::getTargetPosition()	8	static
+../Core/Src/TMC5160.cpp:296:7:float TMC5160::getDCSpeed()	0	static
+../Core/Src/TMC5160.cpp:306:7:float TMC5160::getCurrentSpeed()	8	static
+../Core/Src/TMC5160.cpp:330:6:void TMC5160::setTargetPosition(float)	0	static
+../Core/Src/TMC5160.cpp:335:6:void TMC5160::setMaxSpeed(float)	16	static
+../Core/Src/TMC5160.cpp:226:6:void TMC5160::setRampMode(RampMode)	16	static
+../Core/Src/TMC5160.cpp:344:6:void TMC5160::setTargetSpeed(float)	8	static
+../Core/Src/TMC5160.cpp:352:6:void TMC5160::setRampSpeeds(float, float, float)	32	static
+../Core/Src/TMC5160.cpp:359:6:void TMC5160::setAcceleration(float)	24	static
+../Core/Src/TMC5160.cpp:365:6:void TMC5160::setAccelerations(float, float, float, float)	32	static
+../Core/Src/TMC5160.cpp:424:6:void TMC5160::stop()	8	static
+../Core/Src/TMC5160.cpp:439:6:void TMC5160::enable()	4	static
+../Core/Src/TMC5160.cpp:471:13:static const char* TMC5160::getDriverStatusDescription(DriverStatus)	0	static
+../Core/Src/TMC5160.cpp:499:6:void TMC5160::setModeChangeSpeeds(float, float, float)	24	static
+../Core/Src/TMC5160.cpp:587:6:void TMC5160::setEncoderAllowedDeviation(int)	0	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 0]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 1]	16	static
+../Core/Src/TMC5160.cpp:599:6:void TMC5160::clearEncoderDeviationFlag()	16	static
+../Core/Src/TMC5160.cpp:320:6:void TMC5160::setCurrentPosition(float, bool)	24	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 2]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 6]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 7]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 9]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 3]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 0; unsigned int Bits = 4]	16	static
+../Core/Src/TMC5160.cpp:431:6:void TMC5160::disable()	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 8; unsigned int Bits = 4]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 16; unsigned int Bits = 2]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 18]	16	static
+../Core/Src/TMC5160.cpp:606:6:void TMC5160::setShortProtectionLevels(int, int, int, int)	24	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 18; unsigned int Bits = 2]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 0; unsigned int Bits = 5]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 8; unsigned int Bits = 5]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 16; unsigned int Bits = 4]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = unsigned char; unsigned int Index = 8; unsigned int Bits = 8]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = unsigned char; unsigned int Index = 0; unsigned int Bits = 8]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = TMC5160_Reg::PWMCONF_freewheel_Values; unsigned int Index = 20; unsigned int Bits = 2]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 19]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 31]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 30]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 15; unsigned int Bits = 2]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 4; unsigned int Bits = 3]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 7; unsigned int Bits = 4]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 24; unsigned int Bits = 4]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 4]	16	static
+../Core/Src/TMC5160.cpp:576:6:void TMC5160::setEncoderLatching(bool)	24	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 0; unsigned int Bits = 8]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 8; unsigned int Bits = 8]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 16]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 10]	16	static
+../Core/Src/TMC5160.cpp:506:6:bool TMC5160::setEncoderResolution(int32_t, int32_t, bool)	48	static
+../Core/Inc/Bitfield.h:114:14:BitField<Index, 1>::operator bool() const [with unsigned int Index = 9]	16	static
+../Core/Src/TMC5160.cpp:378:6:bool TMC5160::isTargetPositionReached()	16	static
+../Core/Inc/Bitfield.h:114:14:BitField<Index, 1>::operator bool() const [with unsigned int Index = 0]	16	static
+../Core/Src/TMC5160.cpp:385:6:bool TMC5160::isLeftLimitReached()	16	static
+../Core/Inc/Bitfield.h:114:14:BitField<Index, 1>::operator bool() const [with unsigned int Index = 1]	16	static
+../Core/Src/TMC5160.cpp:392:6:bool TMC5160::isRightLimitReached()	16	static
+../Core/Src/TMC5160.cpp:592:6:bool TMC5160::isEncoderDeviationDetected()	16	static
+../Core/Inc/Bitfield.h:114:14:BitField<Index, 1>::operator bool() const [with unsigned int Index = 24]	16	static
+../Core/Src/TMC5160.cpp:399:6:bool TMC5160::isMotorStalled()	16	static
+../Core/Src/TMC5160.cpp:406:6:bool TMC5160::noLimits()	8	static
+../Core/Inc/Bitfield.h:114:14:BitField<Index, 1>::operator bool() const [with unsigned int Index = 8]	16	static
+../Core/Src/TMC5160.cpp:417:6:bool TMC5160::isTargetVelocityReached()	16	static
+../Core/Inc/Bitfield.h:114:14:BitField<Index, 1>::operator bool() const [with unsigned int Index = 2]	16	static
+../Core/Inc/Bitfield.h:114:14:BitField<Index, 1>::operator bool() const [with unsigned int Index = 12]	16	static
+../Core/Inc/Bitfield.h:114:14:BitField<Index, 1>::operator bool() const [with unsigned int Index = 13]	16	static
+../Core/Inc/Bitfield.h:114:14:BitField<Index, 1>::operator bool() const [with unsigned int Index = 27]	16	static
+../Core/Inc/Bitfield.h:114:14:BitField<Index, 1>::operator bool() const [with unsigned int Index = 28]	16	static
+../Core/Inc/Bitfield.h:114:14:BitField<Index, 1>::operator bool() const [with unsigned int Index = 25]	16	static
+../Core/Inc/Bitfield.h:114:14:BitField<Index, 1>::operator bool() const [with unsigned int Index = 26]	16	static
+../Core/Src/TMC5160.cpp:444:23:TMC5160::DriverStatus TMC5160::getDriverStatus()	24	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = TMC5160_Reg::ENCMODE_sensitivity_Values; unsigned int Index = 6; unsigned int Bits = 2]	16	static
+../Core/Src/TMC5160.cpp:562:6:void TMC5160::setEncoderIndexConfiguration(TMC5160_Reg::ENCMODE_sensitivity_Values, bool, bool, bool, bool)	32	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 5; unsigned int Bits = 2]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 13; unsigned int Bits = 2]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 15]	16	static
+../Core/Inc/Bitfield.h:69:15:BitField<Index, Bits>& BitField<Index, Bits>::operator=(T2) [with T2 = int; unsigned int Index = 16; unsigned int Bits = 7]	16	static
+../Core/Inc/Bitfield.h:108:15:BitField<Index, 1>& BitField<Index, 1>::operator=(bool) [with unsigned int Index = 24]	16	static
+../Core/Src/TMC5160.cpp:617:6:void TMC5160::setStallProtectionLevels(int, int, int, int, int)	32	static
+../Core/Src/TMC5160.cpp:38:6:virtual bool TMC5160::begin(const PowerStageParameters&, const MotorParameters&, MotorDirection, MotorType)	72	static

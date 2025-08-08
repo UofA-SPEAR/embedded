@@ -1,0 +1,8 @@
+../Core/Src/TMC5160_SPI.cpp:28:1:TMC5160_SPI::TMC5160_SPI(SPI_HandleTypeDef*, uint16_t, GPIO_TypeDef*, uint32_t, uint8_t)	24	static
+../Core/Src/TMC5160_SPI.cpp:73:6:void TMC5160_SPI::motorCommand(uint8_t, float)	16	static
+../Core/Src/TMC5160_SPI.cpp:51:6:void TMC5160_SPI::translateCAN(uint8_t, uint8_t*)	0	static
+../Core/Src/TMC5160_SPI.cpp:40:6:void TMC5160_SPI::CAN_IN(CAN_RxHeaderTypeDef*, uint8_t*)	4	static
+../Core/Src/TMC5160_SPI.cpp:125:6:void TMC5160_SPI::_SPItransaction()	16	static
+../Core/Src/TMC5160_SPI.cpp:134:10:virtual uint32_t TMC5160_SPI::readRegister(uint8_t)	8	static
+../Core/Src/TMC5160_SPI.cpp:162:9:virtual uint8_t TMC5160_SPI::writeRegister(uint8_t, uint32_t)	8	static
+../Core/Src/TMC5160_SPI.cpp:182:9:uint8_t TMC5160_SPI::readStatus()	8	static

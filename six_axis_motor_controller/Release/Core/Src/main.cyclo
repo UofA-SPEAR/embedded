@@ -1,0 +1,10 @@
+../Core/Src/main.cpp:225:6:void SystemClock_Config()	4
+../Core/Src/main.cpp:423:9:uint8_t getTemp()	2
+../Core/Src/main.cpp:465:6:void enableAll(TMC5160_SPI**)	2
+../Core/Src/main.cpp:472:6:void disableAll(TMC5160_SPI**)	2
+../Core/Src/main.cpp:446:6:void CheckBoardTemp(TMC5160_SPI**)	5
+../Core/Src/main.cpp:479:6:void CAN_Transmit(TMC5160_SPI**, CAN_HandleTypeDef*, CAN_TxHeaderTypeDef*, uint32_t*)	4
+../Core/Src/main.cpp:505:6:void CAN_Filter(CAN_HandleTypeDef*, CAN_TxHeaderTypeDef*)	1
+../Core/Src/main.cpp:548:6:void beginAll(TMC5160_SPI**, const TMC5160::PowerStageParameters&, const TMC5160::MotorParameters&, TMC5160::MotorDirection)	4
+../Core/Src/main.cpp:59:5:int main()	13
+../Core/Src/main.cpp:575:6:void Error_Handler()	1
