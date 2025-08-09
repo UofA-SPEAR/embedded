@@ -193,20 +193,24 @@ int main(void)
 //    	}
 
     	//Transmit data
-    	if (tindex < nMotors) {
-    CAN_TxHeader.DLC = 4;                 // you send 4 bytes
-    CAN_TxHeader.ExtId  = thead[tindex];  // rebuild ID fresh
-    CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << (12-8));
-    CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin) << (13-8));
-    CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << (14-8));
-    CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << (15-8));
+    	if (tindex < nMotors){
 
-    if (HAL_CAN_GetTxMailboxesFreeLevel(&hcan) > 0) {
-        uint32_t mbx;
-        (void)HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &mbx);
-    }
-    tindex++; // advance regardless (drop stale on congestion)
-}
+    		CAN_TxData[0] = static_cast<uint8_t>(tdata[tindex] >> 24);
+			CAN_TxData[1] = static_cast<uint8_t>(tdata[tindex] >> 16);
+			CAN_TxData[2] = static_cast<uint8_t>(tdata[tindex] >> 8);
+			CAN_TxData[3] = static_cast<uint8_t>(tdata[tindex]);
+			// Eliminate lingering data from other transmissions
+			CAN_TxHeader.ExtId = thead[tindex]; // Putting in the motor ID and command ID
+			CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_0_GPIO_Port, CAN_ADD_0_Pin) << (12-8));
+			CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_1_GPIO_Port, CAN_ADD_1_Pin) << (13-8));
+			CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_2_GPIO_Port, CAN_ADD_2_Pin) << (14-8));
+			CAN_TxHeader.ExtId |= (uint32_t)(HAL_GPIO_ReadPin(CAN_ADD_3_GPIO_Port, CAN_ADD_3_Pin) << (15-8));
+
+			HAL_StatusTypeDef tresult = HAL_CAN_AddTxMessage(&hcan, &CAN_TxHeader, CAN_TxData, &CAN_TxMailbox);
+			if (tresult == HAL_OK){
+				tindex++;
+			}
+    	}
 
     	//Set data to be transmitted
     	delayCount++;
@@ -224,18 +228,9 @@ int main(void)
 
 
         // Do nothing until a CAN message comes in.
-        while (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) > 1) {
-    HAL_CAN_GetRxMessage(&hcan, CAN_RX_FIFO0, &CAN_RxHeader, CAN_RxData); /* drop */
-}
-if (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) > 0) {
-    HAL_CAN_GetRxMessage(&hcan, CAN_RX_FIFO0, &CAN_RxHeader, CAN_RxData);
-    motor1.CAN_IN(&CAN_RxHeader, CAN_RxData);
-    motor2.CAN_IN(&CAN_RxHeader, CAN_RxData);
-    motor3.CAN_IN(&CAN_RxHeader, CAN_RxData);
-    motor4.CAN_IN(&CAN_RxHeader, CAN_RxData);
-    motor5.CAN_IN(&CAN_RxHeader, CAN_RxData);
-    motor6.CAN_IN(&CAN_RxHeader, CAN_RxData);
-}
+        if (HAL_CAN_GetRxFifoFillLevel(&hcan, CAN_RX_FIFO0) == 0){
+        	continue;
+        }
 
         // Get CAN message. priority: 0 command id: 02
         //actuator id: fl:24 fr:21 bl:26 br:23
