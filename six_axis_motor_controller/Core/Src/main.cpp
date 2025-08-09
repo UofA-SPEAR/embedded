@@ -163,7 +163,7 @@ int main(void)
     //HAL_Delay(3000);
     //motor4.setTargetPosition(0);
 
-    uint32_t delayLimit = 3200;
+    uint32_t delayLimit = 16000;
 	uint32_t delayCount = 0;
 
 	unsigned int nMotors = 6;
@@ -172,9 +172,9 @@ int main(void)
 	unsigned int tindex = nMotors;
 
     // Initialize encoders
-    for (uint8_t i = 0; i < 6; i++){
-    	motors[i]->setEncoderResolution(200, 4000, false);
-    }
+//    for (uint8_t i = 0; i < 6; i++){
+//    	motors[i]->setEncoderResolution(200, 4000, false);
+//    }
 
     uint32_t CAN_TxMailbox = 0;
 

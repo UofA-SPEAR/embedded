@@ -34,6 +34,7 @@ TMC5160_SPI::TMC5160_SPI(SPI_HandleTypeDef* h_spi, uint16_t Pin, GPIO_TypeDef* P
     CAN_MotorID = ID;
     CAN_MotorTxData = 0;
     CAN_MotorTxHeader = 0x00010100 | (((uint32_t)(CAN_MotorID)) << 0);
+    CAN_MotorTxHeader |= 0x0f << (4*6);
     CAN_SendStatus = false;
 }
 
