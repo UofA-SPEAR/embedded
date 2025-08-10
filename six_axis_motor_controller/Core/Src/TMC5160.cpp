@@ -38,7 +38,8 @@ TMC5160::~TMC5160()
 bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParameters& stepperMotorParams, const MotorParameters& dcBrushMotorParams, MotorDirection stepperDirection, MotorType mtrType)
 {
 	setMotorType = mtrType;
-	stepperMaxSpeed = 500;
+	stepperMaxSpeed = 400;
+	stepperSpeedToStop = 200;
 
     /* Clear the reset and charge pump undervoltage flags */
     TMC5160_Reg::GSTAT_Register gstat = { 0 };
@@ -119,10 +120,10 @@ bool TMC5160::begin(const PowerStageParameters& powerParams, const MotorParamete
         writeRegister(TMC5160_Reg::GCONF, gconf.value);
 
         // Set default start, stop, threshold speeds.
-        setRampSpeeds(50, 200, 0); // Start, stop, threshold speeds
+        setRampSpeeds(0, stepperSpeedToStop, 0); // Start, stop, threshold speeds
 
         // set default max accel, max decel, start accel, and final decel
-        setAccelerations(250, 250, 0, 0);
+        setAccelerations(1000, 1000, 0, 0);
 
         // set default max speed
         setMaxSpeed(stepperMaxSpeed);

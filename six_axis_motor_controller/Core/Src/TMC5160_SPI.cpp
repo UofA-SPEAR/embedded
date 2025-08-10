@@ -106,23 +106,14 @@ void TMC5160_SPI::motorCommand(uint8_t commandID, float CANfloatData)
 
     case CAN_Command::SetSpeed: { // Multiplying the float by the steps/second max speed
     	if (setMotorType == STEPPER){
-    		if(CANfloatData == 0){
-    			if (true){
-    				wasSpeedMoving = false;
-    				setMaxSpeed(stepperMaxSpeed);
-    				//setCurrentPosition(getEncoderPosition(), false);
-    				setTargetPosition(getCurrentPosition());
-    			}
-			} else {
-				wasSpeedMoving = true;
-				CANfloatData = constrain(CANfloatData, -1, 1);
-				CANfloatData = round(stepperMaxSpeed * CANfloatData);
-				setMaxSpeed(fabs(CANfloatData));
-				if (CANfloatData > 0){
-					setTargetPosition(1E6);
-				} else if (CANfloatData < 0){
-					setTargetPosition(-1E6);
-				}
+			wasSpeedMoving = true;
+			CANfloatData = constrain(CANfloatData, -1, 1);
+			CANfloatData = round(stepperMaxSpeed * CANfloatData);
+			setMaxSpeed(fabs(CANfloatData));
+			if (CANfloatData >= 0){
+				setTargetPosition(1E6);
+			} else if (CANfloatData < 0){
+				setTargetPosition(-1E6);
 			}
     	} else if (setMotorType == DC_BRUSHED){
     		CANfloatData = CANfloatData * MAX_SPEED_VAL;

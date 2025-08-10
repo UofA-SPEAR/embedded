@@ -245,6 +245,7 @@ protected:
     static constexpr uint8_t WRITE_ACCESS = 0x80; // Register write access for spi / uart communication
     MotorType setMotorType = STEPPER;
     float stepperMaxSpeed = 300;
+    float stepperSpeedToStop = 200;
     bool wasSpeedMoving = false;
 
     bool _lastRegisterReadSuccess = false;
